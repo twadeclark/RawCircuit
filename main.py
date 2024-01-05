@@ -9,7 +9,13 @@ from message_board_poster import post_comment
 def main():
     manager = NewsAggregatorManager()
     article = manager.get_article()
-    print(article.aggregator + "\n" + article.url + "\n" + article.content + "\n")
+
+    if article is None:
+        print("No articles found.")
+        return
+
+    print(article)
+
 
 
 if __name__ == "__main__":

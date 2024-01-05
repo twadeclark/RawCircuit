@@ -26,4 +26,14 @@ class Article:
         #     "content": "Roku is stepping into premium TV territory at CES 2024 with its new Pro Series sets, which feature Mini LED backlighting for better brightness and contrast, as well as enhanced audio. The company ann… [+2510 chars]"
         # },
 
-        
+    def __str__(self):
+        return (self.aggregator or "N/A") + "\n" + \
+            (self.source_id or "N/A") + "\n" + \
+            (self.source_name or "N/A") + "\n" + \
+            (self.author or "N/A") + "\n" + \
+            (self.title or "N/A") + "\n" + \
+            (self.description or "N/A") + "\n" + \
+            (self.url or "N/A") + "\n" + \
+            (self.url_to_image or "N/A") + "\n" + \
+            (self.published_at or "N/A") + "\n" + \
+            (self.content or "N/A") + "\n"
