@@ -17,12 +17,9 @@ class OpenAI_interface(AbstractProvider):
             stream=False,
         )
 
-        # print("raw response:", response)
-
         if response is not None:
             try:
                 content = response.choices[0].message.content
-                # print("content:", content)
                 return content
             except Exception as e:
                 print("Error (response.choices[0].message.content):", e)

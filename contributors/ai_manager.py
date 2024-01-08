@@ -17,6 +17,6 @@ class AIManager:
     def get_comment(self, provider_name, article, instructions):
         provider = self.providers.get(provider_name)
         if provider:
-            return provider.generate_comment(article.content, instructions)
+            return provider.generate_comment(article, instructions)
         else:
             raise ValueError("AI provider not found")

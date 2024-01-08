@@ -35,7 +35,7 @@ class DBManager:
             cur.execute("""
                 SELECT aggregator, source_id, source_name, author, title, description, url, url_to_image, published_at, content
                 FROM articles
-                ORDER BY published_at DESC
+                ORDER BY RANDOM() --published_at DESC
                 LIMIT 1
                 """)
             row = cur.fetchone()
