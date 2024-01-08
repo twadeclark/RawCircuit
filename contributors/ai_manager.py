@@ -14,9 +14,9 @@ class AIManager:
             'remote_api2': RemoteProviderAPI2()
         }
 
-    def get_comment(self, provider_name, article, instructions):
+    def get_comment(self, provider_name, article_text, instructions):
         provider = self.providers.get(provider_name)
         if provider:
-            return provider.generate_comment(article, instructions)
+            return provider.generate_comment(article_text, instructions)
         else:
             raise ValueError("AI provider not found")
