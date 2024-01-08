@@ -1,5 +1,6 @@
 import configparser
 import psycopg2
+from article import Article
 
 class DBManager:
     def __init__(self):
@@ -27,3 +28,18 @@ class DBManager:
                 """,
                 (article_data.aggregator, article_data.source_id, article_data.source_name, article_data.author, article_data.title, article_data.description, article_data.url, article_data.url_to_image, article_data.published_at, article_data.content))
             self.conn.commit()
+
+    # select the most recent article and return it as an Article object
+    def get_most_recent_article(self):
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                SELECT aggregator, source_id, source_name, author, title, description, url, url_to_image, published_at, content
+                FROM articles
+                ORDER BY published_at DESC
+                LIMIT 1
+                """)
+            row = cur.fetchone()
+            if row is None:
+                return None
+            else:
+                return Article(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9])

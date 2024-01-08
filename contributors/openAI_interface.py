@@ -10,14 +10,6 @@ class OpenAI_interface(AbstractProvider):
             {"role": "user", "content": article},
         ]
 
-        # print(messages)
-
-        # messages=[
-        #     {"role": "system", "content": instructions},
-        #     {"role": "user", "content": "Compose a sentence that addresses this issue. " + str(article.content)},
-        # ]
-
-
         response = client.chat.completions.create(
             model="local-model", # this field is currently unused
             messages=messages,
