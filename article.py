@@ -1,5 +1,3 @@
-# article.py
-
 class Article:
     def __init__(self, aggregator, source_id, source_name, author, title, description, url, url_to_image, published_at, content):
         self.aggregator = aggregator

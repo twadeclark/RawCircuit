@@ -1,22 +1,22 @@
-from contributors.abstract_provider import AbstractProvider
-from contributors.openAI_interface import OpenAI_interface
-from contributors.local_provider import LocalProvider
-from contributors.remote_provider_api1 import RemoteProviderAPI1
-from contributors.remote_provider_api2 import RemoteProviderAPI2
+from contributors.openai_interface import OpenAIInterface
 
 class AIManager:
     def __init__(self):
         # Initialize with available AI providers
         self.providers = {
-            'OpenAI_interface': OpenAI_interface(),
-            'local': LocalProvider(),
-            'remote_api1': RemoteProviderAPI1(),
-            'remote_api2': RemoteProviderAPI2()
+            'OpenAI_interface': OpenAIInterface()
         }
 
-    def get_comment(self, provider_name, article_text, instructions):
+    def generate_comment(self, provider_name, incoming_text, instructions):
         provider = self.providers.get(provider_name)
         if provider:
-            return provider.generate_comment(article_text, instructions)
+            return provider.generate_comment(incoming_text, instructions)
+        else:
+            raise ValueError("AI provider not found")
+
+    def get_summary(self, provider_name, article_text):
+        provider = self.providers.get(provider_name)
+        if provider:
+            return provider.generate_summary(article_text)
         else:
             raise ValueError("AI provider not found")

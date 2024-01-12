@@ -1,15 +1,15 @@
+import re
 from openai import OpenAI
+import openai
 from contributors.abstract_provider import AbstractProvider
 
-class OpenAI_interface(AbstractProvider):
-    def generate_comment(self, article_text, instructions):
+class OpenAIInterface(AbstractProvider):
+    def generate_summary(self, article_text):
         client = OpenAI(base_url="http://localhost:1234/v1", api_key="not-needed") # TODO: pass this in as a parameter
-
-        # generate summary here
-        summary_instructions = """You are a specialist in summarizing. 
-        You will provide an excellent short summary of the following article. 
-        You will use your own words to summarize the article. 
-        You will not copy any text from the article. You will not plagiarize.
+        summary_instructions = """You are an analytical thinker.
+        Use reasoning to ensure the summary is concise and accurate.
+        Include only information included in the text.
+        Summarize the following text into two or three paragrpahs, capturing all key details.
         """
 
         messages = [
@@ -18,36 +18,41 @@ class OpenAI_interface(AbstractProvider):
         ]
 
         summary_response = client.chat.completions.create(
-            model="local-model", # this field is currently unused
+            model="local-model", # TODO: this field is currently unused for local, pass in as a parameter
             messages=messages,
-            temperature=0.7,
+            temperature=0.1,
             stream=False,
         )
 
-        if summary_response is not None:
+        if summary_response:
             try:
                 summary = summary_response.choices[0].message.content
-            except Exception as e:
+
+                # TODO: move this simple clean up to utility file
+                summary = re.sub(r"\[.*\]", "", summary).strip()
+                summary = re.sub(r"[\n\r]", " ", summary)
+
+                print("\nSummary:")
+                print(summary)
+                return summary
+            except (IndexError, AttributeError, TypeError) as e:
                 print("Summary - Error (response.choices[0].message.content):", e)
-                return None
         else:
             print("Summary - No response or an error occurred")
-            return None
-        
-        print("\nSummary:")
-        print(summary)
+        return None
 
+    def generate_comment(self, incoming_text, instructions):
+        client = OpenAI(base_url="http://localhost:1234/v1", api_key="not-needed") # TODO: pass this in as a parameter
 
-        # generate comment here
         messages = [
             {"role": "system", "content": instructions},
-            {"role": "user", "content": summary},
+            {"role": "user", "content": incoming_text},
         ]
 
         response = client.chat.completions.create(
-            model="local-model", # this field is currently unused
+            model="local-model", # TODO: this field is currently unused for local, pass in as a parameter
             messages=messages,
-            temperature=0.7,
+            temperature=2.0,
             stream=False,
         )
 
@@ -55,10 +60,9 @@ class OpenAI_interface(AbstractProvider):
             try:
                 content = response.choices[0].message.content
                 return content
-            except Exception as e:
+            except (openai.OpenAIError, IndexError) as e:
                 print("Error (response.choices[0].message.content):", e)
                 return None
         else:
             print("No response or an error occurred")
             return None
-

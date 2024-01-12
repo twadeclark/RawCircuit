@@ -1,12 +1,11 @@
-# newsapiorg_news.py
+from datetime import datetime, timedelta
+import configparser
+import requests
 from article import Article
 from database.db_manager import DBManager
 from .base_aggregator import NewsAggregator
-import requests
-from datetime import datetime, timedelta
-import configparser
 
-class newsapiorg_news(NewsAggregator):
+class NewsApiOrgNews(NewsAggregator):
     config = configparser.ConfigParser()
     config.read('config.ini')
 
@@ -16,7 +15,7 @@ class newsapiorg_news(NewsAggregator):
     sortBy = config.get('NewsAPI', 'sortBy')
     apiKey = config.get('NewsAPI', 'apiKey')
 
-    def fetch_articles_as_JSON(self):
+    def fetch_articles_as_json(self):
         params = {
             "q": self.q,
             "from": self.from_date,
@@ -24,42 +23,42 @@ class newsapiorg_news(NewsAggregator):
             "apiKey": self.apiKey
         }
 
-        response = requests.get(self.urlBaseAPI, params=params)
+        response = requests.get(self.urlBaseAPI, params=params, timeout=5)
 
         if response.status_code == 200: # The request was successful
-            return response.json()  # Returns the JSON response as a Python dictionary
+            return response.json()
         else: # The request failed
             response.raise_for_status()
 
     def get_article(self) -> Article:
         try:
-            articles_data = self.fetch_articles_as_JSON()
+            articles_data = self.fetch_articles_as_json()
         except requests.RequestException as e:
             print(f"An error occurred: {e}")
 
-        articles_list = articles_data.get('articles', []) # Assuming articles_data contains the JSON response
+        articles_list = articles_data.get('articles', []) # presume articles_data contains the JSON response
 
         db_manager = DBManager()
 
-        for articleItem in articles_list: # Each 'artarticleItemicle' is a dictionary containing details about a news article
-            articleInstance = Article(
+        for article in articles_list:
+            article_instance = Article(
                 self.urlBaseAPI,
-                articleItem.get('source', {}).get('id'),
-                articleItem.get('source', {}).get('name'),
-                articleItem.get('author'),
-                articleItem.get('title'),
-                articleItem.get('description'),
-                articleItem.get('url'),
-                articleItem.get('urlToImage'),
-                articleItem.get('publishedAt'),
-                articleItem.get('content')
+                article.get('source', {}).get('id'),
+                article.get('source', {}).get('name'),
+                article.get('author'),
+                article.get('title'),
+                article.get('description'),
+                article.get('url'),
+                article.get('urlToImage'),
+                article.get('publishedAt'),
+                article.get('content')
             )
 
-            if db_manager.is_article_processed(articleInstance.url):
+            if db_manager.is_article_processed(article_instance.url):
                 continue
-            else:
-                db_manager.save_article(articleInstance)
-                return articleInstance
+
+            db_manager.save_article(article_instance)
+            return article_instance
 
         # No articles were found
         return None
