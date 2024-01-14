@@ -31,9 +31,6 @@ class OpenAIInterface(AbstractProvider):
                 # TODO: move this simple clean up to utility file
                 summary = re.sub(r"\[.*\]", "", summary).strip()
                 summary = re.sub(r"[\n\r]", " ", summary)
-
-                print("\nSummary:")
-                print(summary)
                 return summary
             except (IndexError, AttributeError, TypeError) as e:
                 print("Summary - Error (response.choices[0].message.content):", e)
@@ -52,7 +49,7 @@ class OpenAIInterface(AbstractProvider):
         response = client.chat.completions.create(
             model="local-model", # TODO: this field is currently unused for local, pass in as a parameter
             messages=messages,
-            temperature=2.0,
+            temperature=1.0,
             stream=False,
         )
 
