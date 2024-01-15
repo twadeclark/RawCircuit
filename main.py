@@ -23,25 +23,34 @@ def main():
     provider_name = "OpenAI_interface"
 
     summary = ai_manager.get_summary(provider_name, article.content)
-    print("\nAI Summary:")
-    print(summary)
+    print("     AI Summary:")
+    print(summary, "\n")
 
+    comment = summary
 
-    for _ in range(0, 100):
+    for _ in range(0, 10):
         instructions = generate_instructions()
+        print("     Instructions: ", instructions)
 
-        print("\nInstructions: ", instructions)
+        system_content = instructions
+        user_content = comment
 
-        comment = ai_manager.generate_comment(provider_name, summary, instructions)
+        comment = ai_manager.generate_comment(provider_name, user_content, system_content)
+
+        comment_temp = "\n".join([line for line in comment.split("\n") if not line.startswith("#")])
+        if comment_temp != comment:
+            comment = comment_temp
+
         comment = comment.strip()
 
         if comment is None or len(comment) == 0:
-            print("No comment generated. Rerunning...")
+            print("No comment generated. Skipping...")
+            comment = summary
         else:
-            print("AI Comment:")
+            print("     AI Comment:")
             print(comment)
-            # summary = comment
 
+        print()
 
 if __name__ == "__main__":
     main()

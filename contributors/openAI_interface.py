@@ -20,7 +20,7 @@ class OpenAIInterface(AbstractProvider):
         summary_response = client.chat.completions.create(
             model="local-model", # TODO: this field is currently unused for local, pass in as a parameter
             messages=messages,
-            temperature=0.1,
+            temperature=1.0,
             stream=False,
         )
 
@@ -38,18 +38,18 @@ class OpenAIInterface(AbstractProvider):
             print("Summary - No response or an error occurred")
         return None
 
-    def generate_comment(self, incoming_text, instructions):
+    def generate_comment(self, user_content, system_content):
         client = OpenAI(base_url="http://localhost:1234/v1", api_key="not-needed") # TODO: pass this in as a parameter
 
         messages = [
-            {"role": "system", "content": instructions},
-            {"role": "user", "content": incoming_text},
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": user_content},
         ]
 
         response = client.chat.completions.create(
             model="local-model", # TODO: this field is currently unused for local, pass in as a parameter
             messages=messages,
-            temperature=1.0,
+            temperature=0.7,
             stream=False,
         )
 

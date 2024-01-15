@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 class AbstractProvider(ABC):
     @abstractmethod
-    def generate_comment(self, incoming_text, instructions):
+    def generate_comment(self, user_content, system_content):
         pass
 
     @abstractmethod

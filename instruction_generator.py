@@ -1,15 +1,21 @@
 import random
 
 def generate_instructions():
-    instructions = "You are an extremely " + get_descriptor() + " " + get_profession() + ". You " + get_metaphor() + ". " + \
-        get_revise_thoughts() + \
-        "Your response is " + get_length() + "."
+    instructions = ""
+
+    instructions += "Your role is " + get_profession() + ". "
+    instructions += "Your tone will be " + get_descriptor() + ". "
+    instructions += "Your reply will " + get_metaphor() + ". "
+    instructions += "Your reply is limited to " + get_length() + ". "
+    instructions += get_revise_thoughts()
+
     return instructions
 
 def get_revise_thoughts():
     revise_thoughts_list = [
         "Take some time to organize your thoughts and revise your response. ",
-        "",
+        "You will summarize the message below into your own words and thoughts, then reply to that summary. ",
+        "You ramble off topic. ",
         ]
     return random.choice(revise_thoughts_list)
 
@@ -61,7 +67,7 @@ def get_descriptor():
         "grandiose",
         "grave",
         "hesitant",
-        "highly opinionated",
+        "opinionated",
         "humorous",
         "incredulous",
         "innovative",
@@ -177,7 +183,7 @@ def get_profession():
 
 def get_metaphor():
     metaphor_list = [
-        "use subtle metaphor",
+        "use subtle metaphor to make your point",
         "use pompous words and pretentious phrases",
         "use slang",
         "use concise, factual statements",
@@ -189,6 +195,10 @@ def get_metaphor():
         "use a metaphor to make your point",
         "respond as if you were speaking to a child",
         "respond as if you were speaking to a highly educated adult",
+        "include pop references",
+        "include references to historical events",
+        "include references to fictional events",
+        "use a terrible metaphor to make your point",        
         ]
     return random.choice(metaphor_list)
 
@@ -203,9 +213,12 @@ def get_length():
         "one paragraph",
         "one short paragraph",
         "one long paragraph",
-        "short witty poems",
-        "a tweet",
-        "a facebook post",
-        "a reddit post",
+        "a short witty poem",
+        "a text message",
+        "a fortune cookie message",
+        "an inspirational quote",
+        "an incomplete phrase",
+        "a few phrases",
+        "a few words",
     ]
     return random.choice(length_list)
