@@ -8,3 +8,7 @@ class AbstractProvider(ABC):
     @abstractmethod
     def generate_summary(self, article_text):
         pass
+
+    @abstractmethod
+    def prepare_model(self, model):
+        pass

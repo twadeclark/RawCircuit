@@ -9,6 +9,10 @@ def generate_instructions():
     instructions += "Your reply is limited to " + get_length() + ". "
     instructions += get_revise_thoughts()
 
+        # instructions = "You are a robot who speaks with boops and beeps in every sentence. You are flatulent. You will reply in a love letter."
+        # instructions = "You are a 3 year old toddler who barely makes coherent sentences. you do not use emojis."
+        # instructions = "You are a caveman. Your reply will be only 3 words long."
+
     return instructions
 
 def get_revise_thoughts():
@@ -64,6 +68,7 @@ def get_descriptor():
         "formal",
         "frivolous",
         "funny",
+        "flatulent",
         "grandiose",
         "grave",
         "hesitant",
@@ -177,7 +182,15 @@ def get_profession():
         "research scientist",
         "sailor",
         "translator",
-        "video game developer"
+        "video game developer",
+        "writer",
+        "zoologist",
+        "accountant",
+        "banker",
+        "robot",
+        "astronaut",
+        "astronomer",
+        "chemist",
     ]
     return random.choice(get_profession_list)
 
@@ -198,27 +211,28 @@ def get_metaphor():
         "include pop references",
         "include references to historical events",
         "include references to fictional events",
-        "use a terrible metaphor to make your point",        
+        "use a terrible metaphor to make your point",
         ]
     return random.choice(metaphor_list)
 
 def get_length():
     length_list = [
         "one sentence",
-        "one short sentence",
-        "one long sentence",
-        "a few sentences",
-        "a few short sentences",
-        "a few long sentences",
-        "one paragraph",
-        "one short paragraph",
-        "one long paragraph",
-        "a short witty poem",
-        "a text message",
-        "a fortune cookie message",
-        "an inspirational quote",
-        "an incomplete phrase",
-        "a few phrases",
-        "a few words",
+        # "one short sentence",
+        # "one long sentence",
+        # "a few sentences",
+        # "a few short sentences",
+        # "a few long sentences",
+        # "one paragraph",
+        # "one short paragraph",
+        # "one long paragraph",
+        # "a short witty poem",
+        # "a text message",
+        # "a fortune cookie message",
+        # "an inspirational quote",
+        # "an incomplete phrase",
+        # "a few phrases",
+        # "a few words",
+        # "a love letter",
     ]
     return random.choice(length_list)

@@ -2,11 +2,11 @@ import random
 
 class IntegerArray:
     def __init__(self):
-        self.array = []
+        self.thread_array = []
 
     def add(self, item1, item2):
         if isinstance(item1, int) and isinstance(item2, int):
-            self.array.append([item1, item2])
+            self.thread_array.append([item1, item2])
         else:
             print("Both items must be integers.")
 
@@ -17,10 +17,10 @@ array = IntegerArray()
 array.add(0, 0)
 
 for i in range(1, TOTAL_COMMENTS):
-    d = (len(array.array) - 1) * MULTIPLER
+    d = (len(array.thread_array) - 1) * MULTIPLER
     r = random.randint(0, int(d))
-    if r > len(array.array) - 1:
-        r = len(array.array) - 1
+    if r > len(array.thread_array) - 1:
+        r = len(array.thread_array) - 1
     # print("i:", i, "d:", d, "r:", r)
     array.add(i, r)
 
@@ -28,7 +28,7 @@ indent = 0
 last = 0
 # subtractor = 0
 
-for item in array.array:
+for item in array.thread_array:
     # for i in range(0, item[1]):
     #     print(" ", end="")
     # print(item)

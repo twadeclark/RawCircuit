@@ -1,22 +1,43 @@
-from contributors.openai_interface import OpenAIInterface
+import json
+import random
+from contributors.local_openai_interface import OpenAIInterface
 
 class AIManager:
     def __init__(self):
-        # Initialize with available AI providers
-        self.providers = {
-            'OpenAI_interface': OpenAIInterface()
+        self.interface_list = {
+            'OpenAIInterface': OpenAIInterface()
         }
 
-    def generate_comment(self, provider_name, user_content, system_content):
-        provider = self.providers.get(provider_name)
-        if provider:
-            return provider.generate_comment(user_content, system_content)
-        else:
-            raise ValueError("AI provider not found")
+        with open('models.json', 'r', encoding='utf-8') as file:
+            self.models_json = json.load(file)
 
-    def get_summary(self, provider_name, article_text):
-        provider = self.providers.get(provider_name)
-        if provider:
-            return provider.generate_summary(article_text)
-        else:
-            raise ValueError("AI provider not found")
+        self.model = None
+        self.interface = None
+        self.choose_random_provider()
+
+    def choose_random_provider(self):
+        model_names = list(self.models_json.keys())
+        random_model_name = random.choice(model_names)
+        self.model = self.models_json[random_model_name]
+        interface_name = self.model['interface']
+        self.interface = self.interface_list.get(interface_name)
+        self.interface.prepare_model(self.model)
+
+        # print("Selected random_model_name: ", random_model_name)
+        # print("Selected interface_name: ", interface_name)
+        # print()
+
+    def get_model(self):
+        return self.model
+    
+    def get_model_polite_name(self):
+        return self.model['polite_name']
+
+    # def get_interface(self):
+    #     return self.interface
+
+    def generate_comment(self, user_content, system_content):
+        return self.interface.generate_comment(user_content, system_content)
+
+    def get_summary(self, article_text):
+        return self.interface.generate_summary(article_text)

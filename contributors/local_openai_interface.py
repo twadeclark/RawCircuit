@@ -4,8 +4,15 @@ import openai
 from contributors.abstract_provider import AbstractProvider
 
 class OpenAIInterface(AbstractProvider):
+    def __init__(self):
+        self.model = None
+
+    def prepare_model(self, model):
+        self.model = model
+
     def generate_summary(self, article_text):
-        client = OpenAI(base_url="http://localhost:1234/v1", api_key="not-needed") # TODO: pass this in as a parameter
+        client = OpenAI(base_url=self.model["base_url"], api_key=self.model["api_key"])
+
         summary_instructions = """You are an analytical thinker.
         Use reasoning to ensure the summary is concise and accurate.
         Include only information included in the text.
@@ -18,17 +25,15 @@ class OpenAIInterface(AbstractProvider):
         ]
 
         summary_response = client.chat.completions.create(
-            model="local-model", # TODO: this field is currently unused for local, pass in as a parameter
+            model=self.model["model_name"],
             messages=messages,
-            temperature=1.0,
+            temperature=self.model["temperature_summary"],
             stream=False,
         )
 
         if summary_response:
             try:
                 summary = summary_response.choices[0].message.content
-
-                # TODO: move this simple clean up to utility file
                 summary = re.sub(r"\[.*\]", "", summary).strip()
                 summary = re.sub(r"[\n\r]", " ", summary)
                 return summary
@@ -39,7 +44,7 @@ class OpenAIInterface(AbstractProvider):
         return None
 
     def generate_comment(self, user_content, system_content):
-        client = OpenAI(base_url="http://localhost:1234/v1", api_key="not-needed") # TODO: pass this in as a parameter
+        client = OpenAI(base_url=self.model["base_url"], api_key=self.model["api_key"])
 
         messages = [
             {"role": "system", "content": system_content},
@@ -47,9 +52,9 @@ class OpenAIInterface(AbstractProvider):
         ]
 
         response = client.chat.completions.create(
-            model="local-model", # TODO: this field is currently unused for local, pass in as a parameter
+            model=self.model["model_name"],
             messages=messages,
-            temperature=0.7,
+            temperature=self.model["temperature_message"],
             stream=False,
         )
 
