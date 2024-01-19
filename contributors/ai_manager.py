@@ -23,18 +23,11 @@ class AIManager:
         self.interface = self.interface_list.get(interface_name)
         self.interface.prepare_model(self.model)
 
-        # print("Selected random_model_name: ", random_model_name)
-        # print("Selected interface_name: ", interface_name)
-        # print()
-
     def get_model(self):
         return self.model
-    
+
     def get_model_polite_name(self):
         return self.model['polite_name']
-
-    # def get_interface(self):
-    #     return self.interface
 
     def generate_comment(self, user_content, system_content):
         return self.interface.generate_comment(user_content, system_content)

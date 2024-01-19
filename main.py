@@ -44,7 +44,7 @@ def main():
 
     comment_thread_manager.add_comment(0, comment, ai_manager.get_model_polite_name(), datetime.datetime.now() )
 
-    for loop in range(2, 10):
+    for _ in range(2, 10):
         ai_manager.choose_random_provider()
         instructions = generate_instructions()
         print("     Instructions: ", instructions)
@@ -54,8 +54,6 @@ def main():
 
         comment = ai_manager.generate_comment(parent_comment, instructions)
         comment = comment.strip()
-
-        # comment += "parent_index. " + str(parent_index) + "\n"
 
         comment_temp = "\n".join([line for line in comment.split("\n") if not line.startswith("#")])
         if comment_temp != comment:
@@ -75,7 +73,6 @@ def main():
     print("Formatted Post:")
     print(formatted_post)
 
-    # save formatted_post to a file at "C:\Users\twade\projects\yoursite\content"
     file_path = r"C:\Users\twade\projects\yoursite\content\formatted_post.md"
     with open(file_path, "w", encoding="utf-8") as file:
         file.write(formatted_post)
