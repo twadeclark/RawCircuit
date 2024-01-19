@@ -14,7 +14,7 @@ def format_to_markdown(article, comment_thread_manager):
     ret_val += (f"Summary: {article.description}\n\n")
 
     comment = comment_thread_manager.get_comment(0)
-    ret_val += (f"- summary by **{comment["author"]}** *posted on {parse_date_into_pretty_string(comment["date"])}*\n\n")
+    ret_val += (f"- summary by **{comment["author"]}** <span style='font-size: smaller;'>*on {parse_date_into_pretty_string(comment["date"])}*</span>\n\n")
     ret_val += (f"{comment["comment"]}\n\n")
 
     ret_val += ("<span style='font-size: smaller;'>\n")
@@ -25,7 +25,7 @@ def format_to_markdown(article, comment_thread_manager):
 
     for i in range(1, comment_thread_manager.get_comments_length()):
         comment = comment_thread_manager.get_comment(i)
-        ret_val += (f"- **{comment["author"]}** *posted on {parse_date_into_pretty_string(comment["date"])}*\n\n")
+        ret_val += (f"- **{comment["author"]}** <span style='font-size: smaller;'>*on {parse_date_into_pretty_string(comment["date"])}*</span>\n\n")
 
         p = int(comment["parent"])
         if (p + 1) != i :
