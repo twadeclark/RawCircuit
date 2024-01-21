@@ -7,10 +7,14 @@ class NewsAggregatorManager:
         self.aggregators = [ # Put the list of aggregators here
             NewsApiOrgNews(),
         ]
+        self.aggregator = random.choice(self.aggregators)
 
     def get_article(self, query_term):
-        aggregator = random.choice(self.aggregators)
-        return aggregator.get_article(query_term)
+        return self.aggregator.get_article(query_term)
+
+    def get_article_(self, query_term):
+        return self.aggregator.get_article(query_term)
+
 
     def get_random_article(self):
         db_manager = DBManager()

@@ -1,7 +1,9 @@
 class CommentThreadManager:
-    def __init__(self, article):
+    def __init__(self, article, category, tags):
         self.comments = []
         self.article = article
+        self.category = category
+        self.tags = tags
 
     def add_comment(self, parent, comment, author, date):
         self.comments.append({
@@ -22,3 +24,9 @@ class CommentThreadManager:
 
     def get_article(self):
         return self.article
+
+    def get_tags_comma_separated(self):
+        return ", ".join(self.tags)
+    
+    def get_category(self):
+        return self.category

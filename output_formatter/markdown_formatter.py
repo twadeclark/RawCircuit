@@ -11,6 +11,8 @@ def format_to_markdown(article, comment_thread_manager):
     ret_val += (f"Title: {title}\n")
     ret_val += (f"Date: {parse_date_into_pretty_string(comment_thread_manager.get_comment(0)["date"])}\n")
     ret_val += (f"Authors: {comment_thread_manager.get_comment(0)["author"]}\n")
+    ret_val += (f"Tags: {comment_thread_manager.get_tags_comma_separated()}\n")
+    ret_val += (f"Category: {comment_thread_manager.get_category()}\n")
 
     comment = comment_thread_manager.get_comment(0)
     ret_val += ("<span style='font-size: smaller;'>")

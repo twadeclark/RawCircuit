@@ -1,47 +1,54 @@
 from datetime import datetime, timedelta
 import configparser
 import requests
+from newsapi import NewsApiClient
 from article import Article
 from database.db_manager import DBManager
 from .base_aggregator import NewsAggregator
 
 class NewsApiOrgNews(NewsAggregator):
-    config = configparser.ConfigParser()
-    config.read('config.ini')
+    def __init__(self):
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        self.from_date = datetime.now() - timedelta(days=config.getint('NewsAPI', 'days_back'))
+        self.sort_by = config.get('NewsAPI', 'sortBy')
+        self.api_key = config.get('NewsAPI', 'apiKey')
+        self.newsapi = NewsApiClient(api_key=self.api_key)
 
-    urlBaseAPI = config.get('NewsAPI', 'urlBaseAPI')
-    from_date = datetime.now() - timedelta(days=config.getint('NewsAPI', 'days_back'))
-    sortBy = config.get('NewsAPI', 'sortBy')
-    apiKey = config.get('NewsAPI', 'apiKey')
+    def fetch_top_headlines(self, query_term):
+        top_headlines = self.newsapi.get_top_headlines( q=f"{query_term}",
+                                                        category='technology',
+                                                        language='en')
+        return top_headlines
 
-    def fetch_articles_as_json(self, query_term):
-        params = {
-            "q": query_term,
-            "from": self.from_date,
-            "sortBy": self.sortBy,
-            "apiKey": self.apiKey
-        }
-
-        response = requests.get(self.urlBaseAPI, params=params, timeout=5)
-
-        if response.status_code == 200: # The request was successful
-            return response.json()
-        else: # The request failed
-            response.raise_for_status()
+    def fetch_everything_headlines(self, query_term):
+        all_articles = self.newsapi.get_everything( q=f"{query_term}",
+                                                    from_param=self.from_date,
+                                                    sort_by='relevancy',
+                                                    language='en')
+        return all_articles
 
     def get_article(self, query_term) -> Article:
+        # we try to get the top headlines first, if that fails we try to get everything
         try:
-            articles_data = self.fetch_articles_as_json(query_term)
+            articles_data = self.fetch_top_headlines(query_term)
         except requests.RequestException as e:
-            print(f"An error occurred: {e}")
+            print(f"An error occurred (fetch_top_headlines): {e}")
 
         articles_list = articles_data.get('articles', []) # presume articles_data contains the JSON response
+
+        if len(articles_list) == 0:
+            try:
+                articles_data = self.fetch_everything_headlines(query_term)
+                articles_list = articles_data.get('articles', [])
+            except requests.RequestException as e:
+                print(f"An error occurred (fetch_everything_headlines): {e}")
 
         db_manager = DBManager()
 
         for article in articles_list:
             article_instance = Article(
-                self.urlBaseAPI,
+                "newsapi.org",
                 article.get('source', {}).get('id'),
                 article.get('source', {}).get('name'),
                 article.get('author'),

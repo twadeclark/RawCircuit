@@ -8,8 +8,9 @@ from comment_thread_manager import CommentThreadManager
 from contributors.ai_manager import AIManager
 from instruction_generator import generate_instructions
 from output_formatter.markdown_formatter import format_to_markdown
+from vocabulary.news_search import SearchTerms
 
-GET_NEW_ARTICLE = False # for testing purposes
+GET_NEW_ARTICLE = True # for testing purposes
 
 def main():
     config = configparser.ConfigParser()
@@ -19,25 +20,27 @@ def main():
 
     manager = NewsAggregatorManager()
     ai_manager = AIManager()
+    search_terms = SearchTerms()
     ai_manager.choose_random_provider()
-
-
-    query_term = "artificial intelligence"
-
+    random_category, random_term = search_terms.get_random_term()
 
     if GET_NEW_ARTICLE:
-        article = manager.get_article(query_term)
+        article = manager.get_article(random_term)
+        print("     random_category:", random_category, " random_term:", random_term)
+        print("     Article:", article.title)
+        print(article.content)
     else:
         article = manager.get_random_article()
+        print("\n     Database article:", article.title)
 
-    if article.content is None or len(article.content) == 0:
+    if article is None:
         print("No article found. Exiting...")
         return
 
-    comment_thread_manager = CommentThreadManager(article)
+    tags = search_terms.find_tags_in_article(article)
+    print("     tags:", tags)
 
-    print("\n     Article:", article.title)
-    print(article.content)
+    comment_thread_manager = CommentThreadManager(article, random_category, tags)
 
     # summary and first comment belong to same ai
 
@@ -83,8 +86,8 @@ def main():
         print()
 
     formatted_post = format_to_markdown(article, comment_thread_manager)
-    print("Formatted Post:")
-    print(formatted_post)
+    print("Post sucessfully formatted. ", len(formatted_post), "characters")
+    # print(formatted_post)
 
     unique_seconds = int(time.time())
 
