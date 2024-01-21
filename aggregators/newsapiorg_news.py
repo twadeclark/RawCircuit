@@ -10,14 +10,13 @@ class NewsApiOrgNews(NewsAggregator):
     config.read('config.ini')
 
     urlBaseAPI = config.get('NewsAPI', 'urlBaseAPI')
-    q = config.get('NewsAPI', 'q')
     from_date = datetime.now() - timedelta(days=config.getint('NewsAPI', 'days_back'))
     sortBy = config.get('NewsAPI', 'sortBy')
     apiKey = config.get('NewsAPI', 'apiKey')
 
-    def fetch_articles_as_json(self):
+    def fetch_articles_as_json(self, query_term):
         params = {
-            "q": self.q,
+            "q": query_term,
             "from": self.from_date,
             "sortBy": self.sortBy,
             "apiKey": self.apiKey
@@ -30,9 +29,9 @@ class NewsApiOrgNews(NewsAggregator):
         else: # The request failed
             response.raise_for_status()
 
-    def get_article(self) -> Article:
+    def get_article(self, query_term) -> Article:
         try:
-            articles_data = self.fetch_articles_as_json()
+            articles_data = self.fetch_articles_as_json(query_term)
         except requests.RequestException as e:
             print(f"An error occurred: {e}")
 

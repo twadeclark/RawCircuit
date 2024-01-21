@@ -1,3 +1,5 @@
+import configparser
+import os
 import random
 from datetime import datetime
 import time
@@ -10,15 +12,21 @@ from output_formatter.markdown_formatter import format_to_markdown
 GET_NEW_ARTICLE = False # for testing purposes
 
 def main():
-    BRANCH_MULTIPLIER = 3
-    QTY_ADDL_COMMENTS = 100
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    continuity_multiplier = float(config.get('general_configurations', 'continuity_multiplier'))
+    qty_addl_comments = int(config.get('general_configurations', 'qty_addl_comments'))
 
     manager = NewsAggregatorManager()
     ai_manager = AIManager()
     ai_manager.choose_random_provider()
 
+
+    query_term = "artificial intelligence"
+
+
     if GET_NEW_ARTICLE:
-        article = manager.get_article()
+        article = manager.get_article(query_term)
     else:
         article = manager.get_random_article()
 
@@ -28,7 +36,7 @@ def main():
 
     comment_thread_manager = CommentThreadManager(article)
 
-    print("\nArticle:")
+    print("\n     Article:", article.title)
     print(article.content)
 
     # summary and first comment belong to same ai
@@ -48,12 +56,12 @@ def main():
 
     comment_thread_manager.add_comment(0, comment, ai_manager.get_model_polite_name(), datetime.now() )
 
-    for _ in range(2, 2 + QTY_ADDL_COMMENTS):
+    for _ in range(2, 2 + qty_addl_comments):
         ai_manager.choose_random_provider()
         instructions = generate_instructions()
         print("     Instructions: ", instructions)
 
-        parent_index = random.randint(0, comment_thread_manager.get_comments_length() * BRANCH_MULTIPLIER)
+        parent_index = random.randint(0, int(comment_thread_manager.get_comments_length() * continuity_multiplier))
         parent_index = min(parent_index, comment_thread_manager.get_comments_length() - 1)
         parent_comment = comment_thread_manager.get_comment(parent_index)["comment"]
 
@@ -79,7 +87,11 @@ def main():
     print(formatted_post)
 
     unique_seconds = int(time.time())
-    file_path = r"C:\Users\twade\projects\yoursite\content\formatted_post_" + str(unique_seconds) + ".md"
+
+    base_path = config.get('general_configurations', 'completed_articles_path')
+    file_name = "formatted_post_" + str(unique_seconds) + ".md"
+    file_path = os.path.join(base_path, file_name)
+
     with open(file_path, "w", encoding="utf-8") as file:
         file.write(formatted_post)
     print("Formatted post saved to:", file_path)

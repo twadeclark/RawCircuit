@@ -11,15 +11,13 @@ def format_to_markdown(article, comment_thread_manager):
     ret_val += (f"Title: {title}\n")
     ret_val += (f"Date: {parse_date_into_pretty_string(comment_thread_manager.get_comment(0)["date"])}\n")
     ret_val += (f"Authors: {comment_thread_manager.get_comment(0)["author"]}\n")
-    ret_val += (f"Summary: {article.description}\n\n")
 
     comment = comment_thread_manager.get_comment(0)
-    ret_val += (f"- summary by **{comment["author"]}** <span style='font-size: smaller;'>*on {parse_date_into_pretty_string(comment["date"])}*</span>\n\n")
-    ret_val += (f"{comment["comment"]}\n\n")
-
-    ret_val += ("<span style='font-size: smaller;'>\n")
-    ret_val += (f"[original article]({article.url}) from *{article.source_name}* by *{article.author}* at *{parse_date_into_pretty_string(article.published_at)}* \n")
+    ret_val += ("<span style='font-size: smaller;'>")
+    ret_val += (f"[original article]({article.url}) from *{article.source_name}* by *{article.author}* at *{parse_date_into_pretty_string(article.published_at)}* ")
     ret_val += ("</span> \n\n")
+    ret_val += (f">- summary by **{comment["author"]}** <span style='font-size: smaller;'>*on {parse_date_into_pretty_string(comment["date"])}*</span>\n\n")
+    ret_val += (f">{comment["comment"]}\n\n")
 
     ret_val += ("***\n\n***\n\n")
 
@@ -33,7 +31,7 @@ def format_to_markdown(article, comment_thread_manager):
             ret_val += (f">*{parent_commenter} wrote:*\n\n")
             parent_comment = comment_thread_manager.get_comment(p)["comment"]
             parent_comment = re.sub(r"[\n\r]", " ", parent_comment)
-            ret_val += (f">{parent_comment}\n\n")
+            ret_val += (f"><span style='font-size: smaller;'>{parent_comment}</span>\n\n")
 
         ret_val += (f"{comment["comment"]}\n\n")
         ret_val += ("***\n\n")

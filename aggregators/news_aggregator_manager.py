@@ -8,9 +8,9 @@ class NewsAggregatorManager:
             NewsApiOrgNews(),
         ]
 
-    def get_article(self):
+    def get_article(self, query_term):
         aggregator = random.choice(self.aggregators)
-        return aggregator.get_article()
+        return aggregator.get_article(query_term)
 
     def get_random_article(self):
         db_manager = DBManager()
