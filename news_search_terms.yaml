@@ -21,14 +21,14 @@ Imaging:
   - midjourney
 
 Commercial:
+  - google bard
   - openai
+  - chatgpt
   - meta
   - facebook
   - amazon web services
-  - google
   - deepmind
+  - nvidia
   - microsoft
   - apple
   - tesla
-  - nvidia
-  - chatgpt

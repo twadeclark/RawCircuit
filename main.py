@@ -17,18 +17,20 @@ def main():
     config.read('config.ini')
     continuity_multiplier = float(config.get('general_configurations', 'continuity_multiplier'))
     qty_addl_comments = int(config.get('general_configurations', 'qty_addl_comments'))
+    no_article_retries = int(config.get('general_configurations', 'no_article_retries'))
 
     manager = NewsAggregatorManager()
     ai_manager = AIManager()
     search_terms = SearchTerms()
     ai_manager.choose_random_provider()
-    random_category, random_term = search_terms.get_random_term()
+    article = None
 
     if GET_NEW_ARTICLE:
-        article = manager.get_article(random_term)
-        print("     random_category:", random_category, " random_term:", random_term)
-        print("     Article:", article.title)
-        print(article.content)
+        while article is None and no_article_retries > 0:
+            random_category, random_term = search_terms.get_random_term()
+            print("     random_category:", random_category, " random_term:", random_term)
+            article = manager.get_article(random_term)
+            no_article_retries -= 1
     else:
         article = manager.get_random_article()
         print("\n     Database article:", article.title)
@@ -36,6 +38,9 @@ def main():
     if article is None:
         print("No article found. Exiting...")
         return
+
+    print("     Article:", article.title)
+    print(article.content)
 
     tags = search_terms.find_tags_in_article(article)
     print("     tags:", tags)
