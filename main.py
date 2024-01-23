@@ -10,7 +10,7 @@ from instruction_generator import generate_instructions
 from output_formatter.markdown_formatter import format_to_markdown
 from vocabulary.news_search import SearchTerms
 
-GET_NEW_ARTICLE = True # for testing purposes
+GET_NEW_ARTICLE = False # for testing purposes
 
 def main():
     config = configparser.ConfigParser()
