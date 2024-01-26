@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import configparser
+import random
 import requests
 from newsapi import NewsApiClient
 from article import Article
@@ -14,6 +15,16 @@ class NewsApiOrgNews(NewsAggregator):
         self.sort_by = config.get('NewsAPI', 'sortBy')
         self.api_key = config.get('NewsAPI', 'apiKey')
         self.newsapi = NewsApiClient(api_key=self.api_key)
+
+    def get_articles(self):
+        query_term = "" #TODO: get this from the search terms
+        return random.choice(self.fetch_methods())(query_term)
+
+    def fetch_methods(self):
+        return [
+            self.fetch_top_headlines,
+            self.fetch_everything_headlines
+        ]
 
     def fetch_top_headlines(self, query_term):
         top_headlines = self.newsapi.get_top_headlines( q=f"{query_term}",
@@ -57,7 +68,12 @@ class NewsApiOrgNews(NewsAggregator):
                 article.get('url'),
                 article.get('urlToImage'),
                 article.get('publishedAt'),
-                article.get('content')
+                article.get('content'),
+                article.get('rec_order'),
+                article.get('added_timestamp'),
+                article.get('scraped_timestamp'),
+                article.get('scraped_website_content'),
+                article.get('processed_timestamp')
             )
 
             if db_manager.is_article_processed(article_instance.url):

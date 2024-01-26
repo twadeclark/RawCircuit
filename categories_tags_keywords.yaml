@@ -1,0 +1,198 @@
+Robotics:
+  robots:
+    - robot
+    - robotic
+    - Cobot
+    - drone
+  self-driving:
+    - self driving
+    - self-driving
+    - Autonomous Vehicle
+  automation:
+    - automation
+    - Industrial Automation
+    - Bionic
+  prosthetic:
+    - prosthetic
+    - augment
+  kill-bots:
+    - kill bot
+    - killbot
+    - boston dynamics
+    - exoskeleton
+    - weapon
+    - bomb
+    - missile
+    - gun
+    - firearm 
+    - bullet
+
+Imaging:
+  imagery:
+    - imaging
+    - imagery
+    - hugging face
+    - dall-e
+    - midjourney
+    - stable diffusion
+    - diffusion model
+  vision:
+    - computer vision
+    - Machine Vision
+    - Visual Data Mining
+    - Pattern Recognition
+    - Biometric Identification Systems
+    - Convolutional Neural Networks
+    - Image Recognition
+    - Generative Adversarial Networks
+    - Facial Recognition Technology
+    - Object Detection
+    - Augmented Reality
+    - Image Classification
+    - Neural Style Transfer
+    - Semantic Segmentation
+    - Image Enhancement
+    - Video Analysis
+    - Automated Image Captioning
+    - 3D Reconstruction
+
+OpenSource:
+  frameworks:
+    - Framework
+    - PyTorch
+    - TensorFlow
+    - Keras
+    - Scikit-Learn
+    - FastAI
+    - OpenCV
+    - NLTK
+  platforms:
+    - Platform
+    - Jupyter
+    - GitHub
+    - GitLab
+    - Google Colab
+    - Kaggle
+    - OpenAI Gym
+    - huggingface
+    - hugging face
+    - Apache Spark 
+    - MLlib
+    - Support Vector Machines
+  algorithms:
+    - Algorithm
+    - open source
+    - Python
+    - Julia
+    - SQL
+    - perplexity
+    - diffusion model
+    - transformer
+    - library
+    - Libraries
+    - Natural Language Toolkit 
+    - NLTK
+    - BERT 
+    - Bidirectional Encoder Representations from Transformers
+    - FastAI
+    - Reinforcement Learning 
+    - MLflow
+    - Open Source Data Sets
+    - Decision Tree
+    - Random Forest
+    - Naive Bayes
+    - Logistic Regression
+    - Linear Regression
+    - Clustering Algorithm
+    - Bayesian Networks
+    - Support Vector Machines
+    - SVM
+    - Ensemble Method
+    - Association Rule Learning
+    - Gradient Boosting
+    - Dimensionality Reduction
+  deployment:
+    - Deploy
+    - BERT
+    - GPT-3
+    - GANs
+    - Docker
+    - Kubernetes
+    - Model Serving Tools
+    - Open Neural Network Exchange 
+    - ONNX
+  community:
+    - Community
+    - AI Conferences
+    - Open Source AI Projects
+    - Online AI Tutorials
+    - AI Courseware
+    - AI Fairness 360
+    - AIF360
+    - Ethics
+    - Ethical
+  prompting:
+    - prompt
+
+AIML:
+  AIML:
+    - Artificial Intelligence
+    - Machine Learning
+    - Neural Network
+    - Deep Learning
+    - Natural Language Processing
+  techniques:
+    - Cognitive Computing
+    - Supervised Learning
+  analytics:
+    - Feature Engineering
+    - Generative Model
+    - Large Language Model
+    - Text Analytics
+    - Data Mining
+    - Predictive Analytics
+    - Anomaly Detection
+    - Time Series Analysis
+    - Algorithm Optimization
+    - Model Evaluation Metrics
+
+Commercial:
+  commercial:
+    - openai
+    - google
+    - chatgpt
+    - meta
+    - facebook
+    - deepmind
+    - nvidia
+    - microsoft
+    - apple
+    - tesla
+    - Watson
+    - Alibaba Cloud
+    - Salesforce Einstein
+    - Intel AI
+    - SAP AI
+    - Oracle AI
+    - Huawei Cloud AI
+    - Adobe Sensei
+    - Sony AI
+    - Siemens AI
+    - Qualcomm AI
+    - Accenture AI
+    - SAS Institute
+    - Palantir Technologies
+    - Panasonic AI
+    - LG AI
+    - Tencent AI
+    - Zebra Medical Vision
+    - Hitachi AI
+    - NEC AI
+    - Uber AI
+    - Twitter Cortex
+    - Samsung AI Research
+    - DeepMind
+    - Waymo
+    - gemini
+    - PaLM 2
+    - SageMaker
