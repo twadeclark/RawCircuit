@@ -21,13 +21,28 @@ def main():
     qty_addl_comments = int(config.get('general_configurations', 'qty_addl_comments'))
     completed_articles_path = config.get('general_configurations', 'completed_articles_path')
 
-    news_aggregator_manager = NewsAggregatorManager()
+    news_aggregator_manager = NewsAggregatorManager("NewsApiOrgNews")
     article_to_process = news_aggregator_manager.get_next_article_to_process()
 
+
+
+
+    # need to move this to get_next_article_to_process
     if article_to_process is None or (datetime.now(timezone.utc) - article_to_process.added_timestamp).total_seconds() > article_freshness:
         print("Loading new articles into database...")
         news_aggregator_manager.fetch_new_articles_into_db()
-        article_to_process = news_aggregator_manager.get_next_article_to_process()
+        article_to_process = news_aggregator_manager.get_next_article_to_process() # deliberately not rechecking freshness. we will process older articles to keep the pipeline moving
+    news_aggregator_manager.update_scrape_time(article_to_process)
+    article_to_process.scraped_website_content, success = fetch_raw_html_from_url(article_to_process.url)
+    news_aggregator_manager.update_scraped_website_content(article_to_process)
+    if not success:
+        print("Error scraping article. Exiting...")
+        return
+    article_to_process.unstored_article_text = extract_text_from_html(article_to_process.scraped_website_content)
+
+
+
+
 
     if article_to_process is None:
         print("No article to process. Exiting...")
@@ -35,16 +50,7 @@ def main():
 
     print("     Article:", article_to_process.title)
 
-    news_aggregator_manager.update_scrape_time(article_to_process)
-    article_to_process.scraped_website_content, success = fetch_raw_html_from_url(article_to_process.url)
-    news_aggregator_manager.update_scraped_website_content(article_to_process)
-
-    if not success:
-        print("Error scraping article. Exiting...")
-        return
-
     news_aggregator_manager.update_process_time(article_to_process)
-    article_to_process.unstored_article_text = extract_text_from_html(article_to_process.scraped_website_content)
     search_terms = SearchTerms()
     article_to_process.unstored_category, article_to_process.unstored_tags = search_terms.categorize_article_all_tags(article_to_process.unstored_article_text)
 

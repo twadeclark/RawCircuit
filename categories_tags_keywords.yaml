@@ -36,6 +36,7 @@ Imaging:
     - midjourney
     - stable diffusion
     - diffusion model
+    - deepfake
   vision:
     - computer vision
     - Machine Vision
