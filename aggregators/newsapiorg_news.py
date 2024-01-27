@@ -1,24 +1,29 @@
 from datetime import datetime, timedelta
 import configparser
 import random
-import requests
+# import requests
 from newsapi import NewsApiClient
-from article import Article
-from database.db_manager import DBManager
-from .base_aggregator import NewsAggregator
+from aggregators.news_aggregator_base import NewsAggregator
+# from article import Article
+# from database.db_manager import DBManager
+# from .base_aggregator import NewsAggregator
 
 class NewsApiOrgNews(NewsAggregator):
     def __init__(self):
         config = configparser.ConfigParser()
         config.read('config.ini')
+        self.news_search_term = config.get('general_configurations', 'news_search_term')
         self.from_date = datetime.now() - timedelta(days=config.getint('NewsAPI', 'days_back'))
         self.sort_by = config.get('NewsAPI', 'sortBy')
         self.api_key = config.get('NewsAPI', 'apiKey')
         self.newsapi = NewsApiClient(api_key=self.api_key)
 
-    def get_articles(self):
-        query_term = "" #TODO: get this from the search terms
-        return random.choice(self.fetch_methods())(query_term)
+    def fetch_articles(self):
+        # https://newsapi.org/docs/endpoints/everything
+            # we can put multiple search terms in the same call
+            # (artifical and intelligence) or (machine and learning) or (ChatGPT) or (robot)
+            # this needs to be tested
+        return random.choice(self.fetch_methods())(self.news_search_term)
 
     def fetch_methods(self):
         return [
@@ -39,48 +44,48 @@ class NewsApiOrgNews(NewsAggregator):
                                                     language='en')
         return all_articles
 
-    def get_article(self, query_term) -> Article:
-        # we try to get the top headlines first, if that fails we try to get everything
-        try:
-            articles_data = self.fetch_top_headlines(query_term)
-        except requests.RequestException as e:
-            print(f"An error occurred (fetch_top_headlines): {e}")
+    # def get_ article(self, query_term) -> Article:
+    #     # we try to get the top headlines first, if that fails we try to get everything
+    #     try:
+    #         articles_data = self.fetch_top_headlines(query_term)
+    #     except requests.RequestException as e:
+    #         print(f"An error occurred (fetch_top_headlines): {e}")
 
-        articles_list = articles_data.get('articles', []) # presume articles_data contains the JSON response
+    #     articles_list = articles_data.get('articles', []) # presume articles_data contains the JSON response
 
-        if len(articles_list) == 0:
-            try:
-                articles_data = self.fetch_everything_headlines(query_term)
-                articles_list = articles_data.get('articles', [])
-            except requests.RequestException as e:
-                print(f"An error occurred (fetch_everything_headlines): {e}")
+    #     if len(articles_list) == 0:
+    #         try:
+    #             articles_data = self.fetch_everything_headlines(query_term)
+    #             articles_list = articles_data.get('articles', [])
+    #         except requests.RequestException as e:
+    #             print(f"An error occurred (fetch_everything_headlines): {e}")
 
-        db_manager = DBManager()
+    #     db_manager = DBManager()
 
-        for article in articles_list:
-            article_instance = Article(
-                "newsapi.org",
-                article.get('source', {}).get('id'),
-                article.get('source', {}).get('name'),
-                article.get('author'),
-                article.get('title'),
-                article.get('description'),
-                article.get('url'),
-                article.get('urlToImage'),
-                article.get('publishedAt'),
-                article.get('content'),
-                article.get('rec_order'),
-                article.get('added_timestamp'),
-                article.get('scraped_timestamp'),
-                article.get('scraped_website_content'),
-                article.get('processed_timestamp')
-            )
+    #     for article in articles_list:
+    #         article_instance = Article(
+    #             "newsapi.org",
+    #             article.get('source', {}).get('id'),
+    #             article.get('source', {}).get('name'),
+    #             article.get('author'),
+    #             article.get('title'),
+    #             article.get('description'),
+    #             article.get('url'),
+    #             article.get('urlToImage'),
+    #             article.get('publishedAt'),
+    #             article.get('content'),
+    #             article.get('rec_order'),
+    #             article.get('added_timestamp'),
+    #             article.get('scraped_timestamp'),
+    #             article.get('scraped_website_content'),
+    #             article.get('processed_timestamp')
+    #         )
 
-            if db_manager.is_article_processed(article_instance.url):
-                continue
+    #         if db_manager.is_article_processed(article_instance.url):
+    #             continue
 
-            db_manager.save_article(article_instance)
-            return article_instance
+    #         db_manager.save_article(article_instance)
+    #         return article_instance
 
-        # No articles were found
-        return None
+    #     # No articles were found
+    #     return None

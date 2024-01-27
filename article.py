@@ -1,5 +1,6 @@
 class Article:
-    def __init__(self, aggregator, source_id, source_name, author, title, description, url, url_to_image, published_at, content, rec_order, added_timestamp, scraped_timestamp, scraped_website_content, processed_timestamp):
+    def __init__(self, id, aggregator, source_id, source_name, author, title, description, url, url_to_image, published_at, content, rec_order, added_timestamp, scraped_timestamp, scraped_website_content, processed_timestamp):
+        self.id = id
         self.aggregator = aggregator
         self.source_id = source_id
         self.source_name = source_name
@@ -15,9 +16,14 @@ class Article:
         self.scraped_timestamp = scraped_timestamp
         self.scraped_website_content = scraped_website_content
         self.processed_timestamp = processed_timestamp
-        
+
+        self.unstored_tags = []
+        self.unstored_category = None
+        self.unstored_article_text = None
+
     def __str__(self):
-        return (self.aggregator or "N/A") + "\n" + \
+        return (self.id or "N/A") + "\n" + \
+            (self.aggregator or "N/A") + "\n" + \
             (self.source_id or "N/A") + "\n" + \
             (self.source_name or "N/A") + "\n" + \
             (self.author or "N/A") + "\n" + \

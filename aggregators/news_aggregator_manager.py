@@ -10,14 +10,11 @@ class NewsAggregatorManager:
         ]
         self.aggregator = random.choice(self.aggregators)
 
-    def get_article(self, query_term):
-        return self.aggregator.get_article(query_term)
-
     def get_random_article(self):
         return self.db_manager.get_random_article()
 
-    def load_new_articles_into_db(self):
-        articles = self.aggregator.get_articles()
+    def fetch_new_articles_into_db(self):
+        articles = self.aggregator.fetch_articles()
         rec_order = 0
         for article in articles:
             article.rec_order = rec_order

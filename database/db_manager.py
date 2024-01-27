@@ -27,7 +27,7 @@ class DBManager:
     def get_random_article(self):
         with self.conn.cursor() as cur:
             cur.execute("""
-                SELECT aggregator, source_id, source_name, author, title, description, url, url_to_image, published_at, content, rec_order, added_timestamp, scraped_timestamp, scraped_website_content, processed_timestamp
+                SELECT id, aggregator, source_id, source_name, author, title, description, url, url_to_image, published_at, content, rec_order, added_timestamp, scraped_timestamp, scraped_website_content, processed_timestamp
                 FROM articles
                 ORDER BY RANDOM() --published_at DESC
                 LIMIT 1
@@ -35,35 +35,29 @@ class DBManager:
             row = cur.fetchone()
             if row is None:
                 return None
-            return Article(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9],row[10],row[11],row[12],row[13],row[14])
+            return Article(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9],row[10],row[11],row[12],row[13],row[14],row[15])
 
     def get_next_article_to_process(self):
         with self.conn.cursor() as cur:
             cur.execute("""
-                SELECT a.aggregator, a.source_id, a.source_name, a.author, a.title, a.description, a.url, a.url_to_image, a.published_at, a.content, a.rec_order, a.added_timestamp, a.scraped_timestamp, a.scraped_website_content, a.processed_timestamp
+                SELECT a.id, a.aggregator, a.source_id, a.source_name, a.author, a.title, a.description, a.url, a.url_to_image, a.published_at, a.content, a.rec_order, a.added_timestamp, a.scraped_timestamp, a.scraped_website_content, a.processed_timestamp
                 FROM articles a
-                INNER JOIN (
-                    SELECT added_timestamp, MIN(rec_order) as min_rec_order
-                    FROM articles
-                    WHERE scraped_timestamp IS NULL AND processed_timestamp IS NULL
-                    GROUP BY added_timestamp
-                    ORDER BY added_timestamp DESC
-                    LIMIT 1
-                ) as latest_group ON a.added_timestamp = latest_group.added_timestamp AND a.rec_order = latest_group.min_rec_order
+                WHERE scraped_timestamp IS NULL AND processed_timestamp IS NULL AND scraped_website_content IS NULL
+                ORDER BY added_timestamp DESC, rec_order DESC
                 """)
             row = cur.fetchone()
             if row is None:
                 return None
-            return Article(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9],row[10],row[11],row[12],row[13],row[14])
+            return Article(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9],row[10],row[11],row[12],row[13],row[14],row[15])
 
     def update_scrape_time(self, article):
         with self.conn.cursor() as cur:
             cur.execute("""
                 UPDATE articles
                 SET scraped_timestamp = NOW()
-                WHERE url = %s
+                WHERE id = %s
                 """,
-                (article.url,))
+                (article.id,))
             self.conn.commit()
 
     def update_process_time(self, article):
@@ -71,9 +65,9 @@ class DBManager:
             cur.execute("""
                 UPDATE articles
                 SET processed_timestamp = NOW()
-                WHERE url = %s
+                WHERE id = %s
                 """,
-                (article.url,))
+                (article.id,))
             self.conn.commit()
 
     def update_scraped_website_content(self, article):
@@ -81,11 +75,7 @@ class DBManager:
             cur.execute("""
                 UPDATE articles
                 SET scraped_website_content = %s
-                WHERE url = %s
+                WHERE id = %s
                 """,
-                (article.scraped_website_content, article.url))
+                (article.scraped_website_content, article.id))
             self.conn.commit()
-
-            
-
-

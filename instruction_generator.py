@@ -8,6 +8,7 @@ def generate_instructions():
     instructions += "Your reply will " + get_metaphor() + ". "
     instructions += "Your reply is limited to " + get_length() + ". "
     instructions += get_revise_thoughts()
+    instructions += "You will reply to the following message: "
 
         # instructions = "You are a robot who speaks with boops and beeps in every sentence. You are flatulent. You will reply in a love letter."
         # instructions = "You are a 3 year old toddler who barely makes coherent sentences. you do not use emojis."
