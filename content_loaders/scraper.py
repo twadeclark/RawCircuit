@@ -1,3 +1,4 @@
+import re
 from selenium import webdriver
 import selenium
 from selenium.webdriver.common.by import By
@@ -25,8 +26,41 @@ def extract_text_from_html(html):
         script_or_style.decompose()
 
     text = soup.get_text()
-    lines = (line.strip() for line in text.splitlines())
-    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-    text = '\n'.join(chunk for chunk in chunks if chunk)
+    text = remove_extra_whitespace(text)
 
     return text
+
+def remove_extra_whitespace(text):
+    text = text.replace("\n", " ")
+    text = text.replace("\r", " ")
+    text = text.replace("\t", " ")
+    text = " ".join(text.split())
+    return text
+
+
+def extract_last_integer(s):
+    if not isinstance(s, str):
+        return None
+
+    matches = re.findall(r'\[\D*(\d+)\D*\]', s)
+
+    if not matches:
+        return None
+
+    try:
+        return int(matches[-1])
+    except ValueError:
+        return None
+
+def extract_article(raw_text_extracted, content_truncated, plus_chars):
+    try:
+        if not all(isinstance(i, str) for i in [raw_text_extracted, content_truncated]) or not isinstance(plus_chars, int):
+            return None
+
+        start = raw_text_extracted.index(content_truncated)
+        end = start + len(content_truncated) + plus_chars
+        full_article = raw_text_extracted[start:end]
+
+        return full_article
+    except Exception:
+        return None

@@ -1,13 +1,12 @@
 import configparser
 import os
 import random
-from datetime import datetime, timezone
+from datetime import datetime
 import time
 from aggregators.news_aggregator_manager import NewsAggregatorManager
 from comment_thread_manager import CommentThreadManager
-from content_loaders.scraper import fetch_raw_html_from_url, extract_text_from_html
 from contributors.ai_manager import AIManager
-from instruction_generator import generate_instructions
+from instruction_generator import generate_instructions_wrapping_input
 from output_formatter.markdown_formatter import format_to_markdown
 from vocabulary.news_search import SearchTerms
 
@@ -16,33 +15,12 @@ GET_NEW_ARTICLE = False # for testing purposes
 def main():
     config = configparser.ConfigParser()
     config.read('config.ini')
-    article_freshness = int(config.get('general_configurations', 'article_freshness'))
     continuity_multiplier = float(config.get('general_configurations', 'continuity_multiplier'))
     qty_addl_comments = int(config.get('general_configurations', 'qty_addl_comments'))
     completed_articles_path = config.get('general_configurations', 'completed_articles_path')
 
     news_aggregator_manager = NewsAggregatorManager("NewsApiOrgNews")
     article_to_process = news_aggregator_manager.get_next_article_to_process()
-
-
-
-
-    # need to move this to get_next_article_to_process
-    if article_to_process is None or (datetime.now(timezone.utc) - article_to_process.added_timestamp).total_seconds() > article_freshness:
-        print("Loading new articles into database...")
-        news_aggregator_manager.fetch_new_articles_into_db()
-        article_to_process = news_aggregator_manager.get_next_article_to_process() # deliberately not rechecking freshness. we will process older articles to keep the pipeline moving
-    news_aggregator_manager.update_scrape_time(article_to_process)
-    article_to_process.scraped_website_content, success = fetch_raw_html_from_url(article_to_process.url)
-    news_aggregator_manager.update_scraped_website_content(article_to_process)
-    if not success:
-        print("Error scraping article. Exiting...")
-        return
-    article_to_process.unstored_article_text = extract_text_from_html(article_to_process.scraped_website_content)
-
-
-
-
 
     if article_to_process is None:
         print("No article to process. Exiting...")
@@ -52,7 +30,7 @@ def main():
 
     news_aggregator_manager.update_process_time(article_to_process)
     search_terms = SearchTerms()
-    article_to_process.unstored_category, article_to_process.unstored_tags = search_terms.categorize_article_all_tags(article_to_process.unstored_article_text)
+    article_to_process.unstored_category, article_to_process.unstored_tags = search_terms.categorize_article_all_tags(article_to_process.scraped_website_content)
 
     print("url      :", article_to_process.url)
     print("category :", article_to_process.unstored_category)
@@ -60,7 +38,7 @@ def main():
 
     ai_manager = AIManager()
     ai_manager.choose_random_provider()
-    summary = ai_manager.get_summary(article_to_process.unstored_article_text)
+    summary = ai_manager.get_summary(article_to_process.scraped_website_content)
     summary = summary.strip()
 
     if summary is None or len(summary) == 0:
@@ -73,9 +51,9 @@ def main():
     comment_thread_manager.add_comment(0, summary, ai_manager.get_model_polite_name(), datetime.now() )
 
     # first comment belongs to summary ai
-    instructions = generate_instructions()
+    instructions = generate_instructions_wrapping_input(article_to_process.description, summary)
     print("     1st Comment Instructions: ", instructions)
-    comment = ai_manager.generate_comment(summary, instructions)
+    comment = ai_manager.generate_comment_preformatted_message_streaming(instructions)
     comment = comment.strip()
 
     if comment is None or len(comment) == 0:
@@ -88,21 +66,21 @@ def main():
 
     for _ in range(2, 2 + qty_addl_comments):
         ai_manager.choose_random_provider()
-        instructions = generate_instructions()
-        print("     Instructions: ", instructions)
 
         parent_index = random.randint(0, int(comment_thread_manager.get_comments_length() * continuity_multiplier))
         parent_index = min(parent_index, comment_thread_manager.get_comments_length() - 1)
         parent_comment = comment_thread_manager.get_comment(parent_index)["comment"]
 
-        comment = ai_manager.generate_comment(parent_comment, instructions)
+        instructions = generate_instructions_wrapping_input(article_to_process.description, parent_comment)
+        print("     Instructions: ", instructions)
+        comment = ai_manager.generate_comment_preformatted_message_streaming(instructions)
         comment = comment.strip()
 
         if comment is None or len(comment) == 0:
             print("No comment generated. Stopping...")
             return
 
-        print("     AI Comment: ", comment)
+        print()
         comment_thread_manager.add_comment(parent_index, comment, ai_manager.get_model_polite_name(), datetime.now() )
 
     formatted_post = format_to_markdown(article_to_process, comment_thread_manager)
@@ -115,8 +93,6 @@ def main():
     with open(file_path, "w", encoding="utf-8") as file:
         file.write(formatted_post)
     print("     Formatted post saved to:", file_path)
-
-    #TODO: store the filename in the database
 
 if __name__ == "__main__":
     main()

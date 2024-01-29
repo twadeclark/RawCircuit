@@ -37,13 +37,26 @@ class DBManager:
                 return None
             return Article(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9],row[10],row[11],row[12],row[13],row[14],row[15])
 
-    def get_next_article_to_process(self):
+    def get_next_article_to_scrape(self):
         with self.conn.cursor() as cur:
             cur.execute("""
                 SELECT a.id, a.aggregator, a.source_id, a.source_name, a.author, a.title, a.description, a.url, a.url_to_image, a.published_at, a.content, a.rec_order, a.added_timestamp, a.scraped_timestamp, a.scraped_website_content, a.processed_timestamp
                 FROM articles a
                 WHERE scraped_timestamp IS NULL AND processed_timestamp IS NULL AND scraped_website_content IS NULL
-                ORDER BY added_timestamp DESC, rec_order DESC
+                ORDER BY added_timestamp DESC, rec_order
+                """)
+            row = cur.fetchone()
+            if row is None:
+                return None
+            return Article(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9],row[10],row[11],row[12],row[13],row[14],row[15])
+
+    def get_next_article_to_process(self):
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                SELECT a.id, a.aggregator, a.source_id, a.source_name, a.author, a.title, a.description, a.url, a.url_to_image, a.published_at, a.content, a.rec_order, a.added_timestamp, a.scraped_timestamp, a.scraped_website_content, a.processed_timestamp
+                FROM articles a
+                WHERE processed_timestamp IS NULL
+                ORDER BY added_timestamp DESC, rec_order
                 """)
             row = cur.fetchone()
             if row is None:

@@ -34,3 +34,9 @@ class AIManager:
 
     def get_summary(self, article_text):
         return self.interface.generate_summary(article_text)
+
+    def generate_comment_preformatted_message(self, instructions):
+        return self.interface.generate_comment_preformatted_message(instructions)
+
+    def generate_comment_preformatted_message_streaming(self, instructions):
+        return self.interface.generate_comment_preformatted_message_streaming(instructions)

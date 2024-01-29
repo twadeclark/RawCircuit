@@ -1,5 +1,23 @@
 import random
 
+from content_loaders.scraper import remove_extra_whitespace
+
+def generate_instructions_wrapping_input(topic, comment):
+    instructions = ""
+    instructions += ""
+
+    instructions += "You are a very " + get_descriptor() + " converstionalist. "
+    instructions += "The topic is '" + remove_extra_whitespace(topic) + "'. Keep that topic in mind when writing your Response. "
+    instructions += "You will read the Instruction below and summarize it in your own words. "
+    instructions += "Your Response to the Instruction will be " + get_length() + ", and it will " + get_metaphor() + ". "
+    instructions += "Take some time to organize your thoughts and revise your Response. "
+    instructions += "\n"
+    instructions += "### Instruction:\n"
+    instructions += remove_extra_whitespace(comment) + "\n"
+    instructions += "### Response:\n"
+
+    return instructions
+
 def generate_instructions():
     instructions = ""
 
@@ -23,6 +41,49 @@ def get_revise_thoughts():
         "You ramble off topic. ",
         ]
     return random.choice(revise_thoughts_list)
+
+def get_metaphor():
+    metaphor_list = [
+        "use subtle metaphor to make a point",
+        "use pompous words and pretentious phrases",
+        "use slang",
+        "use concise, factual statements",
+        "express empathy and understanding",
+        "incorporate humor and witty remarks",
+        "offer constructive criticism and thoughtful advice",
+        "use passionate and emotive language",
+        "respond with a question",
+        "use a metaphor to make a point",
+        "respond as if speaking to a child",
+        "respond as if speaking to a highly educated adult",
+        "include pop references",
+        "include references to historical events",
+        "include references to fictional events",
+        "use a terrible metaphor to make a point",
+        ]
+    return random.choice(metaphor_list)
+
+def get_length():
+    length_list = [
+        "one sentence",
+        "one short sentence",
+        "one long sentence",
+        "a few sentences",
+        "a few short sentences",
+        "a few long sentences",
+        "one paragraph",
+        "one short paragraph",
+        "one long paragraph",
+        "a short witty poem",
+        "a text message",
+        "a fortune cookie message",
+        "an inspirational quote",
+        "an incomplete phrase",
+        "a few phrases",
+        "a few words",
+        "a love letter",
+    ]
+    return random.choice(length_list)
 
 def get_descriptor():
     descriptor_list = [
@@ -194,46 +255,3 @@ def get_profession():
         "chemist",
     ]
     return random.choice(get_profession_list)
-
-def get_metaphor():
-    metaphor_list = [
-        "use subtle metaphor to make your point",
-        "use pompous words and pretentious phrases",
-        "use slang",
-        "use concise, factual statements",
-        "express empathy and understanding",
-        "incorporate humor and witty remarks",
-        "offer constructive criticism and thoughtful advice",
-        "use passionate and emotive language",
-        "respond with a question",
-        "use a metaphor to make your point",
-        "respond as if you were speaking to a child",
-        "respond as if you were speaking to a highly educated adult",
-        "include pop references",
-        "include references to historical events",
-        "include references to fictional events",
-        "use a terrible metaphor to make your point",
-        ]
-    return random.choice(metaphor_list)
-
-def get_length():
-    length_list = [
-        "one sentence",
-        # "one short sentence",
-        # "one long sentence",
-        # "a few sentences",
-        # "a few short sentences",
-        # "a few long sentences",
-        # "one paragraph",
-        # "one short paragraph",
-        # "one long paragraph",
-        # "a short witty poem",
-        # "a text message",
-        # "a fortune cookie message",
-        # "an inspirational quote",
-        # "an incomplete phrase",
-        # "a few phrases",
-        # "a few words",
-        # "a love letter",
-    ]
-    return random.choice(length_list)
