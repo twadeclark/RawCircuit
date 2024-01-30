@@ -35,8 +35,13 @@ def remove_extra_whitespace(text):
     text = text.replace("\r", " ")
     text = text.replace("\t", " ")
     text = " ".join(text.split())
+    text = text.strip()
     return text
 
+def full_sanitize_text(text):
+    text = re.sub(r'#+(?![\s])', '', text)
+    text = remove_extra_whitespace(text)
+    return text
 
 def extract_last_integer(s):
     if not isinstance(s, str):

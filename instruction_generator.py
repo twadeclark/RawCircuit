@@ -6,6 +6,7 @@ def generate_instructions_wrapping_input(topic, comment):
     instructions = ""
     instructions += ""
 
+    # this works well for small models
     instructions += "You are a very " + get_descriptor() + " converstionalist. "
     instructions += "The topic is '" + remove_extra_whitespace(topic) + "'. Keep that topic in mind when writing your Response. "
     instructions += "You will read the Instruction below and summarize it in your own words. "
@@ -15,6 +16,12 @@ def generate_instructions_wrapping_input(topic, comment):
     instructions += "### Instruction:\n"
     instructions += remove_extra_whitespace(comment) + "\n"
     instructions += "### Response:\n"
+
+    return instructions
+
+def generate_brief_instructions():
+    instructions = ""
+    instructions += "You are a very " + get_descriptor() + " converstionalist, and your reply will " + get_metaphor()
 
     return instructions
 
@@ -38,12 +45,12 @@ def get_revise_thoughts():
     revise_thoughts_list = [
         "Take some time to organize your thoughts and revise your response. ",
         "You will summarize the message below into your own words and thoughts, then reply to that summary. ",
-        "You ramble off topic. ",
         ]
     return random.choice(revise_thoughts_list)
 
 def get_metaphor():
     metaphor_list = [
+        "ramble off topic",
         "use subtle metaphor to make a point",
         "use pompous words and pretentious phrases",
         "use slang",

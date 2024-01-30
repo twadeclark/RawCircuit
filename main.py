@@ -5,8 +5,9 @@ from datetime import datetime
 import time
 from aggregators.news_aggregator_manager import NewsAggregatorManager
 from comment_thread_manager import CommentThreadManager
+from content_loaders.scraper import full_sanitize_text
 from contributors.ai_manager import AIManager
-from instruction_generator import generate_instructions_wrapping_input
+from instruction_generator import generate_brief_instructions, generate_instructions_wrapping_input
 from output_formatter.markdown_formatter import format_to_markdown
 from vocabulary.news_search import SearchTerms
 
@@ -37,7 +38,9 @@ def main():
     print("tags     :", article_to_process.unstored_tags)
 
     ai_manager = AIManager()
-    ai_manager.choose_random_provider()
+    # ai_manager.choose_random_ai_unit()
+    ai_manager.choose_specific_ai_unit('bart-large-cnn')
+
     summary = ai_manager.get_summary(article_to_process.scraped_website_content)
     summary = summary.strip()
 
@@ -45,41 +48,51 @@ def main():
         print("No summary generated. Exiting...")
         return
 
-    print("     AI Summary: ", summary, "\n")
+    print("     AI Summary: ", summary)
 
     comment_thread_manager = CommentThreadManager(article_to_process)
     comment_thread_manager.add_comment(0, summary, ai_manager.get_model_polite_name(), datetime.now() )
 
-    # first comment belongs to summary ai
-    instructions = generate_instructions_wrapping_input(article_to_process.description, summary)
-    print("     1st Comment Instructions: ", instructions)
-    comment = ai_manager.generate_comment_preformatted_message_streaming(instructions)
-    comment = comment.strip()
+    # #  works great for very small models
+    # instructions = generate_instructions_wrapping_input(article_to_process.description, summary)
+    # print("     1st Comment Instructions: ", instructions)
+    # ai_manager.choose_random_ai_unit()
+    # comment = ai_manager.generate_comment_preformatted_message_streaming(instructions)
 
-    if comment is None or len(comment) == 0:
-        print("No 1st Comment generated. Exiting...")
-        return
+    # ai_manager.choose_random_ai_unit()
+    # ai_manager.choose_specific_ai_unit('mistralai/Mistral-7B-v0.1')
 
-    print("     1st Comment:",comment, "\n")
+    # instructions = generate_brief_instructions()
+    # print("     1st Comment Instructions: ", instructions)
 
-    comment_thread_manager.add_comment(0, comment, ai_manager.get_model_polite_name(), datetime.now() )
+    # comment = ai_manager.generate_new_comment_from_summary_and_previous_comment(full_sanitize_text(instructions), full_sanitize_text(summary), full_sanitize_text(summary))
 
-    for _ in range(2, 2 + qty_addl_comments):
-        ai_manager.choose_random_provider()
+    # comment = comment.strip()
+    # if comment is None or len(comment) == 0:
+    #     print("No 1st Comment generated. Exiting...")
+    #     return
+    # print("     1st Comment:",comment, "\n")
+    # comment_thread_manager.add_comment(0, comment, ai_manager.get_model_polite_name(), datetime.now() )
+
+    for _ in range(1, qty_addl_comments):
+        # ai_manager.choose_random_ai_unit()
+        ai_manager.choose_specific_ai_unit('mistralai/Mistral-7B-v0.1')
 
         parent_index = random.randint(0, int(comment_thread_manager.get_comments_length() * continuity_multiplier))
         parent_index = min(parent_index, comment_thread_manager.get_comments_length() - 1)
         parent_comment = comment_thread_manager.get_comment(parent_index)["comment"]
 
-        instructions = generate_instructions_wrapping_input(article_to_process.description, parent_comment)
-        print("     Instructions: ", instructions)
-        comment = ai_manager.generate_comment_preformatted_message_streaming(instructions)
-        comment = comment.strip()
+        # instructions = generate_instructions_wrapping_input(full_sanitize_text(article_to_process.description), full_sanitize_text(parent_comment))
+        instructions = generate_brief_instructions()
+        # print("     Instructions: ", instructions)
+    
+        # comment = ai_manager.generate_comment_preformatted_message_streaming(instructions)
+        comment = ai_manager.generate_new_comment_from_summary_and_previous_comment(full_sanitize_text(instructions), full_sanitize_text(summary), full_sanitize_text(parent_comment))
 
+        comment = full_sanitize_text(comment)
         if comment is None or len(comment) == 0:
-            print("No comment generated. Stopping...")
-            return
-
+            print("No comment generated. Skipping...")
+            continue
         print()
         comment_thread_manager.add_comment(parent_index, comment, ai_manager.get_model_polite_name(), datetime.now() )
 

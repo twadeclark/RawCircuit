@@ -1,11 +1,13 @@
 import json
 import random
-from contributors.local_openai_interface import OpenAIInterface
+from contributors.hugging_face_interface import HuggingFaceInterface
+from contributors.local_openai_interface import LocalOpenAIInterface
 
 class AIManager:
     def __init__(self):
         self.interface_list = {
-            'OpenAIInterface': OpenAIInterface()
+            'LocalOpenAIInterface': LocalOpenAIInterface(),
+            'HuggingFaceInterface': HuggingFaceInterface()
         }
 
         with open('models.json', 'r', encoding='utf-8') as file:
@@ -13,12 +15,17 @@ class AIManager:
 
         self.model = None
         self.interface = None
-        self.choose_random_provider()
 
-    def choose_random_provider(self):
+    def choose_random_ai_unit(self):
         model_names = list(self.models_json.keys())
-        random_model_name = random.choice(model_names)
-        self.model = self.models_json[random_model_name]
+        model_name = random.choice(model_names)
+        self._select_and_prepare_model(model_name)
+
+    def choose_specific_ai_unit(self, model_name):
+        self._select_and_prepare_model(model_name)
+
+    def _select_and_prepare_model(self, model_name):
+        self.model = self.models_json[model_name]
         interface_name = self.model['interface']
         self.interface = self.interface_list.get(interface_name)
         self.interface.prepare_model(self.model)
@@ -40,3 +47,7 @@ class AIManager:
 
     def generate_comment_preformatted_message_streaming(self, instructions):
         return self.interface.generate_comment_preformatted_message_streaming(instructions)
+
+    def generate_new_comment_from_summary_and_previous_comment(self, instructions, summary_text, previous_comment):
+        return self.interface.generate_new_comment_from_summary_and_previous_comment(instructions, summary_text, previous_comment)
+
