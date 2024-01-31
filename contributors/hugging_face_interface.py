@@ -62,7 +62,7 @@ class HuggingFaceInterface(AbstractAIUnit):
 
         summary = data[0]["summary_text"]
 
-        print(summary)
+        # print(summary)
 
         return summary
 
@@ -81,7 +81,10 @@ class HuggingFaceInterface(AbstractAIUnit):
         # inputs = "You will generate a witty reply to this comment:\n\n " + previous_comment + "\n\n"
 
         # instructions = "Your reply will " + get_metaphor() + ".\n"
-        inputs = "### Comment\n\n" + previous_comment + "\n\n### Counterpoint\n\n"
+
+
+        inputs = "### Comment\n\n" + previous_comment + "\n\n### Counterpoint\n\n" # works on some models
+        # inputs = "You will disagree with the following statement.\n" + previous_comment + "\n"
 
 
 
@@ -93,19 +96,28 @@ class HuggingFaceInterface(AbstractAIUnit):
             {
                 "inputs": inputs,
                 "parameters": {
-                    "repetition_penalty": 2.0,
-                    "do_sample": False,
-                    "return_full_text": False
+                    "temperature": 1.1,
+                    "do_sample": False
+                    # "return_full_text": False
                 },
                 "options": {"wait_for_model": True}
             }
         )
 
+        value = next(iter(data[0].values())) # this should handle the case where the key is anything
+        if value == inputs:
+            print("    Stuck in a loop.")
+            #TODO: handle this better
+        print(value)
 
         generated_text = data[0]["generated_text"]
 
         print("    inputs          : ", inputs)
         print("    generated_text  : ", generated_text)
+
+        # delete the first line only if it starts with ###
+        if generated_text.startswith("###"):
+            generated_text = generated_text.split("\n", 1)[1]
 
         # truncate generated_text from the first ###
         generated_text = generated_text.split("###")[0]

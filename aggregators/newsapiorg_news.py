@@ -30,14 +30,14 @@ class NewsApiOrgNews(NewsAggregator):
             self.fetch_everything_headlines
         ]
 
-    def fetch_top_headlines(self, query_term):
-        top_headlines = self.newsapi.get_top_headlines( q=f"{query_term}",
-                                                        category='technology',
+    def fetch_top_headlines(self, query_term): # query_term does not seem to work for headlines
+        top_headlines = self.newsapi.get_top_headlines( category='technology',
                                                         language='en')
         return top_headlines
 
     def fetch_everything_headlines(self, query_term):
-        all_articles = self.newsapi.get_everything( q=f"{query_term}",
+
+        all_articles = self.newsapi.get_everything( q=query_term,
                                                     from_param=self.from_date,
                                                     sort_by='relevancy',
                                                     language='en')

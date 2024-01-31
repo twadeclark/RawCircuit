@@ -1,7 +1,9 @@
 import configparser
+import datetime
 import random
 # from datetime import datetime, timezone
 from aggregators.rss_feeder import RSSFeeder
+from article import Article
 from database.db_manager import DBManager
 from content_loaders.scraper import extract_article, extract_last_integer, fetch_raw_html_from_url, extract_text_from_html
 from .newsapiorg_news import NewsApiOrgNews
@@ -33,7 +35,7 @@ class NewsAggregatorManager: # we want to be able to choose an aggregator at ran
                 #TODO: rotate through aggregators
                 num_articles_returned = self.fetch_new_articles_into_db()
                 if num_articles_returned == 0:
-                    print("No articles returned from aggregator. Exiting...")
+                    print("No new articles returned from aggregator. Exiting...")
                     return None
                 else:
                     continue
@@ -93,7 +95,34 @@ class NewsAggregatorManager: # we want to be able to choose an aggregator at ran
     def fetch_new_articles_into_db(self):
         articles = self.aggregator.fetch_articles()
         rec_order = 0
-        for article in articles:
+        for article in articles["articles"]:
+
+            # check if article already exists in database
+            # if so, skip it
+            if self.db_manager.article_exists(article["url"]):
+                continue
+
+            # convert article to Article object, set any missing fields to None
+            article = Article(
+                None,
+                self.aggregator.get_name(),
+                article["source"]["id"],
+                article["source"]["name"],
+                article["author"],
+                article["title"],
+                article["description"],
+                article["url"],
+                article["urlToImage"],
+                article["publishedAt"],
+                article["content"],
+                None,
+                None,
+                None,
+                None,
+                None
+            )
+
+            article.added_timestamp = datetime.datetime.now()
             article.rec_order = rec_order
             self.db_manager.save_article(article)
             rec_order += 1

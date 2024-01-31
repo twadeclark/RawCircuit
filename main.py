@@ -39,7 +39,7 @@ def main():
 
     ai_manager = AIManager()
     # ai_manager.choose_random_ai_unit()
-    ai_manager.choose_specific_ai_unit('bart-large-cnn')
+    ai_manager.choose_specific_ai_unit('Falconsai/text_summarization')
 
     summary = ai_manager.get_summary(article_to_process.scraped_website_content)
     summary = summary.strip()
@@ -76,7 +76,8 @@ def main():
 
     for _ in range(1, qty_addl_comments):
         # ai_manager.choose_random_ai_unit()
-        ai_manager.choose_specific_ai_unit('mistralai/Mistral-7B-v0.1')
+        # ai_manager.choose_specific_ai_unit('mistralai/Mistral-7B-v0.1')
+        ai_manager.choose_specific_ai_unit('kanishka/smolm-autoreg-bpe-counterfactual-babylm-pipps_and_keys_to_it_all_removal-1e-3')
 
         parent_index = random.randint(0, int(comment_thread_manager.get_comments_length() * continuity_multiplier))
         parent_index = min(parent_index, comment_thread_manager.get_comments_length() - 1)
@@ -106,6 +107,17 @@ def main():
     with open(file_path, "w", encoding="utf-8") as file:
         file.write(formatted_post)
     print("     Formatted post saved to:", file_path)
+
+    # execute this shell command: C:\Users\twade\git\pelican>pelican C:\Users\twade\projects\yoursite\content -s C:\Users\twade\projects\yoursite\pelicanconf.py
+    local_source_path = config.get('publishing_details', 'local_source_path')
+    local_pelicanconf = config.get('publishing_details', 'local_pelicanconf')
+    os_result = os.system("pelican " + local_source_path + " -s " + local_pelicanconf)
+    if os_result != 0:
+        print("     Pelican failed to execute. Exiting...")
+        return
+    print("     Pelican executed")
+
+
 
 if __name__ == "__main__":
     main()

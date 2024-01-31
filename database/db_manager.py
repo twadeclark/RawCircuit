@@ -14,12 +14,23 @@ class DBManager:
 
     def connect_to_db(self):
         return psycopg2.connect(**self.config)
+    
+    def article_exists(self, url):
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                SELECT EXISTS(SELECT 1 FROM articles WHERE url = %s)
+                """,
+                (url,))
+            row = cur.fetchone()
+            if row is None:
+                return False
+            return row[0]
 
     def save_article(self, article_data):
         with self.conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO articles (aggregator, source_id, source_name, author, title, description, url, url_to_image, published_at, content, rec_order, added_timestamp, scraped_timestamp, processed_timestamp)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (article_data.aggregator, article_data.source_id, article_data.source_name, article_data.author, article_data.title, article_data.description, article_data.url, article_data.url_to_image, article_data.published_at, article_data.content, article_data.rec_order, article_data.added_timestamp, article_data.scraped_timestamp, article_data.processed_timestamp))
             self.conn.commit()
