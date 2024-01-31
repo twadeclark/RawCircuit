@@ -6,6 +6,13 @@ class HuggingFaceInterface(AbstractAIUnit):
     def __init__(self):
         self.model = None
 
+    def prepare_model(self, model):
+        self.model = model
+
+
+
+
+
     def generate_comment_preformatted_message_streaming(self, message_text):
         API_TOKEN = self.model["api_key"]
         API_URL = self.model["api_url"]
@@ -38,9 +45,6 @@ class HuggingFaceInterface(AbstractAIUnit):
 
         return generated_text
 
-    def prepare_model(self, model):
-        self.model = model
-
     def generate_summary(self, article_text):
         API_TOKEN = self.model["api_key"]
         API_URL = self.model["api_url"]
@@ -62,9 +66,7 @@ class HuggingFaceInterface(AbstractAIUnit):
 
         summary = data[0]["summary_text"]
 
-        # print(summary)
-
-        return summary
+        return summary.strip()
 
 
     def generate_new_comment_from_summary_and_previous_comment(self, instructions, summary_text, previous_comment):

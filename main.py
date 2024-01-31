@@ -11,16 +11,19 @@ from instruction_generator import generate_brief_instructions, generate_instruct
 from output_formatter.markdown_formatter import format_to_markdown
 from vocabulary.news_search import SearchTerms
 
-GET_NEW_ARTICLE = False # for testing purposes
 
 def main():
     config = configparser.ConfigParser()
+    search_terms = SearchTerms()
+    ai_manager = AIManager()
+    news_aggregator_manager = NewsAggregatorManager("NewsApiOrgNews")
+
     config.read('config.ini')
     continuity_multiplier = float(config.get('general_configurations', 'continuity_multiplier'))
     qty_addl_comments = int(config.get('general_configurations', 'qty_addl_comments'))
     completed_articles_path = config.get('general_configurations', 'completed_articles_path')
 
-    news_aggregator_manager = NewsAggregatorManager("NewsApiOrgNews")
+
     article_to_process = news_aggregator_manager.get_next_article_to_process()
 
     if article_to_process is None:
@@ -30,53 +33,27 @@ def main():
     print("     Article:", article_to_process.title)
 
     news_aggregator_manager.update_process_time(article_to_process)
-    search_terms = SearchTerms()
     article_to_process.unstored_category, article_to_process.unstored_tags = search_terms.categorize_article_all_tags(article_to_process.scraped_website_content)
 
     print("url      :", article_to_process.url)
     print("category :", article_to_process.unstored_category)
     print("tags     :", article_to_process.unstored_tags)
 
-    ai_manager = AIManager()
     # ai_manager.choose_random_ai_unit()
     ai_manager.choose_specific_ai_unit('Falconsai/text_summarization')
 
     summary = ai_manager.get_summary(article_to_process.scraped_website_content)
-    summary = summary.strip()
 
     if summary is None or len(summary) == 0:
         print("No summary generated. Exiting...")
         return
-
     print("     AI Summary: ", summary)
 
     comment_thread_manager = CommentThreadManager(article_to_process)
     comment_thread_manager.add_comment(0, summary, ai_manager.get_model_polite_name(), datetime.now() )
 
-    # #  works great for very small models
-    # instructions = generate_instructions_wrapping_input(article_to_process.description, summary)
-    # print("     1st Comment Instructions: ", instructions)
-    # ai_manager.choose_random_ai_unit()
-    # comment = ai_manager.generate_comment_preformatted_message_streaming(instructions)
-
-    # ai_manager.choose_random_ai_unit()
-    # ai_manager.choose_specific_ai_unit('mistralai/Mistral-7B-v0.1')
-
-    # instructions = generate_brief_instructions()
-    # print("     1st Comment Instructions: ", instructions)
-
-    # comment = ai_manager.generate_new_comment_from_summary_and_previous_comment(full_sanitize_text(instructions), full_sanitize_text(summary), full_sanitize_text(summary))
-
-    # comment = comment.strip()
-    # if comment is None or len(comment) == 0:
-    #     print("No 1st Comment generated. Exiting...")
-    #     return
-    # print("     1st Comment:",comment, "\n")
-    # comment_thread_manager.add_comment(0, comment, ai_manager.get_model_polite_name(), datetime.now() )
-
     for _ in range(1, qty_addl_comments):
         # ai_manager.choose_random_ai_unit()
-        # ai_manager.choose_specific_ai_unit('mistralai/Mistral-7B-v0.1')
         ai_manager.choose_specific_ai_unit('kanishka/smolm-autoreg-bpe-counterfactual-babylm-pipps_and_keys_to_it_all_removal-1e-3')
 
         parent_index = random.randint(0, int(comment_thread_manager.get_comments_length() * continuity_multiplier))
@@ -86,7 +63,7 @@ def main():
         # instructions = generate_instructions_wrapping_input(full_sanitize_text(article_to_process.description), full_sanitize_text(parent_comment))
         instructions = generate_brief_instructions()
         # print("     Instructions: ", instructions)
-    
+
         # comment = ai_manager.generate_comment_preformatted_message_streaming(instructions)
         comment = ai_manager.generate_new_comment_from_summary_and_previous_comment(full_sanitize_text(instructions), full_sanitize_text(summary), full_sanitize_text(parent_comment))
 

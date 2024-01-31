@@ -33,6 +33,9 @@ class AIManager:
     def get_model(self):
         return self.model
 
+    def get_model_name(self):
+        return self.model['model_name']
+
     def get_model_polite_name(self):
         return self.model['polite_name']
 
