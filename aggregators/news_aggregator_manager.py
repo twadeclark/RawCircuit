@@ -5,7 +5,7 @@ import random
 from aggregators.rss_feeder import RSSFeeder
 from article import Article
 from database.db_manager import DBManager
-from content_loaders.scraper import extract_article, extract_last_integer, fetch_raw_html_from_url, extract_text_from_html
+from content_loaders.scraper import extract_article, extract_last_integer, fetch_raw_html_from_url, extract_pure_text_from_raw_html
 from .newsapiorg_news import NewsApiOrgNews
 
 class NewsAggregatorManager: # we want to be able to choose an aggregator at random, or send in the name of the aggregator we want to use
@@ -24,67 +24,64 @@ class NewsAggregatorManager: # we want to be able to choose an aggregator at ran
         else:
             self.aggregator = random.choice(self.aggregators)
 
-    def get_next_article_to_process(self):
-        article_to_process = None
-        is_full_text_set = False
-        while article_to_process is None:
-            article_to_process = self.db_manager.get_next_article_to_process()
+    # def get_next_article_to_process(self):
+    #     article_to_process = None
+    #     is_full_text_set = False
+    #     while article_to_process is None:
+    #         article_to_process = self.db_manager.get_next_article_to_process()
 
-            if article_to_process is None: # or (datetime.now(timezone.utc) - article_to_process.added_timestamp).total_seconds() > self.article_freshness:
-                print("Loading new articles into database...")
-                #TODO: rotate through aggregators
-                num_articles_returned = self.fetch_new_articles_into_db()
-                if num_articles_returned == 0:
-                    print("No new articles returned from aggregator. Exiting...")
-                    return None
-                else:
-                    continue
+    #         if article_to_process is None: # or (datetime.now(timezone.utc) - article_to_process.added_timestamp).total_seconds() > self.article_freshness:
+    #             print("Loading new articles into database...")
+    #             #TODO: rotate through aggregators
+    #             num_articles_returned = self.fetch_new_articles_into_db()
+    #             if num_articles_returned == 0:
+    #                 print("No new articles returned from aggregator. Exiting...")
+    #                 return None
+    #             else:
+    #                 continue
 
-            if article_to_process.scraped_timestamp is None:
-                self.update_scrape_time(article_to_process)
-                print(article_to_process.url)
-                raw_html, success = fetch_raw_html_from_url(article_to_process.url)
-                article_to_process.scraped_website_content = raw_html
-                if not success:
-                    print("Error scraping article. Continuing to next article...")
-                    self.update_scraped_website_content(article_to_process)
-                    self.update_process_time(article_to_process)
-                    article_to_process = None
-                    continue
+    #         if article_to_process.scraped_timestamp is None:
+    #             self.update_scrape_time(article_to_process)
+    #             print(article_to_process.url)
+    #             raw_html, success = fetch_raw_html_from_url(article_to_process.url)
+    #             article_to_process.scraped_website_content = raw_html
+    #             if not success:
+    #                 print("Error scraping article. Continuing to next article...")
+    #                 self.update_scraped_website_content(article_to_process)
+    #                 self.update_process_time(article_to_process)
+    #                 article_to_process = None
+    #                 continue
 
-                raw_text_extracted = extract_text_from_html(raw_html)
-                if raw_text_extracted is None or len(raw_text_extracted) == 0:
-                    self.update_scraped_website_content(article_to_process)
-                    self.update_process_time(article_to_process)
-                    article_to_process = None
-                    continue
+    #             raw_text_extracted = extract_pure_text_from_raw_html(raw_html)
+    #             if raw_text_extracted is None or len(raw_text_extracted) == 0:
+    #                 self.update_scraped_website_content(article_to_process)
+    #                 self.update_process_time(article_to_process)
+    #                 article_to_process = None
+    #                 continue
 
-                article_to_process.scraped_website_content = raw_text_extracted
-                plus_chars = extract_last_integer(article_to_process.content)
-                if plus_chars is not None:
-                    content_truncated = article_to_process.content.split('…', 1)[0]
-                    if content_truncated is not None and len(content_truncated) > 0:
-                        full_article = extract_article(raw_html, content_truncated, plus_chars)
-                        if full_article is not None and len(full_article) > 0:
-                            article_to_process.scraped_website_content = full_article
-                            is_full_text_set = True
-                        else:
-                            full_article = extract_article(extract_text_from_html(raw_html), extract_text_from_html(content_truncated), plus_chars)
-                            if full_article is not None and len(full_article) > 0:
-                                article_to_process.scraped_website_content = full_article
-                                is_full_text_set = True
+    #             is_full_text_set = self.get_article_text_based_on_content_hint(article_to_process, raw_html, raw_text_extracted)
 
-                article_to_process.scraped_website_content = extract_text_from_html(article_to_process.scraped_website_content)
-                self.update_scraped_website_content(article_to_process)
+    #         if article_to_process.scraped_website_content is None or len(article_to_process.scraped_website_content) < 220: #TODO: make this a config setting
+    #             self.update_process_time(article_to_process)
+    #             article_to_process = None
 
-            if article_to_process.scraped_website_content is None or len(article_to_process.scraped_website_content) < 220: #TODO: make this a config setting
-                self.update_process_time(article_to_process)
-                article_to_process = None
+    #     if is_full_text_set:
+    #         print("Full text set.")
 
-        if is_full_text_set:
-            print("Full text set.")
+    #     return article_to_process
 
-        return article_to_process
+    # def get_article_text_based_on_content_hint(self, article_to_process_content, raw_html):
+    #     # this is all specific to only some news.api article content
+
+    #     plus_chars = extract_last_integer(article_to_process_content)
+    #     content_truncated = article_to_process_content.split('…', 1)[0]
+
+    #     full_article = extract_article(raw_html, content_truncated, plus_chars)
+
+    #     if full_article is None or len(full_article) == 0: # then we extract pure text and try again
+    #         full_article = extract_article(extract_pure_text_from_raw_html(raw_html), extract_pure_text_from_raw_html(content_truncated), plus_chars)
+
+    #     return full_article
 
     def get_aggregator_by_name(self, aggregator_name):
         for aggregator in self.aggregators:

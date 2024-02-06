@@ -1,6 +1,109 @@
+import os
 import random
-
+import re
 from content_loaders.scraper import remove_extra_whitespace
+    # variations:
+    # put single or double quotes around the summary and comments
+    # vary the number of newlines
+
+#TODO: we may want to remove colon: from summary and comment so the inference model doesn't get confused
+
+
+def generate_summary_prompt(model_name, article_text):
+    model_name_file = re.sub(r'\W', '_', model_name)
+    template_filename = f"prompt_templates/summary_prompt/{model_name_file}.txt"
+
+    if not os.path.exists(template_filename):
+        with open(template_filename, 'w', encoding='utf-8') as file:
+            file.write("{{article_text}}\n\n")
+
+    with open(template_filename, 'r', encoding='utf-8') as file:
+        content = file.read()
+    content = content.replace("{{article_text}}", article_text)
+
+    return content
+
+def generate_first_comment_prompt(model_name, summary_text):
+    model_name_file = re.sub(r'\W', '_', model_name)
+    template_filename = f"prompt_templates/first_comment/{model_name_file}.txt"
+
+    if not os.path.exists(template_filename):
+        with open(template_filename, 'w', encoding='utf-8') as file:
+            file.write("{{summary_text}}\n\n")
+
+    with open(template_filename, 'r', encoding='utf-8') as file:
+        content = file.read()
+    content = content.replace("{{summary_text}}", summary_text)
+
+    return content #_generate_prompt(model_name, summary_text, 'first_comment')
+
+def generate_loop_comment_prompt(model_name, summary_text, comment_text):
+    model_name_file = re.sub(r'\W', '_', model_name)
+    template_filename = f"prompt_templates/loop_comment/{model_name_file}.txt"
+
+    if not os.path.exists(template_filename):
+        with open(template_filename, 'w', encoding='utf-8') as file:
+            file.write("{{summary_text}}\n\n")
+            file.write("{{comment_text}}\n\n")
+
+    with open(template_filename, 'r', encoding='utf-8') as file:
+        content = file.read()
+    content = content.replace("{{summary_text}}", summary_text)
+    content = content.replace("{{comment_text}}", comment_text)
+    return content
+
+def _generate_prompt(model_name, text, prompt_type):
+    model_name_file = re.sub(r'\W', '_', model_name)
+    template_filename = f"prompt_templates/{prompt_type}/{model_name_file}.txt"
+
+    if not os.path.exists(template_filename):
+        with open(template_filename, 'w', encoding='utf-8') as file:
+            file.write(f"{{{prompt_type}_text}}\n\n")
+
+    with open(template_filename, 'r', encoding='utf-8') as file:
+        content = file.read()
+    content = content.replace(f"{{{prompt_type}_text}}", text)
+    return content
+
+def generate_chat_prompt_simple(comment_history):
+    prompt = "You are in a heated discussion. You have strong opinions about the topic. You do not mind being offensive. What do you say next?\n\n"
+
+    for text in comment_history:
+        prompt += text + '\n\n'
+
+    return prompt.strip()
+
+
+
+
+
+
+
+
+
+
+
+
+
+def generate_fully_formed_prompt(article_summary, previous_comment):
+
+    variables = {
+        "article_summary": article_summary,
+        "previous_comment": previous_comment
+    }
+    filename = "prompts/example.txt"
+    formatted_prompt = replace_variables_in_file(filename, variables)
+
+    return formatted_prompt
+
+def replace_variables_in_file(filename, variables):
+    with open(filename, 'r', encoding='utf-8') as file:
+        content = file.read()
+
+    for key, value in variables.items():
+        content = content.replace(f"{{{{{key}}}}}", value)
+
+    return content
 
 def generate_instructions_wrapping_input(topic, comment):
     instructions = ""

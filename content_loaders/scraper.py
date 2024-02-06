@@ -19,15 +19,19 @@ def fetch_raw_html_from_url(url):
     finally:
         driver.quit()
 
-def extract_text_from_html(html):
-    soup = BeautifulSoup(html, 'html.parser')
-
-    for script_or_style in soup(["script", "style"]):
-        script_or_style.decompose()
-
-    text = soup.get_text()
+def extract_pure_text_from_raw_html(html):
+    text = strip_html_tags(html)
+    text = remove_multiple_hashes(text)
+    text = remove_all_quote(text)
     text = remove_extra_whitespace(text)
 
+    return text
+
+def strip_html_tags(html):
+    soup = BeautifulSoup(html, 'html.parser')
+    for script_or_style in soup(["script", "style"]):
+        script_or_style.decompose()
+    text = soup.get_text()
     return text
 
 def remove_extra_whitespace(text):
@@ -38,9 +42,12 @@ def remove_extra_whitespace(text):
     text = text.strip()
     return text
 
-def full_sanitize_text(text):
-    text = re.sub(r'#+(?![\s])', '', text)
-    text = remove_extra_whitespace(text)
+def remove_multiple_hashes(text):
+    # text = re.sub(r'#+(?![\s])', '', text)
+    return text
+
+def remove_all_quote(text):
+    text = re.sub(r'[\'"`“”‘’]', '', text)
     return text
 
 def extract_last_integer(s):
@@ -65,6 +72,20 @@ def extract_article(raw_text_extracted, content_truncated, plus_chars):
         start = raw_text_extracted.index(content_truncated)
         end = start + len(content_truncated) + plus_chars
         full_article = raw_text_extracted[start:end]
+
+        return full_article
+    except Exception:
+        return None
+
+def get_article_text_based_on_content_hint(article_to_process_content, raw_html):
+    # this is all specific to only some news.api article content
+    try:
+        plus_chars = extract_last_integer(article_to_process_content)
+        content_truncated = article_to_process_content.split('…', 1)[0]
+        full_article = extract_article(raw_html, content_truncated, plus_chars)
+
+        if full_article is None or len(full_article) == 0: # then we extract pure text and try again
+            full_article = extract_article(extract_pure_text_from_raw_html(raw_html), extract_pure_text_from_raw_html(content_truncated), plus_chars)
 
         return full_article
     except Exception:

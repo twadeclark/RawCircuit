@@ -6,48 +6,31 @@ class LocalOpenAIInterface(AbstractAIUnit):
         self.model = None
         self.client = None
 
-    def generate_new_comment_from_summary_and_previous_comment(self, instructions, summary_text, previous_comment):
-        pass
+    def fetch_inference(self, model, prompt):
+        client = OpenAI(base_url=model["api_url"], api_key=model["api_key"])
 
-    def prepare_model(self, model):
-        self.model = model
-        self.client = OpenAI(base_url=self.model["api_url"], api_key=self.model["api_key"])
-
-    def generate_summary(self, article_text):
-        summary_response = self.client.completions.create(
-            prompt="You will read this article, and write a short summary in your own words.\n" + self._truncate_text(article_text) + "\n### Response:\n",
+        stream = client.completions.create(
+            prompt=prompt,
             max_tokens=800,
             n=1,
-            temperature=self.model["temperature_summary"],
+            temperature=model["temperature_summary"],
             presence_penalty=0.1,
-            model=self.model["model_name"],
-            stream=False,
-        )
-        summary = summary_response.choices[0].text
-        return summary
-
-    def generate_comment_preformatted_message_streaming(self, message_text):
-        stream = self.client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {
-                    "role": "user",
-                    "content": message_text,
-                },
-            ],
+            model=model["model_name"],
             stream=True,
         )
 
         content = ""
         for chunk in stream:
-            if not chunk.choices or chunk.choices[0].delta.content is None:
+            if not chunk.choices or chunk.choices[0].text is None:
                 continue
 
-            if "###" in chunk.choices[0].delta.content:
-                break
+            # if "###" in chunk.choices[0].text:
+            #     break
 
-            content += chunk.choices[0].delta.content
-            print(chunk.choices[0].delta.content, end="")
+            content += chunk.choices[0].text
+            print(chunk.choices[0].text, end="")
+
+        stream.close()
 
         return content
 
@@ -59,6 +42,44 @@ class LocalOpenAIInterface(AbstractAIUnit):
         article_text = " ".join(article_text)
 
         return article_text
+
+
+    # def generate_new_comment_from_summary_and_previous_comment(self, instructions, summary_text, previous_comment):
+    #     pass
+
+    # def fetch_inference_comment_with_fully_formatted_prompt(self, prompt):
+    #     pass
+
+    # def prepare_model(self, model):
+    #     self.model = model
+    #     self.client = OpenAI(base_url=self.model["api_url"], api_key=self.model["api_key"])
+
+    # def fetch_inference_summary(self, article_text, model):
+    #     client = OpenAI(base_url=model["api_url"], api_key=model["api_key"])
+    #     stream = self.client.completions.create(
+    #         prompt="You will read this article, and write a short summary in your own words.\n\n" + self._truncate_text(article_text) + "\n### Response:\n",
+    #         max_tokens=800,
+    #         n=1,
+    #         temperature=self.model["temperature_summary"],
+    #         presence_penalty=0.1,
+    #         model=self.model["model_name"],
+    #         stream=True,
+    #     )
+        
+    #     content = ""
+    #     for chunk in stream:
+    #         if not chunk.choices or chunk.choices[0].text is None:
+    #             continue
+
+    #         # if "###" in chunk.choices[0].text:
+    #         #     break
+
+    #         content += chunk.choices[0].text
+    #         print(chunk.choices[0].text, end="")
+
+    #     stream.close()
+
+    #     return content
 
     # def generate_comment(self, user_content, system_content):
     #     content_response = self.client.completions.create(
