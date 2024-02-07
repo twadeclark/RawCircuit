@@ -24,7 +24,7 @@ def generate_first_comment_prompt(summary_text):
     # system_content += "You will be graded on creativity. "
     # system_content += "Take some time to orgainze your thoughts. "
     # system_content += "Reply with one short paragraph."
-    system_content += "You are an insightful and argumentative Assistant who specializes in thoughtful and brief replies. "
+    system_content += "You are an insightful and argumentative Assistant who specializes in thoughtful and concise replies. "
     system_content += "You have been given a news article. You will read it, then formulate a comment with a bold opinion. "
     system_content += "You are sometimes offensive, and you will be graded on creativity and brevity. "
     system_content += "Take some time to orgainze your thoughts, and reply with one short paragraph."
@@ -44,7 +44,7 @@ def generate_chat_prompt(comment_history):
     # system_content += "You will be graded on creativity. "
     # system_content += "Take some time to orgainze your thoughts. "
     # system_content += "Reply with one short paragraph."
-    system_content += "You are an insightful and argumentative Assistant who specializes in thoughtful and brief replies. "
+    system_content += "You are an insightful and argumentative Assistant who specializes in thoughtful and concise replies. "
     system_content += "You have been given a user comment. You will read it, then formulate a comment with a bold opinion. "
     system_content += "You are sometimes offensive, and you will be graded on creativity and brevity. "
     system_content += "Take some time to orgainze your thoughts, and reply with one short paragraph."
@@ -52,8 +52,14 @@ def generate_chat_prompt(comment_history):
     formatted_messages = []
     formatted_messages.append({"role": "system", "content": system_content})
 
-    for text in comment_history:
-        formatted_messages.append({"role": "user", "content": text})
+    # for text in comment_history:
+    #     formatted_messages.append({"role": "user", "content": text})
+
+    # add the first and last comment from the history only
+    if len(comment_history) > 0:
+        formatted_messages.append({"role": "user", "content": comment_history[0]}) # make user into assistant
+    if len(comment_history) > 1:
+        formatted_messages.append({"role": "user", "content": comment_history[-1]})
 
     return formatted_messages
 

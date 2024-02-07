@@ -10,7 +10,7 @@ from contributors.ai_manager import AIManager
 from database.db_manager import DBManager
 from output_formatter.markdown_formatter import format_to_markdown
 from vocabulary.news_search import SearchTerms
-from instruction_generator import generate_chat_prompt, generate_first_comment_prompt, generate_summary_prompt
+from prompt_generator.instruction_generator import generate_chat_prompt, generate_first_comment_prompt, generate_summary_prompt
 
 
 def main():
