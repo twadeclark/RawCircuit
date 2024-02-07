@@ -18,10 +18,6 @@ class NewsApiOrgNews(NewsAggregator):
         return "NewsApiOrgNews"
 
     def fetch_articles(self):
-        # https://newsapi.org/docs/endpoints/everything
-            # we can put multiple search terms in the same call
-            # (artifical and intelligence) or (machine and learning) or (ChatGPT) or (robot)
-            # this needs to be tested
         return random.choice(self.fetch_methods())(self.news_search_term)
 
     def fetch_methods(self):

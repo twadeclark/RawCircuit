@@ -1,9 +1,9 @@
-import os
 import random
-import re
 from content_loaders.scraper import remove_all_newlines_and_tabs
-    #TODO: move system_content to a config file
 
+#TODO: move system_content to a config file
+#TODO: https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
+#      prompt engineering: https://cookbook.openai.com/articles/techniques_to_improve_reliability
 
 def generate_summary_prompt(article_text):
     system_content = "Summarize the text into your own words in one short paragraphs. Ignore any gibberish in the text. Do not include nonsense in your reply."
@@ -11,19 +11,8 @@ def generate_summary_prompt(article_text):
     formatted_messages = []
     formatted_messages.append({"role": "system", "content": system_content})
     formatted_messages.append({"role": "user", "content": article_text})
+
     return formatted_messages
-    # model_name_file = re.sub(r'\W', '_', model_name)
-    # template_filename = f"prompt_templates/summary_prompt/{model_name_file}.txt"
-
-    # if not os.path.exists(template_filename):
-    #     with open(template_filename, 'w', encoding='utf-8') as file:
-    #         file.write("{{article_text}}\n\n")
-
-    # with open(template_filename, 'r', encoding='utf-8') as file:
-    #     content = file.read()
-    # content = content.replace("{{article_text}}", article_text)
-
-    # return content
 
 def generate_first_comment_prompt(summary_text):
     system_content = ""
@@ -40,22 +29,7 @@ def generate_first_comment_prompt(summary_text):
     formatted_messages.append({"role": "user", "content": summary_text})
     return formatted_messages
 
-    # model_name_file = re.sub(r'\W', '_', model_name)
-    # template_filename = f"prompt_templates/first_comment/{model_name_file}.txt"
-
-    # if not os.path.exists(template_filename):
-    #     with open(template_filename, 'w', encoding='utf-8') as file:
-    #         file.write("{{summary_text}}\n\n")
-
-    # with open(template_filename, 'r', encoding='utf-8') as file:
-    #     content = file.read()
-    # content = content.replace("{{summary_text}}", summary_text)
-
-    # return content
-
-
 def generate_chat_prompt_simple(comment_history):
-    # system_content = "You are in a heated discussion. You have bold opinions about this topic. You are not afraid to being offensive. You will reply with one strongly worded paragraph."
     system_content = ""
     system_content += "You are an insightful and argumentative Assistant. "
     system_content += "You have been given a user comment. "
@@ -74,24 +48,7 @@ def generate_chat_prompt_simple(comment_history):
     return formatted_messages
 
 
-# def generate_loop_comment_prompt(model_name, summary_text, comment_text):
-#     model_name_file = re.sub(r'\W', '_', model_name)
-#     template_filename = f"prompt_templates/loop_comment/{model_name_file}.txt"
-
-#     if not os.path.exists(template_filename):
-#         with open(template_filename, 'w', encoding='utf-8') as file:
-#             file.write("{{summary_text}}\n\n")
-#             file.write("{{comment_text}}\n\n")
-
-#     with open(template_filename, 'r', encoding='utf-8') as file:
-#         content = file.read()
-#     content = content.replace("{{summary_text}}", summary_text)
-#     content = content.replace("{{comment_text}}", comment_text)
-#     return content
-
-
-
-
+####
 
 def generate_fully_formed_prompt(article_summary, previous_comment):
 

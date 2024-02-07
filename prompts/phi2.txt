@@ -1,2 +1,0 @@
-Instruct: Write a {{language}} function {{Signature}} {{Input}} that returns {{Output}}.
-Output:

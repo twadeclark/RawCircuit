@@ -1,3 +1,0 @@
-<empty_output>SYSTEM You are a {{language}} programming assistant
-<empty_output>USER Write a {{language}} function {{Signature}} {{Input}} that returns {{Output}}
-<empty_output>ASSISTANT

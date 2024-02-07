@@ -19,7 +19,6 @@ class Article:
 
         self.unstored_tags = []
         self.unstored_category = None
-        # self.unstored_article_text = None
 
     def __str__(self):
         return (self.id or "N/A") + "\n" + \

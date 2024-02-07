@@ -11,84 +11,38 @@ from database.db_manager import DBManager
 from output_formatter.markdown_formatter import format_to_markdown
 from vocabulary.news_search import SearchTerms
 from instruction_generator import generate_chat_prompt_simple, generate_first_comment_prompt, generate_summary_prompt
-# from content_loaders.scraper import get_article_text_based_on_content_hint
 
-#TODO: https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
-# prompt engineering: https://cookbook.openai.com/articles/techniques_to_improve_reliability
 
 def main():
-    ai_manager = AIManager()
 
-    # polite_name, model_temp = ai_manager.return_model_by_name("LocalLLM")
-    # print(polite_name)
-    # polite_name, model_temp = ai_manager.return_model_by_name("h2oai/h2o-danube-1.8b-chat")
-    # print(polite_name)
-    # polite_name, model_temp = ai_manager.return_model_by_name("allenai/OLMo-1B")
-    # print(polite_name)
-    # polite_name, model_temp = ai_manager.return_model_by_name("microsoft/DialoGPT-medium")
-    # print(polite_name)
-    # polite_name, model_temp = ai_manager.return_model_by_name("kanishka/smolm-autoreg-bpe-counterfactual-babylm-pipps_and_keys_to_it_all_removal-1e-3")
-    # print(polite_name)
-    # return
-
-
-
-
-    # required inputs
-    # comment_history: includes most recent comment, newest at the end
-    # comment_history = ['How can I help you today?', 'I have a question about the moon.', "Great! Can you tell me more about the moon's history and its significance in astronomy?", "I don't know anything about all that. is the moon made of cheese?", "Yes, it is. It was created by our AI-powered computer when we were still a bunch of small bacteria in space. It took millions of years for us to get there and eventually colonized our solar system's largest body. \n", "that's amazing.", 'But now that you know more about the moon, I can help with your question on decision making. Can you provide me with a list of top-performing companies in a specific industry?']
-    comment_history = []
-
-    # model_name (to get the right instruction template)
-    model_name = ""
-
-    ##### default values for generate_chat_prompt_shortcut
-    state = {}
-    state['chat-instruct_command'] = 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>'
-    state['context'] = 'The following is a conversation with an AI Large Language Model. The AI has been trained to answer questions, provide recommendations, and help with decision making. The AI follows user requests. The AI thinks outside the box.'
-    state['name1'] = 'You'
-    state['name2'] = 'AI'
-    state['chat_template_str'] = "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}"
-    state['truncation_length'] = 1024
-    state['max_new_tokens'] = 100
-    # this is the default instruction template, should be replaced by the one from get_model_metadata
-    state['instruction_template_str'] = "{%- set ns = namespace(found=false) -%}\n{%- for message in messages -%}\n    {%- if message['role'] == 'system' -%}\n        {%- set ns.found = true -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if not ns.found -%}\n    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\\n\\n' -}}\n{%- endif %}\n{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- '' + message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{-'### Instruction:\\n' + message['content'] + '\\n\\n'-}}\n        {%- else -%}\n            {{-'### Response:\\n' + message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{-'### Response:\\n'-}}\n{%- endif -%}"
-    #####
-
-
-    # these should be in config file or runtime argument
-    # set to None to get random model
-    # summary_model_name = "Falconsai/text_summarization"
-    # first_comment_model_name = "h2oai/h2o-danube-1.8b-chat"
+    #TODO: move these to config.ini
     summary_model_name = "LocalLLM"
     first_comment_model_name = "LocalLLM"
-
     loop_comment_model_name = first_comment_model_name
 
+    ##### default values for generate_chat_prompt_shortcut
+    # state = {}
+    # state['chat-instruct_command'] = 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>'
+    # state['context'] = 'The following is a conversation with an AI Large Language Model. The AI has been trained to answer questions, provide recommendations, and help with decision making. The AI follows user requests. The AI thinks outside the box.'
+    # state['name1'] = 'You'
+    # state['name2'] = 'AI'
+    # state['chat_template_str'] = "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}"
+    # state['truncation_length'] = 1024
+    # state['max_new_tokens'] = 100
+    # # this is the default instruction template, should be replaced by the one from get_model_metadata
+    # state['instruction_template_str'] = "{%- set ns = namespace(found=false) -%}\n{%- for message in messages -%}\n    {%- if message['role'] == 'system' -%}\n        {%- set ns.found = true -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if not ns.found -%}\n    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\\n\\n' -}}\n{%- endif %}\n{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- '' + message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{-'### Instruction:\\n' + message['content'] + '\\n\\n'-}}\n        {%- else -%}\n            {{-'### Response:\\n' + message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{-'### Response:\\n'-}}\n{%- endif -%}"
+    #####
 
-
-
-
-
-
+    ai_manager = AIManager()
+    comment_history = []
     config = configparser.ConfigParser()
     config.read('config.ini')
-
-
-    # publish_pelican(config)
-    # return
-
-
-
-
-
     search_terms = SearchTerms()
     news_aggregator_manager = NewsAggregatorManager("NewsApiOrgNews")
     db_manager = DBManager()
 
     continuity_multiplier = float(config.get('general_configurations', 'continuity_multiplier'))
     qty_addl_comments = int(config.get('general_configurations', 'qty_addl_comments'))
-
 
     article_to_process = db_manager.get_next_article_to_process()
     comment_thread_manager = CommentThreadManager(article_to_process)
@@ -107,8 +61,7 @@ def main():
 
     db_manager.update_process_time(article_to_process)
 
-    # check if there is article_to_process.scraped_timestamp. if no, then scape the article
-    if article_to_process.scraped_timestamp is None:
+    if article_to_process.scraped_timestamp is None: # check if there is article_to_process.scraped_timestamp. if no, then scape the article
         db_manager.update_scrape_time(article_to_process)
         raw_html_from_url, fetch_success = fetch_raw_html_from_url(article_to_process.url)
         if not fetch_success:
@@ -129,8 +82,6 @@ def main():
     print("category :", article_to_process.unstored_category)
     print("tags     :", article_to_process.unstored_tags)
 
-    # if summary_model_name is None or len(summary_model_name) == 0:
-    #     summary_model_name = ai_manager._choose_random_model_name()
     summary_model_polite_name, summary_model = ai_manager.return_model_by_name(summary_model_name)
     summary_prompt = generate_summary_prompt(article_to_process.scraped_website_content)
     print("    summary_prompt: ", summary_prompt, "\n")
@@ -139,14 +90,11 @@ def main():
     if summary is None or len(summary) == 0:
         print("No summary generated. Exiting...")
         return
-    # print("     AI Summary: ", summary)
 
     comment_thread_manager.add_comment(0, summary, summary_model_polite_name, datetime.now() )
     summary = extract_pure_text_from_raw_html(summary)
     comment_history.append(summary)
 
-    # if first_comment_model_name is None or len(first_comment_model_name) == 0:
-    #     first_comment_model_name = ai_manager._choose_random_model_name()
     first_comment_polite_name, first_comment_model = ai_manager.return_model_by_name(first_comment_model_name)
     first_comment_prompt = generate_first_comment_prompt(summary)
     print("    first_comment_prompt: ", first_comment_prompt, "\n")
@@ -155,7 +103,7 @@ def main():
     if first_comment is None or len(first_comment) == 0:
         print("No first comment generated. Exiting...")
         return
-    # print("     First Comment: ", first_comment)
+
     comment_thread_manager.add_comment(0, first_comment, first_comment_polite_name, datetime.now() )
     comment_history.append(extract_pure_text_from_raw_html(first_comment))
 
@@ -166,11 +114,6 @@ def main():
         parent_index = min(parent_index, comment_thread_manager.get_comments_length() - 1)
         parent_comment = comment_thread_manager.get_comment(parent_index)["comment"]
 
-        # if loop_comment_model_name is None or len(loop_comment_model_name) == 0:
-        #     temp_loop_comment_model_name = ai_manager._choose_random_model_name()
-        # else:
-        #     temp_loop_comment_model_name = loop_comment_model_name
-
         temp_loop_polite_name, temp_loop_comment_model = ai_manager.return_model_by_name(loop_comment_model_name)
 
         # model_name = temp_loop_comment_model_name
@@ -178,10 +121,8 @@ def main():
         # print(new_prompt)
         # loop_comment_prompt = new_prompt
 
-
         loop_comment_prompt = generate_chat_prompt_simple(comment_history)
         print("    loop_comment_prompt: ", loop_comment_prompt, "\n")
-
 
         loop_comment = ai_manager.fetch_inference(temp_loop_comment_model, loop_comment_prompt)
 
@@ -211,7 +152,7 @@ def main():
 
 
 def publish_pelican(config):
-    # execute this shell command: C:\Users\twade\git\pelican>pelican C:\Users\twade\projects\PelicanRawCircuit\content -s C:\Users\twade\projects\PelicanRawCircuit\pelicanconf.py -o C:\Users\twade\projects\PelicanRawCircuit\output
+    # execute this shell command: C:\Users\twade\git\pelican>pelican C:\Users\twade\projects\PelicanRawCircuit\content -s C:\Users\twade\projects\PelicanRawCircuit\pelicanconf.py -o C:\Users\twade\projects\PelicanRawCircuit\output -o C:\\Users\\twade\\projects\\PelicanRawCircuit\\output
     local_content_path = config.get('publishing_details', 'local_content_path')
     local_pelicanconf = config.get('publishing_details', 'local_pelicanconf')
     local_publish_path = config.get('publishing_details', 'local_publish_path')
