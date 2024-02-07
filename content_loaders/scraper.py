@@ -21,11 +21,14 @@ def fetch_raw_html_from_url(url):
 
 def extract_pure_text_from_raw_html(html):
     text = strip_html_tags(html)
+    text = force_ascii(text)
     text = remove_multiple_hashes(text)
     text = remove_all_quote(text)
-    text = remove_extra_whitespace(text)
-
+    text = remove_all_newlines_and_tabs(text)
     return text
+
+def force_ascii(text):
+    return text.encode('ascii', errors='ignore').decode()
 
 def strip_html_tags(html):
     soup = BeautifulSoup(html, 'html.parser')
@@ -34,7 +37,7 @@ def strip_html_tags(html):
     text = soup.get_text()
     return text
 
-def remove_extra_whitespace(text):
+def remove_all_newlines_and_tabs(text):
     text = text.replace("\n", " ")
     text = text.replace("\r", " ")
     text = text.replace("\t", " ")
@@ -43,7 +46,8 @@ def remove_extra_whitespace(text):
     return text
 
 def remove_multiple_hashes(text):
-    # text = re.sub(r'#+(?![\s])', '', text)
+    if "##" in text:
+        text = re.sub(r'##+', '', text)
     return text
 
 def remove_all_quote(text):

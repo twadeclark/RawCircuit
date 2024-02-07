@@ -5,18 +5,34 @@ from datetime import datetime
 import time
 from aggregators.news_aggregator_manager import NewsAggregatorManager
 from comment_thread_manager import CommentThreadManager
-from content_loaders.scraper import extract_pure_text_from_raw_html, fetch_raw_html_from_url, remove_multiple_hashes, get_article_text_based_on_content_hint
+from content_loaders.scraper import extract_pure_text_from_raw_html, fetch_raw_html_from_url, get_article_text_based_on_content_hint
 from contributors.ai_manager import AIManager
 from database.db_manager import DBManager
 from output_formatter.markdown_formatter import format_to_markdown
-from prompt_generator.prompt_generator import generate_chat_prompt_shortcut
 from vocabulary.news_search import SearchTerms
 from instruction_generator import generate_chat_prompt_simple, generate_first_comment_prompt, generate_summary_prompt
-from instruction_generator import generate_loop_comment_prompt
 # from content_loaders.scraper import get_article_text_based_on_content_hint
 
+#TODO: https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
+# prompt engineering: https://cookbook.openai.com/articles/techniques_to_improve_reliability
 
 def main():
+    ai_manager = AIManager()
+
+    # polite_name, model_temp = ai_manager.return_model_by_name("LocalLLM")
+    # print(polite_name)
+    # polite_name, model_temp = ai_manager.return_model_by_name("h2oai/h2o-danube-1.8b-chat")
+    # print(polite_name)
+    # polite_name, model_temp = ai_manager.return_model_by_name("allenai/OLMo-1B")
+    # print(polite_name)
+    # polite_name, model_temp = ai_manager.return_model_by_name("microsoft/DialoGPT-medium")
+    # print(polite_name)
+    # polite_name, model_temp = ai_manager.return_model_by_name("kanishka/smolm-autoreg-bpe-counterfactual-babylm-pipps_and_keys_to_it_all_removal-1e-3")
+    # print(polite_name)
+    # return
+
+
+
 
     # required inputs
     # comment_history: includes most recent comment, newest at the end
@@ -56,15 +72,22 @@ def main():
 
 
     config = configparser.ConfigParser()
+    config.read('config.ini')
+
+
+    # publish_pelican(config)
+    # return
+
+
+
+
+
     search_terms = SearchTerms()
-    ai_manager = AIManager()
     news_aggregator_manager = NewsAggregatorManager("NewsApiOrgNews")
     db_manager = DBManager()
 
-    config.read('config.ini')
     continuity_multiplier = float(config.get('general_configurations', 'continuity_multiplier'))
     qty_addl_comments = int(config.get('general_configurations', 'qty_addl_comments'))
-    completed_articles_path = config.get('general_configurations', 'completed_articles_path')
 
 
     article_to_process = db_manager.get_next_article_to_process()
@@ -80,6 +103,7 @@ def main():
         article_to_process = db_manager.get_next_article_to_process()
 
     print("     Article:", article_to_process.title)
+    print("url      :", article_to_process.url)
 
     db_manager.update_process_time(article_to_process)
 
@@ -102,47 +126,52 @@ def main():
 
     search_terms.categorize_article_add_tags(article_to_process)
 
-    print("url      :", article_to_process.url)
     print("category :", article_to_process.unstored_category)
     print("tags     :", article_to_process.unstored_tags)
 
-    if summary_model_name is None or len(summary_model_name) == 0:
-        summary_model_name = ai_manager.choose_random_model_name()
-    summary_prompt = generate_summary_prompt(summary_model_name, article_to_process.scraped_website_content)
-    summary = ai_manager.fetch_inference(summary_model_name, summary_prompt)
+    # if summary_model_name is None or len(summary_model_name) == 0:
+    #     summary_model_name = ai_manager._choose_random_model_name()
+    summary_model_polite_name, summary_model = ai_manager.return_model_by_name(summary_model_name)
+    summary_prompt = generate_summary_prompt(article_to_process.scraped_website_content)
+    print("    summary_prompt: ", summary_prompt, "\n")
+    summary = ai_manager.fetch_inference(summary_model, summary_prompt)
 
     if summary is None or len(summary) == 0:
         print("No summary generated. Exiting...")
         return
-    print("     AI Summary: ", summary)
+    # print("     AI Summary: ", summary)
 
-    comment_thread_manager.add_comment(0, summary, summary_model_name, datetime.now() )
+    comment_thread_manager.add_comment(0, summary, summary_model_polite_name, datetime.now() )
     summary = extract_pure_text_from_raw_html(summary)
     comment_history.append(summary)
 
-    if first_comment_model_name is None or len(first_comment_model_name) == 0:
-        first_comment_model_name = ai_manager.choose_random_model_name()
-    first_comment_prompt = generate_first_comment_prompt(first_comment_model_name, summary)
-    first_comment = ai_manager.fetch_inference(first_comment_model_name, first_comment_prompt)
+    # if first_comment_model_name is None or len(first_comment_model_name) == 0:
+    #     first_comment_model_name = ai_manager._choose_random_model_name()
+    first_comment_polite_name, first_comment_model = ai_manager.return_model_by_name(first_comment_model_name)
+    first_comment_prompt = generate_first_comment_prompt(summary)
+    print("    first_comment_prompt: ", first_comment_prompt, "\n")
+    first_comment = ai_manager.fetch_inference(first_comment_model, first_comment_prompt)
 
     if first_comment is None or len(first_comment) == 0:
         print("No first comment generated. Exiting...")
         return
-    print("     First Comment: ", first_comment)
-    comment_thread_manager.add_comment(1, first_comment, first_comment_model_name, datetime.now() )
+    # print("     First Comment: ", first_comment)
+    comment_thread_manager.add_comment(0, first_comment, first_comment_polite_name, datetime.now() )
     comment_history.append(extract_pure_text_from_raw_html(first_comment))
 
+    loop_num = 1
 
-    for _ in range(2, qty_addl_comments + 1):
+    for _ in range(1, qty_addl_comments):
         parent_index = random.randint(0, int(comment_thread_manager.get_comments_length() * continuity_multiplier))
         parent_index = min(parent_index, comment_thread_manager.get_comments_length() - 1)
         parent_comment = comment_thread_manager.get_comment(parent_index)["comment"]
 
-        if loop_comment_model_name is None or len(loop_comment_model_name) == 0:
-            temp_loop_comment_model_name = ai_manager.choose_random_model_name()
-        else:
-            temp_loop_comment_model_name = loop_comment_model_name
+        # if loop_comment_model_name is None or len(loop_comment_model_name) == 0:
+        #     temp_loop_comment_model_name = ai_manager._choose_random_model_name()
+        # else:
+        #     temp_loop_comment_model_name = loop_comment_model_name
 
+        temp_loop_polite_name, temp_loop_comment_model = ai_manager.return_model_by_name(loop_comment_model_name)
 
         # model_name = temp_loop_comment_model_name
         # new_prompt = generate_chat_prompt_shortcut(comment_history, model_name, state)
@@ -151,41 +180,46 @@ def main():
 
 
         loop_comment_prompt = generate_chat_prompt_simple(comment_history)
-        print(loop_comment_prompt)
+        print("    loop_comment_prompt: ", loop_comment_prompt, "\n")
 
 
-        loop_comment = ai_manager.fetch_inference(temp_loop_comment_model_name, loop_comment_prompt)
+        loop_comment = ai_manager.fetch_inference(temp_loop_comment_model, loop_comment_prompt)
 
         if loop_comment is None or len(loop_comment) == 0:
-            print("No loop comment generated. Exiting...")
-            return
+            print("No loop comment generated. Skipping...")
+            continue
 
-
-        comment_thread_manager.add_comment(0, loop_comment, temp_loop_comment_model_name, datetime.now())
+        comment_thread_manager.add_comment(loop_num, loop_comment, temp_loop_polite_name, datetime.now())
         comment_history.append(extract_pure_text_from_raw_html(loop_comment))
+        loop_num += 1
 
 
-
+    ### formatting and publishing
+    local_content_path = config.get('publishing_details', 'local_content_path')
     formatted_post = format_to_markdown(article_to_process, comment_thread_manager)
     print("     Post sucessfully formatted. ", len(formatted_post), "characters")
 
     unique_seconds = int(time.time())
     file_name = "formatted_post_" + str(unique_seconds) + ".md"
-    file_path = os.path.join(completed_articles_path, file_name)
+    file_path = os.path.join(local_content_path, file_name)
 
     with open(file_path, "w", encoding="utf-8") as file:
         file.write(formatted_post)
     print("     Formatted post saved to:", file_path)
 
-    # execute this shell command: C:\Users\twade\git\pelican>pelican C:\Users\twade\projects\yoursite\content -s C:\Users\twade\projects\yoursite\pelicanconf.py
-    local_source_path = config.get('publishing_details', 'local_source_path')
+    publish_pelican(config)
+
+
+def publish_pelican(config):
+    # execute this shell command: C:\Users\twade\git\pelican>pelican C:\Users\twade\projects\PelicanRawCircuit\content -s C:\Users\twade\projects\PelicanRawCircuit\pelicanconf.py -o C:\Users\twade\projects\PelicanRawCircuit\output
+    local_content_path = config.get('publishing_details', 'local_content_path')
     local_pelicanconf = config.get('publishing_details', 'local_pelicanconf')
-    os_result = os.system("pelican " + local_source_path + " -s " + local_pelicanconf)
+    local_publish_path = config.get('publishing_details', 'local_publish_path')
+    os_result = os.system("pelican " + local_content_path + " -s " + local_pelicanconf + " -o " + local_publish_path)
     if os_result != 0:
         print("     Pelican failed to execute. Exiting...")
         return
     print("     Pelican executed")
-
 
 
 if __name__ == "__main__":

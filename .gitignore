@@ -159,9 +159,11 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+scratch2.py
 config.ini
 models.json
 config.yaml
 output/
 prompt_generator/instruction-templates/
 prompt_templates/
+aggregators/future_aggregator_list.txt

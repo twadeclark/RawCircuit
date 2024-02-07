@@ -1,85 +1,93 @@
 import os
 import random
 import re
-from content_loaders.scraper import remove_extra_whitespace
-    # variations:
-    # put single or double quotes around the summary and comments
-    # vary the number of newlines
-
-#TODO: we may want to remove colon: from summary and comment so the inference model doesn't get confused
+from content_loaders.scraper import remove_all_newlines_and_tabs
+    #TODO: move system_content to a config file
 
 
-def generate_summary_prompt(model_name, article_text):
-    model_name_file = re.sub(r'\W', '_', model_name)
-    template_filename = f"prompt_templates/summary_prompt/{model_name_file}.txt"
+def generate_summary_prompt(article_text):
+    system_content = "Summarize the text into your own words in one short paragraphs. Ignore any gibberish in the text. Do not include nonsense in your reply."
 
-    if not os.path.exists(template_filename):
-        with open(template_filename, 'w', encoding='utf-8') as file:
-            file.write("{{article_text}}\n\n")
+    formatted_messages = []
+    formatted_messages.append({"role": "system", "content": system_content})
+    formatted_messages.append({"role": "user", "content": article_text})
+    return formatted_messages
+    # model_name_file = re.sub(r'\W', '_', model_name)
+    # template_filename = f"prompt_templates/summary_prompt/{model_name_file}.txt"
 
-    with open(template_filename, 'r', encoding='utf-8') as file:
-        content = file.read()
-    content = content.replace("{{article_text}}", article_text)
+    # if not os.path.exists(template_filename):
+    #     with open(template_filename, 'w', encoding='utf-8') as file:
+    #         file.write("{{article_text}}\n\n")
 
-    return content
+    # with open(template_filename, 'r', encoding='utf-8') as file:
+    #     content = file.read()
+    # content = content.replace("{{article_text}}", article_text)
 
-def generate_first_comment_prompt(model_name, summary_text):
-    model_name_file = re.sub(r'\W', '_', model_name)
-    template_filename = f"prompt_templates/first_comment/{model_name_file}.txt"
+    # return content
 
-    if not os.path.exists(template_filename):
-        with open(template_filename, 'w', encoding='utf-8') as file:
-            file.write("{{summary_text}}\n\n")
+def generate_first_comment_prompt(summary_text):
+    system_content = ""
+    system_content += "You are an insightful and argumentative Assistant. "
+    system_content += "You have been given a news article. "
+    system_content += "You will choose the weakest point to argue against. "
+    system_content += "You will identify three specifics explaining why it is the weakest point. "
+    system_content += "You are not afraid to being offensive. "
+    system_content += "You will be graded on novelty. "
+    system_content += "Rewrite your response in one short paragraph."
 
-    with open(template_filename, 'r', encoding='utf-8') as file:
-        content = file.read()
-    content = content.replace("{{summary_text}}", summary_text)
+    formatted_messages = []
+    formatted_messages.append({"role": "system", "content": system_content})
+    formatted_messages.append({"role": "user", "content": summary_text})
+    return formatted_messages
 
-    return content #_generate_prompt(model_name, summary_text, 'first_comment')
+    # model_name_file = re.sub(r'\W', '_', model_name)
+    # template_filename = f"prompt_templates/first_comment/{model_name_file}.txt"
 
-def generate_loop_comment_prompt(model_name, summary_text, comment_text):
-    model_name_file = re.sub(r'\W', '_', model_name)
-    template_filename = f"prompt_templates/loop_comment/{model_name_file}.txt"
+    # if not os.path.exists(template_filename):
+    #     with open(template_filename, 'w', encoding='utf-8') as file:
+    #         file.write("{{summary_text}}\n\n")
 
-    if not os.path.exists(template_filename):
-        with open(template_filename, 'w', encoding='utf-8') as file:
-            file.write("{{summary_text}}\n\n")
-            file.write("{{comment_text}}\n\n")
+    # with open(template_filename, 'r', encoding='utf-8') as file:
+    #     content = file.read()
+    # content = content.replace("{{summary_text}}", summary_text)
 
-    with open(template_filename, 'r', encoding='utf-8') as file:
-        content = file.read()
-    content = content.replace("{{summary_text}}", summary_text)
-    content = content.replace("{{comment_text}}", comment_text)
-    return content
+    # return content
 
-def _generate_prompt(model_name, text, prompt_type):
-    model_name_file = re.sub(r'\W', '_', model_name)
-    template_filename = f"prompt_templates/{prompt_type}/{model_name_file}.txt"
-
-    if not os.path.exists(template_filename):
-        with open(template_filename, 'w', encoding='utf-8') as file:
-            file.write(f"{{{prompt_type}_text}}\n\n")
-
-    with open(template_filename, 'r', encoding='utf-8') as file:
-        content = file.read()
-    content = content.replace(f"{{{prompt_type}_text}}", text)
-    return content
 
 def generate_chat_prompt_simple(comment_history):
-    prompt = "You are in a heated discussion. You have strong opinions about the topic. You do not mind being offensive. What do you say next?\n\n"
+    # system_content = "You are in a heated discussion. You have bold opinions about this topic. You are not afraid to being offensive. You will reply with one strongly worded paragraph."
+    system_content = ""
+    system_content += "You are an insightful and argumentative Assistant. "
+    system_content += "You have been given a user comment. "
+    system_content += "You will choose the weakest point to argue against. "
+    system_content += "You will identify three specifics explaining why it is the weakest point. "
+    system_content += "You are not afraid to being offensive. "
+    system_content += "You will be graded on novelty. "
+    system_content += "Rewrite your response in paragraph form."
+
+    formatted_messages = []
+    formatted_messages.append({"role": "system", "content": system_content})
 
     for text in comment_history:
-        prompt += text + '\n\n'
+        formatted_messages.append({"role": "user", "content": text})
 
-    return prompt.strip()
-
-
+    return formatted_messages
 
 
+# def generate_loop_comment_prompt(model_name, summary_text, comment_text):
+#     model_name_file = re.sub(r'\W', '_', model_name)
+#     template_filename = f"prompt_templates/loop_comment/{model_name_file}.txt"
 
+#     if not os.path.exists(template_filename):
+#         with open(template_filename, 'w', encoding='utf-8') as file:
+#             file.write("{{summary_text}}\n\n")
+#             file.write("{{comment_text}}\n\n")
 
-
-
+#     with open(template_filename, 'r', encoding='utf-8') as file:
+#         content = file.read()
+#     content = content.replace("{{summary_text}}", summary_text)
+#     content = content.replace("{{comment_text}}", comment_text)
+#     return content
 
 
 
@@ -111,13 +119,13 @@ def generate_instructions_wrapping_input(topic, comment):
 
     # this works well for small models
     instructions += "You are a very " + get_descriptor() + " converstionalist. "
-    instructions += "The topic is '" + remove_extra_whitespace(topic) + "'. Keep that topic in mind when writing your Response. "
+    instructions += "The topic is '" + remove_all_newlines_and_tabs(topic) + "'. Keep that topic in mind when writing your Response. "
     instructions += "You will read the Instruction below and summarize it in your own words. "
     instructions += "Your Response to the Instruction will be " + get_length() + ", and it will " + get_metaphor() + ". "
     instructions += "Take some time to organize your thoughts and revise your Response. "
     instructions += "\n"
     instructions += "### Instruction:\n"
-    instructions += remove_extra_whitespace(comment) + "\n"
+    instructions += remove_all_newlines_and_tabs(comment) + "\n"
     instructions += "### Response:\n"
 
     return instructions

@@ -6,7 +6,7 @@ from jinja2.sandbox import ImmutableSandboxedEnvironment
 import torch
 import numpy as np
 import yaml
-from content_loaders.scraper import remove_all_quote, remove_extra_whitespace, remove_multiple_hashes
+from content_loaders.scraper import remove_all_quote, remove_all_newlines_and_tabs, remove_multiple_hashes
 import prompt_generator.shared as shared
 
 jinja_env = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
