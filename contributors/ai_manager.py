@@ -40,13 +40,35 @@ class AIManager:
             if response[:prompt_length] == formatted_messages:
                 response = response[prompt_length:]
 
+        response = truncate_from_marker(response, "```")
+        response = truncate_from_marker(response, "###")
+
         return response.strip()
+
 
     def _choose_random_model_name(self):
         model_names = list(self.models_json.keys())
         model_name = random.choice(model_names)
         return model_name
 
+
+def truncate_from_marker(input_string, marker="```"):
+    # Find the index where the marker starts
+    marker_index = input_string.find(marker)
+    
+    # If the marker is not found, return the original string and an empty string for removed text
+    if marker_index == -1:
+        return input_string
+    
+    # Extract the part of the string before the marker
+    truncated_string = input_string[:marker_index]
+    
+    # Extract the part of the string after (and including) the marker
+    removed_text = input_string[marker_index:]
+    
+    print(f"\n    Removed text for {marker} from here -->{removed_text}<-- to here.\n\n")
+    
+    return truncated_string
 
 def calculate_word_count(list_of_dicts):
     combined_string = " ".join(item["content"] for item in list_of_dicts)

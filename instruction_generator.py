@@ -16,28 +16,38 @@ def generate_summary_prompt(article_text):
 
 def generate_first_comment_prompt(summary_text):
     system_content = ""
-    system_content += "You are an insightful and argumentative Assistant. "
-    system_content += "You have been given a news article. "
-    system_content += "You will choose the weakest point to argue against. "
-    system_content += "You will identify three specifics explaining why it is the weakest point. "
-    system_content += "You are not afraid to being offensive. "
-    system_content += "You will be graded on novelty. "
-    system_content += "Rewrite your response in one short paragraph."
+    # system_content += "You are an insightful and argumentative Assistant. "
+    # system_content += "You have been given a news article. "
+    # system_content += "You will choose the weakest point to argue against. "
+    # system_content += "You will identify a few specific reasons. "
+    # system_content += "You are sometimes offensive. "
+    # system_content += "You will be graded on creativity. "
+    # system_content += "Take some time to orgainze your thoughts. "
+    # system_content += "Reply with one short paragraph."
+    system_content += "You are an insightful and argumentative Assistant who specializes in thoughtful and brief replies. "
+    system_content += "You have been given a news article. You will read it, then formulate a comment with a bold opinion. "
+    system_content += "You are sometimes offensive, and you will be graded on creativity and brevity. "
+    system_content += "Take some time to orgainze your thoughts, and reply with one short paragraph."
 
     formatted_messages = []
     formatted_messages.append({"role": "system", "content": system_content})
     formatted_messages.append({"role": "user", "content": summary_text})
     return formatted_messages
 
-def generate_chat_prompt_simple(comment_history):
+def generate_chat_prompt(comment_history):
     system_content = ""
-    system_content += "You are an insightful and argumentative Assistant. "
-    system_content += "You have been given a user comment. "
-    system_content += "You will choose the weakest point to argue against. "
-    system_content += "You will identify three specifics explaining why it is the weakest point. "
-    system_content += "You are not afraid to being offensive. "
-    system_content += "You will be graded on novelty. "
-    system_content += "Rewrite your response in paragraph form."
+    # system_content += "You are an insightful and argumentative Assistant. "
+    # system_content += "You have been given a user comment. "
+    # system_content += "You will choose the weakest point to argue against. "
+    # system_content += "You will identify a few specific reasons. "
+    # system_content += "You are sometimes offensive. "
+    # system_content += "You will be graded on creativity. "
+    # system_content += "Take some time to orgainze your thoughts. "
+    # system_content += "Reply with one short paragraph."
+    system_content += "You are an insightful and argumentative Assistant who specializes in thoughtful and brief replies. "
+    system_content += "You have been given a user comment. You will read it, then formulate a comment with a bold opinion. "
+    system_content += "You are sometimes offensive, and you will be graded on creativity and brevity. "
+    system_content += "Take some time to orgainze your thoughts, and reply with one short paragraph."
 
     formatted_messages = []
     formatted_messages.append({"role": "system", "content": system_content})

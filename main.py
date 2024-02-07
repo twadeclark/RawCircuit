@@ -10,7 +10,7 @@ from contributors.ai_manager import AIManager
 from database.db_manager import DBManager
 from output_formatter.markdown_formatter import format_to_markdown
 from vocabulary.news_search import SearchTerms
-from instruction_generator import generate_chat_prompt_simple, generate_first_comment_prompt, generate_summary_prompt
+from instruction_generator import generate_chat_prompt, generate_first_comment_prompt, generate_summary_prompt
 
 
 def main():
@@ -56,7 +56,7 @@ def main():
         print("New articles fetched: ", num_articles_returned)
         article_to_process = db_manager.get_next_article_to_process()
 
-    print("     Article:", article_to_process.title)
+    print("     Article: ", article_to_process.title)
     print("url      :", article_to_process.url)
 
     db_manager.update_process_time(article_to_process)
@@ -121,7 +121,7 @@ def main():
         # print(new_prompt)
         # loop_comment_prompt = new_prompt
 
-        loop_comment_prompt = generate_chat_prompt_simple(comment_history)
+        loop_comment_prompt = generate_chat_prompt(comment_history)
         print("    loop_comment_prompt: ", loop_comment_prompt, "\n")
 
         loop_comment = ai_manager.fetch_inference(temp_loop_comment_model, loop_comment_prompt)
@@ -149,6 +149,7 @@ def main():
     print("     Formatted post saved to:", file_path)
 
     publish_pelican(config)
+    print("     Commentary published for: ", article_to_process.title)
 
 
 def publish_pelican(config):
@@ -160,7 +161,7 @@ def publish_pelican(config):
     if os_result != 0:
         print("     Pelican failed to execute. Exiting...")
         return
-    print("     Pelican executed")
+    print("     Pelican executed.")
 
 
 if __name__ == "__main__":
