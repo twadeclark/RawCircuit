@@ -3,11 +3,12 @@ class CommentThreadManager:
         self.comments = []
         self.article = article
 
-    def add_comment(self, parent, comment, author, date):
+    def add_comment(self, parent, comment, author, prompt, date):
         self.comments.append({
             "parent": parent,
             "comment": comment,
             "author": author,
+            "prompt": prompt,
             "date": date
         })
 

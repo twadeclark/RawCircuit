@@ -1,8 +1,8 @@
 import feedparser
 
 class RSSFeeder:
-    def __init__(self):
-        pass
+    def __init__(self, config):
+        self.config = config
 
     def get_name(self):
         return "RSSFeeder"

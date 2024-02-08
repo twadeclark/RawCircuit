@@ -12,6 +12,19 @@ jinja_env = ImmutableSandboxedEnvironment(trim_blocks=True, lstrip_blocks=True)
 
 
 def generate_chat_prompt_shortcut(comment_history, model_name, state):
+    ##### default values for generate_chat_prompt_shortcut
+    # state = {}
+    # state['chat-instruct_command'] = 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>'
+    # state['context'] = 'The following is a conversation with an AI Large Language Model. The AI has been trained to answer questions, provide recommendations, and help with decision making. The AI follows user requests. The AI thinks outside the box.'
+    # state['name1'] = 'You'
+    # state['name2'] = 'AI'
+    # state['chat_template_str'] = "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}"
+    # state['truncation_length'] = 1024
+    # state['max_new_tokens'] = 100
+    # # this is the default instruction template, should be replaced by the one from get_model_metadata
+    # state['instruction_template_str'] = "{%- set ns = namespace(found=false) -%}\n{%- for message in messages -%}\n    {%- if message['role'] == 'system' -%}\n        {%- set ns.found = true -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if not ns.found -%}\n    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\\n\\n' -}}\n{%- endif %}\n{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- '' + message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{-'### Instruction:\\n' + message['content'] + '\\n\\n'-}}\n        {%- else -%}\n            {{-'### Response:\\n' + message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{-'### Response:\\n'-}}\n{%- endif -%}"
+    #####
+
     impersonate = False
 
     model_metadata = get_model_metadata(model_name)

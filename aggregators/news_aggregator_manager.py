@@ -1,26 +1,21 @@
-import configparser
 import datetime
 import random
 from aggregators.rss_feeder import RSSFeeder
 from article import Article
-from database.db_manager import DBManager
 from .newsapiorg_news import NewsApiOrgNews
 
 class NewsAggregatorManager:
 
-    def __init__(self, aggregator_name=None):
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-        self.article_freshness = int(config.get('general_configurations', 'article_freshness'))
-        self.db_manager = DBManager()
-        self.aggregators = [ # Put the list of aggregators here
-            NewsApiOrgNews(),
-            RSSFeeder(),
+    def __init__(self, config, db_manager, aggregator_name=None):
+        self.db_manager = db_manager
+        self.aggregators = [
+            NewsApiOrgNews(config["NewsAPI"]),
+            # RSSFeeder(config["RSSFeeder"]),
         ]
-        if aggregator_name is not None:
-            self.aggregator = self.get_aggregator_by_name(aggregator_name)
-        else:
+        if aggregator_name is None:
             self.aggregator = random.choice(self.aggregators)
+        else:
+            self.aggregator = self.get_aggregator_by_name(aggregator_name)
 
     def get_aggregator_by_name(self, aggregator_name):
         for aggregator in self.aggregators:

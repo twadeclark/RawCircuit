@@ -1,17 +1,15 @@
 from datetime import datetime, timedelta
-import configparser
 import random
 from newsapi import NewsApiClient
 from aggregators.news_aggregator_base import NewsAggregator
 
 class NewsApiOrgNews(NewsAggregator):
-    def __init__(self):
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-        self.news_search_term = config.get('general_configurations', 'news_search_term')
-        self.from_date = datetime.now() - timedelta(days=config.getint('NewsAPI', 'days_back'))
-        self.sort_by = config.get('NewsAPI', 'sortBy')
-        self.api_key = config.get('NewsAPI', 'apiKey')
+    def __init__(self, config):
+        self.news_search_term = config.get('news_search_term')
+        self.from_date = datetime.now() - timedelta(days=config.getint('days_back'))
+        self.sort_by = config.get('sortBy')
+        self.api_key = config.get('apiKey')
+        self.category = config.get('category')
         self.newsapi = NewsApiClient(api_key=self.api_key)
 
     def get_name(self):
@@ -27,7 +25,7 @@ class NewsApiOrgNews(NewsAggregator):
         ]
 
     def fetch_top_headlines(self, query_term): # query_term does not seem to work for headlines
-        top_headlines = self.newsapi.get_top_headlines( category='technology',
+        top_headlines = self.newsapi.get_top_headlines( category=self.category,
                                                         language='en')
         return top_headlines
 

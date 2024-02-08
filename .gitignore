@@ -164,5 +164,5 @@ config.ini
 models.json
 config.yaml
 prompt_generator/instruction-templates/
-prompt_templates/
 aggregators/future_aggregator_list.txt
+prompt_templates/

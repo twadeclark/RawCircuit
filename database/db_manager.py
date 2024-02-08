@@ -1,16 +1,10 @@
-import configparser
 import psycopg2
 from article import Article
 
 class DBManager:
-    def __init__(self):
-        self.config = self.read_db_config()
+    def __init__(self, config):
+        self.config = config
         self.conn = self.connect_to_db()
-
-    def read_db_config(self):
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-        return config['postgresql']
 
     def connect_to_db(self):
         return psycopg2.connect(**self.config)
@@ -54,7 +48,7 @@ class DBManager:
                 SELECT a.id, a.aggregator, a.source_id, a.source_name, a.author, a.title, a.description, a.url, a.url_to_image, a.published_at, a.content, a.rec_order, a.added_timestamp, a.scraped_timestamp, a.scraped_website_content, a.processed_timestamp
                 FROM articles a
                 WHERE scraped_timestamp IS NULL AND processed_timestamp IS NULL AND scraped_website_content IS NULL
-                ORDER BY added_timestamp DESC, rec_order
+                ORDER BY added_timestamp, rec_order
                 """)
             row = cur.fetchone()
             if row is None:
@@ -67,7 +61,7 @@ class DBManager:
                 SELECT a.id, a.aggregator, a.source_id, a.source_name, a.author, a.title, a.description, a.url, a.url_to_image, a.published_at, a.content, a.rec_order, a.added_timestamp, a.scraped_timestamp, a.scraped_website_content, a.processed_timestamp
                 FROM articles a
                 WHERE processed_timestamp IS NULL
-                ORDER BY added_timestamp DESC, rec_order
+                ORDER BY added_timestamp, rec_order
                 """)
             row = cur.fetchone()
             if row is None:

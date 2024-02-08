@@ -1,14 +1,15 @@
 import json
 import random
-import re
+from content_loaders.scraper import make_polite_name
 from contributors.hugging_face_interface import HuggingFaceInterface
 from contributors.local_openai_interface import LocalOpenAIInterface
 
 class AIManager:
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.interface_list = {
-            'LocalOpenAIInterface': LocalOpenAIInterface(),
-            'HuggingFaceInterface': HuggingFaceInterface()
+            'LocalOpenAIInterface': LocalOpenAIInterface(config["LocalOpenAIInterface"]),
+            'HuggingFaceInterface': HuggingFaceInterface(config["HuggingFace"])
         }
 
         with open('models.json', 'r', encoding='utf-8') as file:
@@ -18,15 +19,14 @@ class AIManager:
         if model_name is None or len(model_name) == 0:
             model_name = self._choose_random_model_name()
         model = self.models_json[model_name]
+        model["model_name"] = model_name
 
-        polite_name = re.sub(r'[^.\w]', ' ', model_name)
-        polite_name = re.sub(r'_', ' ', polite_name)
+        polite_name = make_polite_name(model_name)
+        model["polite_name"] = polite_name
 
-        polite_name = polite_name.title()
+        return model
 
-        return polite_name, model
-
-    def fetch_inference(self, model, formatted_messages): #TODO: get api_key from config file, do not store api_key in models.json
+    def fetch_inference(self, model, formatted_messages):
         interface_name = model['interface']
         interface = self.interface_list.get(interface_name)
         word_limit = model["max_tokens"] // 2
@@ -87,6 +87,8 @@ def reduce_content(list_of_dicts, word_limit):
     return list_of_dicts
 
 def adjust_content_based_on_user_entries(list_of_dicts, word_limit):
+    #TODO: https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
+
     while calculate_word_count(list_of_dicts) > word_limit:
         user_entries = [item for item in list_of_dicts if item["role"] == "user"]
         user_entries_count = len(user_entries)

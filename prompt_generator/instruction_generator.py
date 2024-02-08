@@ -1,129 +1,50 @@
 import random
 from content_loaders.scraper import remove_all_newlines_and_tabs
 
-#TODO: move system_content to a config file
-#TODO: https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
-#      prompt engineering: https://cookbook.openai.com/articles/techniques_to_improve_reliability
+
+# prompt engineering: https://cookbook.openai.com/articles/techniques_to_improve_reliability
+
+prompt_templates = {
+    "chat_prompt": "",
+    "first_comment_prompt": "",
+    "summary_prompt": ""
+}
+# for key_temp in prompt_templates:
+#     with open("prompt_templates/" + key_temp + ".txt", "r", encoding="utf-8") as file_temp:
+#         prompt_templates[key_temp] = file_temp.read()
+#         prompt_templates[key_temp] = remove_all_newlines_and_tabs(prompt_templates[key_temp])
+prompt_templates["summary_prompt"] = "You are a specialist at summarizing news articles into your own words. you always make sure to include the major points presented. You always ignore any gibberish, and never include nonsense in your reply. Take some time to orgainze your thoughts, and provide a summary of the article in one paragraph."
+prompt_templates["first_comment_prompt"] = "You are an insightful and argumentative Assistant who specializes in thoughtful and concise replies. You have been given a news article. You will read it, then formulate a comment with a bold opinion. You are sometimes offensive, and you will be graded on creativity and brevity. Take some time to orgainze your thoughts, and reply with one short paragraph."
+
 
 def generate_summary_prompt(article_text):
-    system_content = "Summarize the text into your own words in one short paragraphs. Ignore any gibberish in the text. Do not include nonsense in your reply."
-
+    system_content = prompt_templates["summary_prompt"]
     formatted_messages = []
     formatted_messages.append({"role": "system", "content": system_content})
     formatted_messages.append({"role": "user", "content": article_text})
-
-    return formatted_messages
+    return formatted_messages, system_content
 
 def generate_first_comment_prompt(summary_text):
-    system_content = ""
-    # system_content += "You are an insightful and argumentative Assistant. "
-    # system_content += "You have been given a news article. "
-    # system_content += "You will choose the weakest point to argue against. "
-    # system_content += "You will identify a few specific reasons. "
-    # system_content += "You are sometimes offensive. "
-    # system_content += "You will be graded on creativity. "
-    # system_content += "Take some time to orgainze your thoughts. "
-    # system_content += "Reply with one short paragraph."
-    system_content += "You are an insightful and argumentative Assistant who specializes in thoughtful and concise replies. "
-    system_content += "You have been given a news article. You will read it, then formulate a comment with a bold opinion. "
-    system_content += "You are sometimes offensive, and you will be graded on creativity and brevity. "
-    system_content += "Take some time to orgainze your thoughts, and reply with one short paragraph."
-
+    system_content = prompt_templates["first_comment_prompt"]
     formatted_messages = []
     formatted_messages.append({"role": "system", "content": system_content})
     formatted_messages.append({"role": "user", "content": summary_text})
-    return formatted_messages
+    return formatted_messages, system_content
 
-def generate_chat_prompt(comment_history):
+def generate_loop_prompt(summary, parent_comment):
+    # system_content = prompt_templates["chat_prompt"]
+
     system_content = ""
-    # system_content += "You are an insightful and argumentative Assistant. "
-    # system_content += "You have been given a user comment. "
-    # system_content += "You will choose the weakest point to argue against. "
-    # system_content += "You will identify a few specific reasons. "
-    # system_content += "You are sometimes offensive. "
-    # system_content += "You will be graded on creativity. "
-    # system_content += "Take some time to orgainze your thoughts. "
-    # system_content += "Reply with one short paragraph."
-    system_content += "You are an insightful and argumentative Assistant who specializes in thoughtful and concise replies. "
-    system_content += "You have been given a user comment. You will read it, then formulate a comment with a bold opinion. "
-    system_content += "You are sometimes offensive, and you will be graded on creativity and brevity. "
-    system_content += "Take some time to orgainze your thoughts, and reply with one short paragraph."
+    system_content += "You are a very " + get_descriptor() + " Assistant who specializes in thoughtful and " + get_descriptor() + " conversation. "
+    system_content += "You have been given a user comment. You will read it, then formulate a reply with an uncensored opinion. "
+    system_content += "You are sometimes offensive, and you will be graded on creativity. "
+    system_content += "You will " + get_metaphor() + ". Take some time to organize your thoughts, and revise your response into " + get_length() + "."
 
     formatted_messages = []
     formatted_messages.append({"role": "system", "content": system_content})
-
-    # for text in comment_history:
-    #     formatted_messages.append({"role": "user", "content": text})
-
-    # add the first and last comment from the history only
-    if len(comment_history) > 0:
-        formatted_messages.append({"role": "user", "content": comment_history[0]}) # make user into assistant
-    if len(comment_history) > 1:
-        formatted_messages.append({"role": "user", "content": comment_history[-1]})
-
-    return formatted_messages
-
-
-####
-
-def generate_fully_formed_prompt(article_summary, previous_comment):
-
-    variables = {
-        "article_summary": article_summary,
-        "previous_comment": previous_comment
-    }
-    filename = "prompts/example.txt"
-    formatted_prompt = replace_variables_in_file(filename, variables)
-
-    return formatted_prompt
-
-def replace_variables_in_file(filename, variables):
-    with open(filename, 'r', encoding='utf-8') as file:
-        content = file.read()
-
-    for key, value in variables.items():
-        content = content.replace(f"{{{{{key}}}}}", value)
-
-    return content
-
-def generate_instructions_wrapping_input(topic, comment):
-    instructions = ""
-    instructions += ""
-
-    # this works well for small models
-    instructions += "You are a very " + get_descriptor() + " converstionalist. "
-    instructions += "The topic is '" + remove_all_newlines_and_tabs(topic) + "'. Keep that topic in mind when writing your Response. "
-    instructions += "You will read the Instruction below and summarize it in your own words. "
-    instructions += "Your Response to the Instruction will be " + get_length() + ", and it will " + get_metaphor() + ". "
-    instructions += "Take some time to organize your thoughts and revise your Response. "
-    instructions += "\n"
-    instructions += "### Instruction:\n"
-    instructions += remove_all_newlines_and_tabs(comment) + "\n"
-    instructions += "### Response:\n"
-
-    return instructions
-
-def generate_brief_instructions():
-    instructions = ""
-    instructions += "You are a very " + get_descriptor() + " converstionalist, and your reply will " + get_metaphor()
-
-    return instructions
-
-def generate_instructions():
-    instructions = ""
-
-    instructions += "Your role is " + get_profession() + ". "
-    instructions += "Your tone will be " + get_descriptor() + ". "
-    instructions += "Your reply will " + get_metaphor() + ". "
-    instructions += "Your reply is limited to " + get_length() + ". "
-    instructions += get_revise_thoughts()
-    instructions += "You will reply to the following message: "
-
-        # instructions = "You are a robot who speaks with boops and beeps in every sentence. You are flatulent. You will reply in a love letter."
-        # instructions = "You are a 3 year old toddler who barely makes coherent sentences. you do not use emojis."
-        # instructions = "You are a caveman. Your reply will be only 3 words long."
-
-    return instructions
+    formatted_messages.append({"role": "assistant", "content": summary})
+    formatted_messages.append({"role": "user", "content": parent_comment})
+    return formatted_messages, system_content
 
 def get_revise_thoughts():
     revise_thoughts_list = [
@@ -268,81 +189,69 @@ def get_descriptor():
     ]
     return random.choice(descriptor_list)
 
-def get_profession():
-    get_profession_list = [
-        "politician",
-        "poet",
-        "teacher",
-        "plumber",
-        "blacksmith",
-        "auctioneer",
-        "camp counselor",
-        "cowboy",
-        "farmer",
-        "woodworker",
-        "youtuber",
-        "degnerate gambler",
-        "college professor",
-        "lazy bum",
-        "young child",
-        "conversationalist",
-        "environmental activist",
-        "social worker",
-        "veterinarian",
-        "chef",
-        "journalist",
-        "software engineer",
-        "artist",
-        "human rights lawyer",
-        "nurse",
-        "musician",
-        "architect",
-        "biologist",
-        "civil rights activist",
-        "economist",
-        "fashion designer",
-        "graphic designer",
-        "historian",
-        "industrial designer",
-        "librarian",
-        "mathematician",
-        "nutritionist",
-        "pharmacist",
-        "physicist",
-        "psychologist",
-        "religious leader",
-        "school principal",
-        "social media influencer",
-        "urban planner",
-        "veterinarian technician",
-        "wildlife conservationist",
-        "athlete",
-        "baker",
-        "carpenter",
-        "dentist",
-        "electrical engineer",
-        "filmmaker",
-        "gardener",
-        "human resources manager",
-        "interpreter",
-        "judge",
-        "kindergarten teacher",
-        "mechanic",
-        "nurse practitioner",
-        "optometrist",
-        "physiotherapist",
-        "quality assurance analyst",
-        "research scientist",
-        "sailor",
-        "translator",
-        "video game developer",
-        "writer",
-        "zoologist",
-        "accountant",
-        "banker",
-        "robot",
-        "astronaut",
-        "astronomer",
-        "chemist",
-    ]
-    return random.choice(get_profession_list)
+
+
+
+
+
+
+####
+
+# def generate_fully_formed_prompt(article_summary, previous_comment):
+
+#     variables = {
+#         "article_summary": article_summary,
+#         "previous_comment": previous_comment
+#     }
+#     filename = "prompts/example.txt"
+#     formatted_prompt = replace_variables_in_file(filename, variables)
+
+#     return formatted_prompt
+
+# def replace_variables_in_file(filename, variables):
+#     with open(filename, 'r', encoding='utf-8') as file:
+#         content = file.read()
+
+#     for key, value in variables.items():
+#         content = content.replace(f"{{{{{key}}}}}", value)
+
+#     return content
+
+# def generate_instructions_wrapping_input(topic, comment):
+#     instructions = ""
+#     instructions += ""
+
+#     # this works well for small models
+#     instructions += "You are a very " + get_descriptor() + " converstionalist. "
+#     instructions += "The topic is '" + remove_all_newlines_and_tabs(topic) + "'. Keep that topic in mind when writing your Response. "
+#     instructions += "You will read the Instruction below and summarize it in your own words. "
+#     instructions += "Your Response to the Instruction will be " + get_length() + ", and it will " + get_metaphor() + ". "
+#     instructions += "Take some time to organize your thoughts and revise your Response. "
+#     instructions += "\n"
+#     instructions += "### Instruction:\n"
+#     instructions += remove_all_newlines_and_tabs(comment) + "\n"
+#     instructions += "### Response:\n"
+
+#     return instructions
+
+# def generate_brief_instructions():
+#     instructions = ""
+#     instructions += "You are a very " + get_descriptor() + " converstionalist, and your reply will " + get_metaphor()
+
+#     return instructions
+
+# def generate_instructions():
+#     instructions = ""
+
+#     instructions += "Your role is " + get_profession() + ". "
+#     instructions += "Your tone will be " + get_descriptor() + ". "
+#     instructions += "Your reply will " + get_metaphor() + ". "
+#     instructions += "Your reply is limited to " + get_length() + ". "
+#     instructions += get_revise_thoughts()
+#     instructions += "You will reply to the following message: "
+
+#         # instructions = "You are a robot who speaks with boops and beeps in every sentence. You are flatulent. You will reply in a love letter."
+#         # instructions = "You are a 3 year old toddler who barely makes coherent sentences. you do not use emojis."
+#         # instructions = "You are a caveman. Your reply will be only 3 words long."
+
+#     return instructions

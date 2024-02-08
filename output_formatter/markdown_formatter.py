@@ -8,20 +8,23 @@ def format_to_markdown(article, comment_thread_manager):
     title = re.sub(r'\([^)]*\)', '', article.title)
     title = re.sub(r'\{[^)]*\}', '', article.title)
 
+    comment = comment_thread_manager.get_comment(0)
+
     ret_val += (f"Title: {title}\n")
-    ret_val += (f"Date: {parse_date_into_pretty_string(article.published_at)}\n")
+    ret_val += (f"Date: {parse_date_into_pretty_string(comment["date"])}\n")
     ret_val += (f"Authors: {comment_thread_manager.get_comment(0)["author"]}\n")
     ret_val += (f"Tags: {comment_thread_manager.get_tags_comma_separated()}\n")
     ret_val += (f"Category: {comment_thread_manager.get_category()}\n")
 
-    comment = comment_thread_manager.get_comment(0)
     ret_val += ("<span style='font-size: smaller;'>")
     ret_val += (f"[original article]({article.url}) from *{article.source_name}* by *{article.author}* at *{parse_date_into_pretty_string(article.published_at)}* ")
     ret_val += ("</span> \n\n")
     ret_val += (f">- summary by **{comment["author"]}** <span style='font-size: smaller;'>*on {parse_date_into_pretty_string(comment["date"])}*</span>\n\n")
     ret_val += (f">{comment["comment"]}\n\n")
 
-    ret_val += ("***\n\n***\n\n")
+    prompt = comment_thread_manager.get_comment(0)["prompt"]
+    ret_val += (f"<div title='{prompt}'><hr></div>\n\n")
+    ret_val += ("***\n\n")
 
     for i in range(1, comment_thread_manager.get_comments_length()):
         comment = comment_thread_manager.get_comment(i)
@@ -36,7 +39,9 @@ def format_to_markdown(article, comment_thread_manager):
             ret_val += (f"><span style='font-size: smaller;'>{parent_comment}</span>\n\n")
 
         ret_val += (f"{comment["comment"]}\n\n")
-        ret_val += ("***\n\n")
+
+        prompt = comment_thread_manager.get_comment(i)["prompt"]
+        ret_val += (f"<div title='{prompt}'><hr></div>\n\n")
 
     return ret_val
 

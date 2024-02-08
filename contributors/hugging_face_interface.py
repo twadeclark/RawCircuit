@@ -3,16 +3,16 @@ import requests
 from contributors.abstract_ai_unit import AbstractAIUnit
 
 class HuggingFaceInterface(AbstractAIUnit):
-    def __init__(self):
-        pass
+    def __init__(self, config):
+        self.api_key = config["api_key"]
+        self.base_url = config["base_url"]
 
     def fetch_inference(self, model, formatted_messages):
-        API_TOKEN = model["api_key"]
-        API_URL = model["api_url"]
-        headers = {"Authorization": f"Bearer {API_TOKEN}"}
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        this_url = self.base_url + model['model_name']
 
         def query(payload):
-            response = requests.post(API_URL, headers=headers, json=payload, timeout=120, stream=True)
+            response = requests.post(this_url, headers=headers, json=payload, timeout=120, stream=True)
             all_chunks = ""
 
             for chunk in response.iter_content(chunk_size=1):

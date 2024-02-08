@@ -1,10 +1,10 @@
 import re
+from bs4 import BeautifulSoup, Comment
 from selenium import webdriver
 import selenium
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from bs4 import BeautifulSoup
 
 def fetch_raw_html_from_url(url):
     driver = webdriver.Chrome()
@@ -19,6 +19,25 @@ def fetch_raw_html_from_url(url):
     finally:
         driver.quit()
 
+
+def make_polite_name(s):
+    s = re.sub(r'[^.\w]', ' ', s)
+    s = re.sub(r'_', ' ', s)
+
+    s = " ".join(s.split())
+
+    if s and s[0].isalpha():
+        s = s[0].upper() + s[1:]
+    result = [s[0]] if s else []
+
+    for i in range(1, len(s)):
+        if s[i-1] == ' ' and s[i].isalpha():
+            result.append(s[i].upper())
+        else:
+            result.append(s[i])
+
+    return ''.join(result)
+
 def extract_pure_text_from_raw_html(html):
     text = strip_html_tags(html)
     text = force_ascii(text)
@@ -32,9 +51,21 @@ def force_ascii(text):
 
 def strip_html_tags(html):
     soup = BeautifulSoup(html, 'html.parser')
+
     for script_or_style in soup(["script", "style"]):
         script_or_style.decompose()
+
+    for comment in soup.findAll(text=lambda text: isinstance(text, Comment)):
+        comment.extract()
+
     text = soup.get_text()
+
+    # Remove closing tags without opening tags
+    # text = re.sub(r'</[^>]*?>', '', text)
+
+    # Remove opening tags without closing tags
+    # text = re.sub(r'<[^/>]*?>', '', text)
+
     return text
 
 def remove_all_newlines_and_tabs(text):
