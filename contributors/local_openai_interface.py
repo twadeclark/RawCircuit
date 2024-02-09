@@ -1,25 +1,39 @@
+import random
 from openai import OpenAI
 from content_loaders.scraper import make_polite_name
 from contributors.abstract_ai_unit import AbstractAIUnit
 
 class LocalOpenAIInterface(AbstractAIUnit):
     def __init__(self, config):
-        self.config = config
-        self.model = None
-        self.client = None
-        self.base_url = self.config["base_url"]
-        self.api_key = self.config["api_key"]
+        self.base_url = config["base_url"]
+        self.api_key = config["api_key"]
 
     def fetch_inference(self, model, formatted_messages):
         client = OpenAI(base_url=self.base_url, api_key=self.api_key)
         content = ""
 
-        stream = client.chat.completions.create(
+        # flavors
+        max_tokens = random.randint(1, 20) * 25
+        temperature = random.uniform(0.0, 2.0) # range 0 and 2, Defaults to 1
+        frequency_penalty = random.uniform(-2.0, 2.0) # range -2.0 and 2.0, Defaults to 0
+        presence_penalty = random.uniform(-2.0, 2.0) # range -2.0 and 2.0, Defaults to 0
+
+        max_tokens_as_string = str(max_tokens)
+        temperature_as_string = "{:.1f}".format(temperature)
+        frequency_penalty_as_string = "{:.1f}".format(frequency_penalty)
+        presence_penalty_as_string = "{:.1f}".format(presence_penalty)
+
+        flavors = f" \t max_tokens: {max_tokens_as_string}, \t temperature: {temperature_as_string}, \t frequency_penalty: {frequency_penalty_as_string}, \t presence_penalty: {presence_penalty_as_string}"
+        print(flavors)
+
+        stream = client.chat.completions.create( timeout=6000, # 100 minutes
             messages=formatted_messages,
             model=model["model_name"],
             stream=True,
-            frequency_penalty=1.1,
-            presence_penalty=1.1,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty,
         )
 
         chunk = None
@@ -55,7 +69,7 @@ class LocalOpenAIInterface(AbstractAIUnit):
                     model_name = make_polite_name(model_name)
                     model["polite_name"] = model_name.strip()
 
-        return content
+        return content, flavors
 
 
         #### deprecated as of 4 jan 2024

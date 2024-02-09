@@ -30,20 +30,20 @@ class AIManager:
         interface_name = model['interface']
         interface = self.interface_list.get(interface_name)
         word_limit = model["max_tokens"] // 2
-        formatted_messages = adjust_content_based_on_user_entries(formatted_messages, word_limit)
+        formatted_messages = _truncate_user_messages_if_needed(formatted_messages, word_limit)
 
         # let's go!
-        response = interface.fetch_inference(model, formatted_messages) #TODO: send api_key also
+        response, flavors = interface.fetch_inference(model, formatted_messages)
 
         if response is not None and len(response) > 0: # this strips off the prompt if the response starts with the prompt
             prompt_length = len(formatted_messages)
             if response[:prompt_length] == formatted_messages:
                 response = response[prompt_length:]
 
-        response = truncate_from_marker(response, "```")
-        response = truncate_from_marker(response, "###")
+        response = _truncate_from_marker(response, "```")
+        response = _truncate_from_marker(response, "###")
 
-        return response.strip()
+        return response.strip(), flavors
 
 
     def _choose_random_model_name(self):
@@ -52,7 +52,7 @@ class AIManager:
         return model_name
 
 
-def truncate_from_marker(input_string, marker="```"):
+def _truncate_from_marker(input_string, marker="###"):
     marker_index = input_string.find(marker)
 
     if marker_index == -1:
@@ -64,12 +64,12 @@ def truncate_from_marker(input_string, marker="```"):
 
     return truncated_string
 
-def calculate_word_count(list_of_dicts):
+def _calculate_word_count(list_of_dicts):
     combined_string = " ".join(item["content"] for item in list_of_dicts)
     return len(combined_string.split())
 
-def reduce_content(list_of_dicts, word_limit):
-    while calculate_word_count(list_of_dicts) > word_limit:
+def _reduce_content(list_of_dicts, word_limit):
+    while _calculate_word_count(list_of_dicts) > word_limit:
         longest_user_content = None
         longest_user_index = -1
         for i, item in enumerate(list_of_dicts):
@@ -86,10 +86,10 @@ def reduce_content(list_of_dicts, word_limit):
 
     return list_of_dicts
 
-def adjust_content_based_on_user_entries(list_of_dicts, word_limit):
+def _truncate_user_messages_if_needed(list_of_dicts, word_limit):
     #TODO: https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
 
-    while calculate_word_count(list_of_dicts) > word_limit:
+    while _calculate_word_count(list_of_dicts) > word_limit:
         user_entries = [item for item in list_of_dicts if item["role"] == "user"]
         user_entries_count = len(user_entries)
 
@@ -99,6 +99,6 @@ def adjust_content_based_on_user_entries(list_of_dicts, word_limit):
                 middle_index += 1
             del list_of_dicts[middle_index]
         else:
-            list_of_dicts = reduce_content(list_of_dicts, word_limit)
+            list_of_dicts = _reduce_content(list_of_dicts, word_limit)
 
     return list_of_dicts

@@ -1,16 +1,27 @@
+import datetime
 class CommentThreadManager:
-    def __init__(self, article):
+    def __init__(self):
         self.comments = []
-        self.article = article
+        self.article = None
+        self.start_time = datetime.datetime.now()
 
-    def add_comment(self, parent, comment, author, prompt, date):
+    def add_comment(self, parent, comment, author, prompt_keywords, date):
         self.comments.append({
             "parent": parent,
             "comment": comment,
             "author": author,
-            "prompt": prompt,
+            "prompt_keywords": prompt_keywords,
             "date": date
         })
+
+    def get_duration(self):
+        return datetime.datetime.now() - self.start_time
+
+    def get_start_time(self):
+        return self.start_time
+
+    def set_article(self, article):
+        self.article = article
 
     def get_comments_length(self):
         return len(self.comments)
@@ -26,6 +37,6 @@ class CommentThreadManager:
 
     def get_tags_comma_separated(self):
         return ", ".join(self.article.unstored_tags)
-    
+
     def get_category(self):
         return self.article.unstored_category

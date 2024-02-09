@@ -5,7 +5,7 @@ from datetime import datetime
 import time
 from aggregators.news_aggregator_manager import NewsAggregatorManager
 from comment_thread_manager import CommentThreadManager
-from content_loaders.scraper import extract_pure_text_from_raw_html, fetch_raw_html_from_url, get_article_text_based_on_content_hint, remove_all_newlines_and_tabs
+from content_loaders.scraper import extract_pure_text_from_raw_html, fetch_raw_html_from_url, get_article_text_based_on_content_hint
 from contributors.ai_manager import AIManager
 from database.db_manager import DBManager
 from output_formatter.markdown_formatter import format_to_markdown
@@ -25,13 +25,14 @@ def main():
     search_terms = SearchTerms()
     db_manager = DBManager(config['postgresql'])
     news_aggregator_manager = NewsAggregatorManager(config, db_manager, None)
+    comment_thread_manager = CommentThreadManager()
 
     comment_history = []
     continuity_multiplier = float(config.get('general_configurations', 'continuity_multiplier'))
     qty_addl_comments = int(config.get('general_configurations', 'qty_addl_comments'))
 
     article_to_process = db_manager.get_next_article_to_process()
-    comment_thread_manager = CommentThreadManager(article_to_process)
+    comment_thread_manager.set_article(article_to_process)
 
     if article_to_process is None:
         print("Fetching new articles from aggregator...")
@@ -69,28 +70,28 @@ def main():
     print("tags     :", article_to_process.unstored_tags)
 
     summary_model = ai_manager.return_model_by_name(summary_model_name)
-    summary_prompt, prompt = generate_summary_prompt(article_to_process.scraped_website_content)
+    summary_prompt, prompt_keywords = generate_summary_prompt(article_to_process.scraped_website_content)
     print("    summary_prompt: ", summary_prompt, "\n")
-    summary = ai_manager.fetch_inference(summary_model, summary_prompt)
+    summary, flavors = ai_manager.fetch_inference(summary_model, summary_prompt)
+    summary = extract_pure_text_from_raw_html(summary)
 
     if summary is None or len(summary) == 0:
         print("No summary generated. Exiting...")
         return
 
-    comment_thread_manager.add_comment(0, summary, summary_model.get("polite_name", "anonymous llm"), prompt, datetime.now() )
-    summary = extract_pure_text_from_raw_html(summary)
+    comment_thread_manager.add_comment(0, summary, summary_model.get("polite_name", "anonymous llm"), prompt_keywords + " | " + flavors, datetime.now() )
     comment_history.append(summary)
 
     first_comment_model = ai_manager.return_model_by_name(first_comment_model_name)
-    first_comment_prompt, prompt = generate_first_comment_prompt(summary)
+    first_comment_prompt, prompt_keywords = generate_first_comment_prompt(summary)
     print("    first_comment_prompt: ", first_comment_prompt, "\n")
-    first_comment = ai_manager.fetch_inference(first_comment_model, first_comment_prompt)
+    first_comment, flavors = ai_manager.fetch_inference(first_comment_model, first_comment_prompt)
 
     if first_comment is None or len(first_comment) == 0:
         print("No first comment generated. Exiting...")
         return
 
-    comment_thread_manager.add_comment(0, first_comment, first_comment_model.get("polite_name", "anonymous llm"), prompt, datetime.now() )
+    comment_thread_manager.add_comment(0, first_comment, first_comment_model.get("polite_name", "anonymous llm"), prompt_keywords  + " | " +  flavors, datetime.now() )
     comment_history.append(extract_pure_text_from_raw_html(first_comment))
 
     for _ in range(1, qty_addl_comments):
@@ -100,16 +101,16 @@ def main():
 
         temp_loop_comment_model = ai_manager.return_model_by_name(loop_comment_model_name)
 
-        loop_comment_prompt, prompt = generate_loop_prompt(summary, parent_comment)
+        loop_comment_prompt, prompt_keywords = generate_loop_prompt(summary, parent_comment)
         print("    loop_comment_prompt: ", loop_comment_prompt, "\n")
 
-        loop_comment = ai_manager.fetch_inference(temp_loop_comment_model, loop_comment_prompt)
+        loop_comment, flavors = ai_manager.fetch_inference(temp_loop_comment_model, loop_comment_prompt)
 
         if loop_comment is None or len(loop_comment) == 0:
             print("No loop comment generated. Skipping...")
             continue
 
-        comment_thread_manager.add_comment(parent_index, loop_comment, temp_loop_comment_model.get("polite_name", "anonymous llm"), prompt, datetime.now())
+        comment_thread_manager.add_comment(parent_index, loop_comment, temp_loop_comment_model.get("polite_name", "anonymous llm"), prompt_keywords  + " | " +  flavors, datetime.now())
         comment_history.append(extract_pure_text_from_raw_html(loop_comment))
 
 
