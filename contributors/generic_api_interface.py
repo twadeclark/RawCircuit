@@ -3,7 +3,7 @@ import random
 import requests
 from contributors.abstract_ai_unit import AbstractAIUnit
 
-class HuggingFaceInterface(AbstractAIUnit):
+class GenericApiInterface(AbstractAIUnit):
     def __init__(self, config):
         self.api_key = config["api_key"]
         self.base_url = config["base_url"]
@@ -11,6 +11,16 @@ class HuggingFaceInterface(AbstractAIUnit):
     def fetch_inference(self, model, formatted_messages):
         headers = {"Authorization": f"Bearer {self.api_key}"}
         this_api_endpoint = self.base_url + model['model_name']
+
+        def query(payload):
+            response = requests.post(this_api_endpoint, headers=headers, json=payload, timeout=120, stream=True)
+            all_chunks = ""
+
+            for chunk in response.iter_content(chunk_size=1):
+                all_chunks += chunk.decode("utf-8")
+
+            response.close()
+            return json.loads(all_chunks)
 
         # flavors - https://huggingface.co/docs/api-inference/detailed_parameters#text-generation-task
         max_new_tokens = random.randint(1, 10) * 25 # 0 - 250
@@ -24,35 +34,6 @@ class HuggingFaceInterface(AbstractAIUnit):
         flavors = f" \t max_new_tokens: {max_new_tokens_as_string}, \t temperature: {temperature_as_string}, \t repetition_penalty: {repetition_penalty_as_string}"
         print(flavors)
 
-
-        # Define chat messages (adjust as needed)
-        chat_messages = [
-            "Hello, how are you?",
-            "I'm having a great day! What about you?",
-            "I'm doing well, thanks for asking. Is there anything I can help you with?"
-        ]
-
-        # Create payload structure
-        payload = {
-            "inputs": chat_messages,
-            "parameters": {
-                "temperature": temperature,
-                "repetition_penalty": repetition_penalty
-            },
-        }
-
-
-        def query(payload):
-            response = requests.post(this_api_endpoint, headers=headers, json=payload, timeout=120)
-            all_chunks = ""
-
-            for chunk in response.iter_content(decode_unicode=True):
-                print(chunk, end="")
-                all_chunks += chunk
-
-            response.close()
-            return json.loads(all_chunks)
-
         data = query(
             {
                 "inputs": formatted_messages,
@@ -64,9 +45,7 @@ class HuggingFaceInterface(AbstractAIUnit):
                                "return_full_text": False,
                                },
                 "options": {"wait_for_model": True,
-                            "use_cache": False,
-                            "stream": True
-                            }
+                            "use_cache": False}
             }
         )
 

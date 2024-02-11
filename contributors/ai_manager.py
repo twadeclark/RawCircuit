@@ -2,6 +2,7 @@ import json
 import random
 from content_loaders.scraper import make_polite_name
 from contributors.hugging_face_interface import HuggingFaceInterface
+from contributors.litellm_interface import LiteLLMInterface
 from contributors.local_openai_interface import LocalOpenAIInterface
 
 class AIManager:
@@ -9,7 +10,8 @@ class AIManager:
         self.config = config
         self.interface_list = {
             'LocalOpenAIInterface': LocalOpenAIInterface(config["LocalOpenAIInterface"]),
-            'HuggingFaceInterface': HuggingFaceInterface(config["HuggingFace"])
+            'HuggingFaceInterface_Native': HuggingFaceInterface(config["HuggingFace"]),
+            'HuggingFaceInterface': LiteLLMInterface(config["HuggingFace"])
         }
 
         with open('models.json', 'r', encoding='utf-8') as file:

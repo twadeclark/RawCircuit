@@ -14,9 +14,9 @@ class LocalOpenAIInterface(AbstractAIUnit):
 
         # flavors
         max_tokens = random.randint(1, 20) * 25
-        temperature = random.uniform(0.0, 2.0) # range 0 and 2, Defaults to 1
-        frequency_penalty = random.uniform(-2.0, 2.0) # range -2.0 and 2.0, Defaults to 0
-        presence_penalty = random.uniform(-2.0, 2.0) # range -2.0 and 2.0, Defaults to 0
+        temperature = random.uniform(0.0, 2.0) # range 0 - 2, Defaults to 1
+        frequency_penalty = random.uniform(-2.0, 2.0) # range -2.0 - 2.0, Defaults to 0
+        presence_penalty = random.uniform(-2.0, 2.0) # range -2.0 - 2.0, Defaults to 0
 
         max_tokens_as_string = str(max_tokens)
         temperature_as_string = "{:.1f}".format(temperature)
@@ -68,6 +68,10 @@ class LocalOpenAIInterface(AbstractAIUnit):
                         model_name = model_name[:-5]
                     model_name = make_polite_name(model_name)
                     model["polite_name"] = model_name.strip()
+        if model_name is None or len(model_name) == 0:
+            model["polite_name"] = make_polite_name(model["model_name"])
+        if model_name is None or len(model_name) == 0:
+            model_name = model["model_name"]
 
         return content, flavors
 

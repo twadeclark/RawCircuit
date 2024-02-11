@@ -9,23 +9,26 @@ from content_loaders.scraper import extract_pure_text_from_raw_html, fetch_raw_h
 from contributors.ai_manager import AIManager
 from database.db_manager import DBManager
 from output_formatter.markdown_formatter import format_to_markdown
+from output_formatter.publish_pelican import publish_pelican
+from output_formatter.upload_directory_to_s3 import upload_directory_to_s3
 from vocabulary.news_search import SearchTerms
 from prompt_generator.instruction_generator import generate_loop_prompt, generate_first_comment_prompt, generate_summary_prompt
 
 
 def main():
     #TODO: move these to config.ini, also add random or round robin for an interface if in a loop
+    # or LocalLLM
     summary_model_name = "LocalLLM" # set to None to choose a random model
-    first_comment_model_name = "LocalLLM" # set to None to choose a random model
-    loop_comment_model_name = "LocalLLM" # set to None to choose a random model
+    first_comment_model_name = summary_model_name # set to None to choose a random model
+    loop_comment_model_name = summary_model_name # set to None to choose a random model
 
+    comment_thread_manager = CommentThreadManager()
     config = configparser.ConfigParser()
     config.read('config.ini')
     ai_manager = AIManager(config)
     search_terms = SearchTerms()
     db_manager = DBManager(config['postgresql'])
     news_aggregator_manager = NewsAggregatorManager(config, db_manager, None)
-    comment_thread_manager = CommentThreadManager()
 
     comment_history = []
     continuity_multiplier = float(config.get('general_configurations', 'continuity_multiplier'))
@@ -48,7 +51,9 @@ def main():
 
     db_manager.update_process_time(article_to_process)
 
-    if article_to_process.scraped_timestamp is None: # check if there is article_to_process.scraped_timestamp. if no, then scape the article
+    if article_to_process.scraped_website_content is None or len(article_to_process.scraped_website_content) == 0:
+        print("No content found. Scraping article...")
+
         db_manager.update_scrape_time(article_to_process)
         raw_html_from_url, fetch_success = fetch_raw_html_from_url(article_to_process.url)
         if not fetch_success:
@@ -127,21 +132,19 @@ def main():
         file.write(formatted_post)
     print("     Formatted post saved to:", file_path)
 
-    publish_pelican(config["publishing_details"])
-    print("     Commentary published for: ", article_to_process.title)
+    if config.getboolean('publishing_details', 'publish_to_pelican'):
+        publish_pelican(config["publishing_details"])
+        print("     Website published for: ", article_to_process.title)
+    else:
+        print("     Website not published. Pelican publishing disabled.")
 
+    if config.getboolean('aws_s3_bucket_details', 'publish_to_s3'):
+        number_of_files_pushed = upload_directory_to_s3(config["aws_s3_bucket_details"], config["publishing_details"]["local_publish_path"])
+        print(number_of_files_pushed)
+    else:
+        print("     Website not pushed. S3 publishing disabled.")
 
-def publish_pelican(config):
-    # execute this shell command: C:\Users\twade\git\pelican\pelican C:\Users\twade\projects\PelicanRawCircuit\content -s C:\Users\twade\projects\PelicanRawCircuit\pelicanconf.py -o C:\Users\twade\projects\PelicanRawCircuit\output -o C:\\Users\\twade\\projects\\PelicanRawCircuit\\output
-    local_content_path = config.get('local_content_path')
-    local_pelicanconf = config.get('local_pelicanconf')
-    local_publish_path = config.get('local_publish_path')
-    os_result = os.system("pelican " + local_content_path + " -s " + local_pelicanconf + " -o " + local_publish_path)
-    if os_result != 0:
-        print("     Pelican failed to execute. Exiting...")
-        return
-    print("     Pelican executed.")
-
+    print("     Done. Elapsed time:", comment_thread_manager.get_duration())
 
 if __name__ == "__main__":
     main()
