@@ -1,7 +1,11 @@
 import json
 import random
 import requests
+from transformers import AutoTokenizer
 from contributors.abstract_ai_unit import AbstractAIUnit
+
+# NOTE: HuggingFace Free Interface pays no attention to max_length, and it does not stream
+
 
 class HuggingFaceInterface(AbstractAIUnit):
     def __init__(self, config):
@@ -11,36 +15,59 @@ class HuggingFaceInterface(AbstractAIUnit):
     def fetch_inference(self, model, formatted_messages):
         headers = {"Authorization": f"Bearer {self.api_key}"}
         this_api_endpoint = self.base_url + model['model_name']
+        q = {}
+        flavors = ""
 
-        # flavors - https://huggingface.co/docs/api-inference/detailed_parameters#text-generation-task
-        max_new_tokens = random.randint(1, 10) * 25 # 0 - 250
-        temperature = random.uniform(0.0, 100.0) # range 0.0 - 100.0, Default: 1.0
-        repetition_penalty = random.uniform(0.0, 100.0) # range 0.0 - 100.0, Default: None
+        if 'summary specialist' in formatted_messages[0]["content"]:
+            max_length = 500
+            min_length = 400
+            temperature = 0.1
+            repetition_penalty = 1.0
+        else:
+            # flavors - https://huggingface.co/docs/api-inference/detailed_parameters#text-generation-task
+            max_length = random.randint(1, 10) * 25
+            min_length = max_length // 2
+            temperature = random.uniform(0.0, 2.0)
+            repetition_penalty = random.uniform(0.0, 2.0)
 
-        max_new_tokens_as_string = str(max_new_tokens)
+        max_length_as_string = str(max_length)
+        min_length_as_string = str(min_length)
         temperature_as_string = "{:.1f}".format(temperature)
         repetition_penalty_as_string = "{:.1f}".format(repetition_penalty)
 
-        flavors = f" \t max_new_tokens: {max_new_tokens_as_string}, \t temperature: {temperature_as_string}, \t repetition_penalty: {repetition_penalty_as_string}"
-        print(flavors)
+        flavors = f" \t min_length: {min_length_as_string},  \t max_length: {max_length_as_string}, \t temperature: {temperature_as_string}, \t repetition_penalty: {repetition_penalty_as_string}"
 
+        model_name = model['model_name']
+        
+        kwargs = {}
+        kwargs["token"] = self.api_key
 
-        # Define chat messages (adjust as needed)
-        chat_messages = [
-            "Hello, how are you?",
-            "I'm having a great day! What about you?",
-            "I'm doing well, thanks for asking. Is there anything I can help you with?"
-        ]
+        tokenizer = AutoTokenizer.from_pretrained(model_name, **kwargs)
 
-        # Create payload structure
-        payload = {
-            "inputs": chat_messages,
-            "parameters": {
-                "temperature": temperature,
-                "repetition_penalty": repetition_penalty
-            },
-        }
+        formatted_messages_with_chat_template_applied = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
+        print("    formatted_messages_with_chat_template_applied: ", formatted_messages_with_chat_template_applied, "\n")
 
+        q = {
+            "inputs": formatted_messages_with_chat_template_applied,
+            "parameters": { "max_length": max_length,
+                            "min_length": min_length,
+                            "temperature": temperature,
+                            "repetition_penalty": repetition_penalty,
+                            "max_time": 120,
+                            "do_sample": True,
+                            "return_full_text": False
+                            },
+            "options":    { "wait_for_model": True,
+                            "use_cache": False,
+                            "stream": True
+                            }
+                            
+            }
+
+        q.update()
+        
+        print("    flavors: ", flavors, "\n")
+        print("    q: ", q, "\n")
 
         def query(payload):
             response = requests.post(this_api_endpoint, headers=headers, json=payload, timeout=120)
@@ -50,31 +77,15 @@ class HuggingFaceInterface(AbstractAIUnit):
                 print(chunk, end="")
                 all_chunks += chunk
 
+            print("\n")
             response.close()
             return json.loads(all_chunks)
 
-        data = query(
-            {
-                "inputs": formatted_messages,
-                "parameters": {"max_time": 120,
-                               "do_sample": True,
-                               "max_new_tokens": max_new_tokens,
-                               "temperature": temperature,
-                               "repetition_penalty": repetition_penalty,
-                               "return_full_text": False,
-                               },
-                "options": {"wait_for_model": True,
-                            "use_cache": False,
-                            "stream": True
-                            }
-            }
-        )
-
-        response = None
+        data = query(q)
 
         target_keys = ['error', 'errors', 'warning', 'warnings', 'generated_text', 'summary_text']
         results = self.find_keys(data, target_keys)
-        print(results)
+        print("    results: ", results, "\n")
 
         # big problems:
         if results.get('error') is not None:
@@ -91,13 +102,14 @@ class HuggingFaceInterface(AbstractAIUnit):
             print("Warnings: ", results['warnings'])
 
         # success stories:
+        response = None
         if results.get('generated_text') is not None:
             response = results['generated_text']
 
         if results.get('summary_text') is not None:
             response = results['summary_text']
 
-        return response
+        return response, flavors
 
 
     def find_keys(self, json_input, target_keys):

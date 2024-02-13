@@ -4,11 +4,12 @@ import random
 # prompt engineering: https://cookbook.openai.com/articles/techniques_to_improve_reliability
 
 def generate_summary_prompt(article_text):
-    system_content = "You are a specialist at summarizing news articles into your own words. You always make sure to include the major points presented. You always ignore any gibberish, and never include nonsense in your reply. Take some time to orgainze your thoughts, and provide a summary of the article in one paragraph."
+    system_content = "You are a summary specialist at summarizing news articles into your own words. You always make sure to include the major points presented. Take some time to orgainze your thoughts, and provide a summary of the article in two paragraphs."
+    # system_content = "summarize:"
     formatted_messages = []
     formatted_messages.append({"role": "system", "content": system_content})
     formatted_messages.append({"role": "user", "content": article_text})
-    return formatted_messages, ""
+    return formatted_messages, "Summary."
 
 def generate_first_comment_prompt(summary_text):
     descriptor1 = get_descriptor()
@@ -44,9 +45,15 @@ def generate_loop_prompt(summary, parent_comment):
     system_content += f"You will {metaphor}. Take some time to organize your thoughts, and revise your response into {length}."
 
     formatted_messages = []
-    formatted_messages.append({"role": "system", "content": system_content})
+    # formatted_messages.append({"role": "system", "content": system_content})
+    # formatted_messages.append({"role": "assistant", "content": summary})
+    # formatted_messages.append({"role": "user", "content": parent_comment})
+
+    formatted_messages.append({"role": "system", "content": "You are an AI assistant designed to follow instructions."})
+    formatted_messages.append({"role": "user", "content": system_content})
     formatted_messages.append({"role": "assistant", "content": summary})
     formatted_messages.append({"role": "user", "content": parent_comment})
+
     return formatted_messages, prompt_keywords
 
 

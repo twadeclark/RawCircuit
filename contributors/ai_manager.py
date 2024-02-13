@@ -42,14 +42,16 @@ class AIManager:
         # let's go!
         response, flavors = interface.fetch_inference(model, formatted_messages)
 
-        if response is not None and len(response) > 0: # this strips off the prompt if the response starts with the prompt
+        # remove the prompt from the response
+        if response is not None and len(response) > 0:
             prompt_length = len(formatted_messages)
             if response[:prompt_length] == formatted_messages:
                 response = response[prompt_length:]
 
-        response = _truncate_from_marker(response, "```")
-        response = _truncate_from_marker(response, "###")
-        response = _remove_end_repetitions(response)
+        # # clean up the response
+        # response = _truncate_from_marker(response, "```")
+        # response = _truncate_from_marker(response, "###")
+        # response = _remove_end_repetitions(response)
 
         return response.strip(), flavors
 

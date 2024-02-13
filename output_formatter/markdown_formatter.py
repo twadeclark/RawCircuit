@@ -67,6 +67,11 @@ def get_badges(prompt_keywords):
         max_new_tokens_rotate = int(60 - ((max_new_tokens - 25) / 3)) # 25 - 500
         ret_val += (f"<span title='max_new_tokens = {max_new_tokens}'> 🪙</span><span style='display: inline-block; transform: rotate({max_new_tokens_rotate}deg);'>→</span> ∙ ")
 
+    if 'max_length' in prompt_keywords:
+        max_length = int(re.search(r'max_length: (\d+)', prompt_keywords).group(1)) # 25 - 250
+        max_length_rotate = int(60 - ((max_length - 25) / 3)) # 25 - 500
+        ret_val += (f"<span title='max_length = {max_length}'> 🪙</span><span style='display: inline-block; transform: rotate({max_length_rotate}deg);'>→</span> ∙ ")
+
     if 'temperature' in prompt_keywords:
         temperature = float(re.search(r'temperature: ([\d.]+)', prompt_keywords).group(1)) # 0 - 2
         temperature_rotate = int((temperature - 1) * -60) # 0 - 2

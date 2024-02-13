@@ -20,7 +20,9 @@ def fetch_raw_html_from_url(url):
         driver.quit()
 
 
-def make_polite_name(s):
+def make_polite_name(inVal):
+    s = inVal
+    s = re.sub(r'^.*?/', '', s)
     s = re.sub(r'[^.\w]', ' ', s)
     s = re.sub(r'_', ' ', s)
 
