@@ -18,7 +18,7 @@ from prompt_generator.instruction_generator import generate_loop_prompt, generat
 def main():
     #TODO: move these to config.ini, also add random or round robin for an interface if in a loop
     # or LocalLLM
-    summary_model_name = "LocalLLM" # set to None to choose a random model
+    summary_model_name = "TinyLlama/TinyLlama-1.1B-Chat-v1.0" # set to None to choose a random model
     first_comment_model_name = summary_model_name # set to None to choose a random model
     loop_comment_model_name = summary_model_name # set to None to choose a random model
 

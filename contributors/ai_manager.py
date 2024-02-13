@@ -1,17 +1,22 @@
 import json
 import random
+import re
 from content_loaders.scraper import make_polite_name
 from contributors.hugging_face_interface import HuggingFaceInterface
 from contributors.litellm_interface import LiteLLMInterface
 from contributors.local_openai_interface import LocalOpenAIInterface
+from contributors.transformers_interface import TransformersInterface
 
 class AIManager:
     def __init__(self, config):
         self.config = config
         self.interface_list = {
             'LocalOpenAIInterface': LocalOpenAIInterface(config["LocalOpenAIInterface"]),
-            'HuggingFaceInterface_Native': HuggingFaceInterface(config["HuggingFace"]),
-            'HuggingFaceInterface': LiteLLMInterface(config["HuggingFace"])
+            'LiteLLMInterface': LiteLLMInterface(config["HuggingFace"]),
+            'HuggingFaceInterface': HuggingFaceInterface(config["HuggingFace"]),
+            # 'GenericApiInterface': GenericApiInterface(config["HuggingFace"]),
+            # 'HuggingFaceInterface_Native': HuggingFaceInterface_Native(config["HuggingFace"]),
+            'TransformersInterface': TransformersInterface(config["TransformersInterface"]),
         }
 
         with open('models.json', 'r', encoding='utf-8') as file:
@@ -44,6 +49,7 @@ class AIManager:
 
         response = _truncate_from_marker(response, "```")
         response = _truncate_from_marker(response, "###")
+        response = _remove_end_repetitions(response)
 
         return response.strip(), flavors
 
@@ -104,3 +110,17 @@ def _truncate_user_messages_if_needed(list_of_dicts, word_limit):
             list_of_dicts = _reduce_content(list_of_dicts, word_limit)
 
     return list_of_dicts
+
+def _remove_end_repetitions(text): # sometimes models with wild settings get stuck in a loop and repeat the same word or punctuation over and over
+    # catch repeated words at the end of text, possibly followed by punctuation and spaces. Also catches repeated punctuation or characters.
+    pattern = re.compile(r'(\b(\w+)[,.!?\s]*)(?:\2[,.!?\s]*)+$|([,.!?])\3+$')
+    
+    def replace_func(match):
+        if match.group(2):  # Word repetitions
+            return match.group(1)
+        else:  # Character repetitions
+            return match.group(3)
+    
+    cleaned_text = pattern.sub(replace_func, text.strip())
+    
+    return cleaned_text
