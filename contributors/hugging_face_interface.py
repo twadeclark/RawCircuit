@@ -14,9 +14,7 @@ class HuggingFaceInterface(AbstractAIUnit):
 
     def fetch_inference(self, model, formatted_messages):
         headers = {"Authorization": f"Bearer {self.api_key}"}
-        this_api_endpoint = self.base_url + model['model_name']
-        q = {}
-        flavors = ""
+        this_api_endpoint = self.base_url + model['name']
 
         if 'summary specialist' in formatted_messages[0]["content"]:
             max_length = 500
@@ -30,19 +28,15 @@ class HuggingFaceInterface(AbstractAIUnit):
             temperature = random.uniform(0.0, 2.0)
             repetition_penalty = random.uniform(0.0, 2.0)
 
-        max_length_as_string = str(max_length)
-        min_length_as_string = str(min_length)
         temperature_as_string = "{:.1f}".format(temperature)
         repetition_penalty_as_string = "{:.1f}".format(repetition_penalty)
 
-        flavors = f" \t min_length: {min_length_as_string},  \t max_length: {max_length_as_string}, \t temperature: {temperature_as_string}, \t repetition_penalty: {repetition_penalty_as_string}"
+        flavors = f" \t min_length: {min_length},  \t max_length: {max_length}, \t temperature: {temperature_as_string}, \t repetition_penalty: {repetition_penalty_as_string}"
 
-        model_name = model['model_name']
-        
         kwargs = {}
         kwargs["token"] = self.api_key
 
-        tokenizer = AutoTokenizer.from_pretrained(model_name, **kwargs)
+        tokenizer = AutoTokenizer.from_pretrained(model["name"], **kwargs)
 
         formatted_messages_with_chat_template_applied = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
         print("    formatted_messages_with_chat_template_applied: ", formatted_messages_with_chat_template_applied, "\n")
@@ -61,11 +55,9 @@ class HuggingFaceInterface(AbstractAIUnit):
                             "use_cache": False,
                             "stream": True
                             }
-                            
             }
 
-        q.update()
-        
+
         print("    flavors: ", flavors, "\n")
         print("    q: ", q, "\n")
 

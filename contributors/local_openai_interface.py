@@ -1,6 +1,6 @@
 import random
 from openai import OpenAI
-from content_loaders.scraper import make_polite_name
+from content_loaders.scraper import get_polite_name
 from contributors.abstract_ai_unit import AbstractAIUnit
 
 class LocalOpenAIInterface(AbstractAIUnit):
@@ -66,10 +66,10 @@ class LocalOpenAIInterface(AbstractAIUnit):
                     model_name = model_name.strip()
                     if model_name.lower().endswith(".gguf"):
                         model_name = model_name[:-5]
-                    model_name = make_polite_name(model_name)
+                    model_name = get_polite_name(model_name)
                     model["polite_name"] = model_name.strip()
         if model_name is None or len(model_name) == 0:
-            model["polite_name"] = make_polite_name(model["model_name"])
+            model["polite_name"] = get_polite_name(model["model_name"])
         if model_name is None or len(model_name) == 0:
             model_name = model["model_name"]
 

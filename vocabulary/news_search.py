@@ -4,7 +4,7 @@ import yaml
 
 class SearchTerms():
     def __init__(self):
-        with open('categories_tags_keywords.yaml', 'r', encoding='utf-8') as file:
+        with open('vocabulary/categories_tags_keywords.yaml', 'r', encoding='utf-8') as file:
             self.categories_tags_keywords = yaml.safe_load(file)
 
     def get_random_term(self):

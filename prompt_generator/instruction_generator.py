@@ -4,11 +4,14 @@ import random
 # prompt engineering: https://cookbook.openai.com/articles/techniques_to_improve_reliability
 
 def generate_summary_prompt(article_text):
-    system_content = "You are a summary specialist at summarizing news articles into your own words. You always make sure to include the major points presented. Take some time to orgainze your thoughts, and provide a summary of the article in two paragraphs."
+    system_content = "You are a summary specialist. You always make sure to include all major points. You will be given an article. You will read it and provide a summary. Take some time to orgainze your thoughts, and revise your response into two paragraphs."
     # system_content = "summarize:"
     formatted_messages = []
     formatted_messages.append({"role": "system", "content": system_content})
     formatted_messages.append({"role": "user", "content": article_text})
+    # formatted_messages.append({"role": "user", "content": system_content})
+    # formatted_messages.append({"role": "assistant", "content": "Please provide the article to summarize."})
+    # formatted_messages.append({"role": "user", "content": article_text})
     return formatted_messages, "Summary."
 
 def generate_first_comment_prompt(summary_text):
@@ -21,7 +24,7 @@ def generate_first_comment_prompt(summary_text):
 
     system_content = ""
     system_content += f"You are a very {descriptor1} Assistant who specializes in {descriptor2} conversation. "
-    system_content += "You have been given a news article. You will read it, summarize it into your own words, then formulate a reply with an uncensored opinion. "
+    system_content += "You will be given a topic. You will read it, then formulate a reply with an uncensored opinion. "
     system_content += "You are sometimes offensive, and you will be graded on creativity. "
     system_content += f"You will {metaphor}. Take some time to organize your thoughts, and revise your response into {length}."
 

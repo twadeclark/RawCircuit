@@ -8,7 +8,7 @@ class DBManager:
 
     def connect_to_db(self):
         return psycopg2.connect(**self.config)
-    
+
     def article_exists(self, url):
         with self.conn.cursor() as cur:
             cur.execute("""

@@ -1,7 +1,6 @@
 import json
-import random
 import re
-from content_loaders.scraper import make_polite_name
+# from content_loaders.scraper import make_polite_name
 from contributors.hugging_face_interface import HuggingFaceInterface
 from contributors.litellm_interface import LiteLLMInterface
 from contributors.local_openai_interface import LocalOpenAIInterface
@@ -12,30 +11,14 @@ class AIManager:
         self.config = config
         self.interface_list = {
             'LocalOpenAIInterface': LocalOpenAIInterface(config["LocalOpenAIInterface"]),
-            'LiteLLMInterface': LiteLLMInterface(config["HuggingFace"]),
+            'LiteLLMInterface': LiteLLMInterface(config["LiteLLMInterface"]),
             'HuggingFaceInterface': HuggingFaceInterface(config["HuggingFace"]),
-            # 'GenericApiInterface': GenericApiInterface(config["HuggingFace"]),
-            # 'HuggingFaceInterface_Native': HuggingFaceInterface_Native(config["HuggingFace"]),
             'TransformersInterface': TransformersInterface(config["TransformersInterface"]),
+            # 'GenericApiInterface': GenericApiInterface(config["GenericApiInterface"]),
         }
 
-        with open('models.json', 'r', encoding='utf-8') as file:
-            self.models_json = json.load(file)
-
-    def return_model_by_name(self, model_name):
-        if model_name is None or len(model_name) == 0:
-            model_name = self._choose_random_model_name()
-        model = self.models_json[model_name]
-        model["model_name"] = model_name
-
-        polite_name = make_polite_name(model_name)
-        model["polite_name"] = polite_name
-
-        return model
-
     def fetch_inference(self, model, formatted_messages):
-        interface_name = model['interface']
-        interface = self.interface_list.get(interface_name)
+        interface = self.interface_list.get(model["interface"])
         word_limit = model["max_tokens"] // 2
         formatted_messages = _truncate_user_messages_if_needed(formatted_messages, word_limit)
 
@@ -47,19 +30,14 @@ class AIManager:
             prompt_length = len(formatted_messages)
             if response[:prompt_length] == formatted_messages:
                 response = response[prompt_length:]
+            response = response.strip()
 
-        # # clean up the response
+        # # clean up the response if we want, but it's more fun to see the raw output
         # response = _truncate_from_marker(response, "```")
         # response = _truncate_from_marker(response, "###")
         # response = _remove_end_repetitions(response)
 
-        return response.strip(), flavors
-
-
-    def _choose_random_model_name(self):
-        model_names = list(self.models_json.keys())
-        model_name = random.choice(model_names)
-        return model_name
+        return response, flavors
 
 
 def _truncate_from_marker(input_string, marker="###"):
@@ -116,13 +94,13 @@ def _truncate_user_messages_if_needed(list_of_dicts, word_limit):
 def _remove_end_repetitions(text): # sometimes models with wild settings get stuck in a loop and repeat the same word or punctuation over and over
     # catch repeated words at the end of text, possibly followed by punctuation and spaces. Also catches repeated punctuation or characters.
     pattern = re.compile(r'(\b(\w+)[,.!?\s]*)(?:\2[,.!?\s]*)+$|([,.!?])\3+$')
-    
+
     def replace_func(match):
         if match.group(2):  # Word repetitions
             return match.group(1)
         else:  # Character repetitions
             return match.group(3)
-    
+
     cleaned_text = pattern.sub(replace_func, text.strip())
-    
+
     return cleaned_text
