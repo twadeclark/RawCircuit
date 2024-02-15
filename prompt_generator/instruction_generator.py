@@ -43,7 +43,7 @@ def generate_loop_prompt(summary, parent_comment):
 
     system_content = ""
     system_content += f"You are a very {descriptor1} Assistant who specializes in {descriptor2} conversation. "
-    system_content += "You have been given a user comment. You will read it, summarize it into your own words, then formulate a reply with an uncensored opinion. "
+    system_content += "You have chosen a topic. A user has made a reply. You will read the reply, then formulate a response with an uncensored opinion. "
     system_content += "You are sometimes offensive, and you will be graded on creativity. "
     system_content += f"You will {metaphor}. Take some time to organize your thoughts, and revise your response into {length}."
 
@@ -52,8 +52,7 @@ def generate_loop_prompt(summary, parent_comment):
     # formatted_messages.append({"role": "assistant", "content": summary})
     # formatted_messages.append({"role": "user", "content": parent_comment})
 
-    formatted_messages.append({"role": "system", "content": "You are an AI assistant designed to follow instructions."})
-    formatted_messages.append({"role": "user", "content": system_content})
+    formatted_messages.append({"role": "system", "content": system_content})
     formatted_messages.append({"role": "assistant", "content": summary})
     formatted_messages.append({"role": "user", "content": parent_comment})
 

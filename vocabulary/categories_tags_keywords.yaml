@@ -4,7 +4,6 @@ Robotics:
     - robotic
     - Cobot
     - drone
-    - droid
   self-driving:
     - self driving
     - self-driving
@@ -43,10 +42,10 @@ Imaging:
     - Machine Vision
     - Visual Data Mining
     - Pattern Recognition
-    - Biometric Identification Systems
-    - Convolutional Neural Networks
+    - Biometric Identification System
+    - Convolutional Neural Network
     - Image Recognition
-    - Generative Adversarial Networks
+    - Generative Adversarial Network
     - Facial Recognition Technology
     - Object Detection
     - Augmented Reality
@@ -83,7 +82,6 @@ OpenSource:
     - Support Vector Machines
   algorithms:
     - Algorithm
-    - open source
     - Python
     - Julia
     - SQL
@@ -99,7 +97,7 @@ OpenSource:
     - FastAI
     - Reinforcement Learning 
     - MLflow
-    - Open Source Data Sets
+    - Data Set
     - Decision Tree
     - Random Forest
     - Naive Bayes
@@ -126,8 +124,8 @@ OpenSource:
   community:
     - Community
     - AI Conferences
-    - Open Source AI Projects
-    - Online AI Tutorials
+    - open source
+    - Online AI Tutorial
     - AI Courseware
     - AI Fairness 360
     - AIF360

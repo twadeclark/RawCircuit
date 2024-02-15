@@ -1,5 +1,8 @@
+from datetime import datetime
 import psycopg2
+from psycopg2.extras import DictCursor
 from article import Article
+
 
 class DBManager:
     def __init__(self, config):
@@ -97,3 +100,50 @@ class DBManager:
                 """,
                 (article.scraped_website_content, article.id))
             self.conn.commit()
+
+
+    def get_models_with_none_success(self):
+        with self.conn.cursor(cursor_factory=DictCursor) as cur:
+            cur.execute("""
+                SELECT model_name
+                FROM model_records
+                WHERE success IS NULL
+                """)
+            rows = cur.fetchall()
+            if rows is None:
+                return None
+            return rows
+
+    def insert_model_record(self, model_name):
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO model_records (model_name, attempt_time)
+                VALUES (%s, %s)
+                """,
+                (model_name, datetime.now()))
+            self.conn.commit()
+            return cur.lastrowid
+
+    def update_model_record(self, model_name, success, disposition):
+        with self.conn.cursor() as cur:
+            success_bit = '1' if success else '0'
+            cur.execute("""
+                UPDATE model_records
+                SET attempt_time = %s, success = %s::bit(1), disposition = %s
+                WHERE model_name = %s
+                """,
+                (datetime.now(), success_bit, disposition, model_name))
+            self.conn.commit()
+
+    def get_model_name_list_by_list_of_model_names(self, list_of_model_names):
+        with self.conn.cursor(cursor_factory=DictCursor) as cur:
+            cur.execute("""
+                SELECT model_name
+                FROM model_records
+                WHERE model_name = ANY(%s)
+                """,
+                (list_of_model_names,))
+            rows = cur.fetchall()
+            if rows is None:
+                return None
+            return rows

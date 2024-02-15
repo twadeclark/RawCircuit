@@ -39,7 +39,6 @@ class HuggingFaceInterface(AbstractAIUnit):
         tokenizer = AutoTokenizer.from_pretrained(model["name"], **kwargs)
 
         formatted_messages_with_chat_template_applied = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
-        print("    formatted_messages_with_chat_template_applied: ", formatted_messages_with_chat_template_applied, "\n")
 
         q = {
             "inputs": formatted_messages_with_chat_template_applied,
@@ -58,8 +57,7 @@ class HuggingFaceInterface(AbstractAIUnit):
             }
 
 
-        print("    flavors: ", flavors, "\n")
-        print("    q: ", q, "\n")
+        print("    flavors: ", flavors)
 
         def query(payload):
             response = requests.post(this_api_endpoint, headers=headers, json=payload, timeout=120)
@@ -77,7 +75,6 @@ class HuggingFaceInterface(AbstractAIUnit):
 
         target_keys = ['error', 'errors', 'warning', 'warnings', 'generated_text', 'summary_text']
         results = self.find_keys(data, target_keys)
-        print("    results: ", results, "\n")
 
         # big problems:
         if results.get('error') is not None:
