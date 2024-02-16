@@ -110,8 +110,6 @@ class DBManager:
                 WHERE success IS NULL
                 """)
             rows = cur.fetchall()
-            if not rows:
-                return None
             return rows
 
     def insert_model_record(self, model_name):
@@ -144,6 +142,4 @@ class DBManager:
                 """,
                 (list_of_model_names,))
             rows = cur.fetchall()
-            if not rows:
-                return None
             return rows

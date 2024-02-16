@@ -21,7 +21,7 @@ def main():
     model = {} # empty to select new model from Huggingface
 
     # model = {
-    #                     "name":"tiiuae/falcon-7b-instruct",
+    #                     "name":"TinyLlama/TinyLlama-1.1B-Chat-v1.0",
     #                     "interface":"HuggingFaceInterface",
     #                     "max_tokens":MAX_TOKENS_FOR_SUMMARY
     #                 }
@@ -61,7 +61,7 @@ def main():
     print("url    :", article_to_process.url)
 
     if not article_to_process.scraped_website_content:
-        print("Content not found. Scraping article...")
+        print("Content not in database. Scraping article...")
 
         db_manager.update_scrape_time(article_to_process)
         raw_html_from_url, fetch_success = fetch_raw_html_from_url(article_to_process.url)

@@ -5,17 +5,20 @@ import random
 
 def generate_summary_prompt(article_text):
     # system_content = "You are a summary specialist. You always make sure to include all major points. You will be given an article. You will read it and provide a summary. Take some time to orgainze your thoughts, and revise your response into two paragraphs."
-    # system_content = "summarize:"
-
-    # formatted_messages = []
-    # formatted_messages.append({"role": "system", "content": system_content})
-    # formatted_messages.append({"role": "user", "content": article_text})
 
     # formatted_messages.append({"role": "user", "content": system_content})
     # formatted_messages.append({"role": "assistant", "content": "Please provide the article to summarize."})
     # formatted_messages.append({"role": "user", "content": article_text})
 
-    formatted_messages = "Summarize the text between the three backticks:\n```" + article_text + "```\nThe summary is:\n"
+    # 
+    # formatted_messages = "Summarize the text between the three backticks:\n```" + article_text + "```\nThe summary is:\n"
+
+
+    # good for TinyLlama 1.1B Chat V1.0
+    system_content = "You are a summary expert. You will provide a summary of the user message."
+    formatted_messages = []
+    formatted_messages.append({"role": "system", "content": system_content})
+    formatted_messages.append({"role": "user", "content": article_text})
 
     return formatted_messages, "Summary."
 
@@ -33,9 +36,12 @@ def generate_first_comment_prompt(summary_text):
     system_content += "You are sometimes offensive, and you will be graded on creativity. "
     system_content += f"You will {metaphor}. Take some time to organize your thoughts, and revise your response into {length}."
 
+
+    # good for TinyLlama 1.1B Chat V1.0
     formatted_messages = []
     formatted_messages.append({"role": "system", "content": system_content})
     formatted_messages.append({"role": "user", "content": summary_text})
+
     return formatted_messages, prompt_keywords
 
 def generate_loop_prompt(summary, parent_comment):
@@ -57,9 +63,15 @@ def generate_loop_prompt(summary, parent_comment):
     # formatted_messages.append({"role": "assistant", "content": summary})
     # formatted_messages.append({"role": "user", "content": parent_comment})
 
+    # formatted_messages.append({"role": "system", "content": system_content})
+    # # formatted_messages.append({"role": "assistant", "content": summary})
+    # # formatted_messages.append({"role": "user", "content": parent_comment})
+    # formatted_messages.append({"role": "user", "content": summary + ". " + parent_comment})
+
+
+    # good for TinyLlama 1.1B Chat V1.0
     formatted_messages.append({"role": "system", "content": system_content})
-    formatted_messages.append({"role": "assistant", "content": summary})
-    formatted_messages.append({"role": "user", "content": parent_comment})
+    formatted_messages.append({"role": "user", "content": summary + ".\n" + parent_comment})
 
     return formatted_messages, prompt_keywords
 

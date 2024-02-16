@@ -9,19 +9,19 @@ class HuggingfaceModelSearch:
     def fetch_next_model_name_from_huggingface(self):
         # we check db first and grab a model if we can
         models_with_none_success = self.db_manager.get_models_with_none_success()
-        if len(models_with_none_success) > 0:
+        if models_with_none_success:
             ret_val = models_with_none_success[0][0]
             return ret_val
 
         # if none in the db, we get the first page of the huggingface api results
         response = requests.get(
                                 "https://huggingface.co/api/models",
-                                params={"filter":"text-generation",
-                                        "sort":"likes",
-                                        "direction":"-1",
-                                        "limit":"30",
-                                        "full":"False",
-                                        "config":"False"},
+                                params={"filter"    : "text-generation",
+                                        "sort"      : "likes",
+                                        "direction" : "-1",
+                                        "limit"     : "10",
+                                        "full"      : "False",
+                                        "config"    : "False"},
                                 headers={},
                                 timeout=120
                                 )
