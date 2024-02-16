@@ -12,7 +12,7 @@ class NewsAggregatorManager:
             NewsApiOrgNews(config["NewsAPI"]),
             # RSSFeeder(config["RSSFeeder"]),
         ]
-        if aggregator_name is None:
+        if not aggregator_name:
             self.aggregator = random.choice(self.aggregators)
         else:
             self.aggregator = self.get_aggregator_by_name(aggregator_name)

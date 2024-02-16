@@ -39,7 +39,7 @@ class LocalOpenAIInterface(AbstractAIUnit):
         chunk = None
 
         for chunk in stream:
-            if not chunk.choices or chunk.choices[0].delta.content is None:
+            if not chunk.choices or not chunk.choices[0].delta.content:
                 continue
 
             print(chunk.choices[0].delta.content, end="")
@@ -68,9 +68,9 @@ class LocalOpenAIInterface(AbstractAIUnit):
                         model_name = model_name[:-5]
                     model_name = get_polite_name(model_name)
                     model["polite_name"] = model_name.strip()
-        if model_name is None or len(model_name) == 0:
+        if not model_name:
             model["polite_name"] = get_polite_name(model["model_name"])
-        if model_name is None or len(model_name) == 0:
+        if not model_name:
             model_name = model["model_name"]
 
         return content, flavors

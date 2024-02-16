@@ -18,13 +18,18 @@ class AIManager:
     def fetch_inference(self, model, formatted_messages):
         interface = self.interface_list.get(model["interface"])
         word_limit = model["max_tokens"] // 2
-        formatted_messages = _truncate_user_messages_if_needed(formatted_messages, word_limit)
+
+        if isinstance(formatted_messages, str):
+            pass
+
+        else:
+            formatted_messages = _truncate_user_messages_if_needed(formatted_messages, word_limit)
 
         # let's go!
         response, flavors = interface.fetch_inference(model, formatted_messages)
 
         # remove the prompt from the response
-        if response is not None and len(response) > 0:
+        if response:
             prompt_length = len(formatted_messages)
             if response[:prompt_length] == formatted_messages:
                 response = response[prompt_length:]
@@ -60,7 +65,7 @@ def _reduce_content(list_of_dicts, word_limit):
         longest_user_index = -1
         for i, item in enumerate(list_of_dicts):
             if item["role"] == "user":
-                if longest_user_content is None or len(item["content"].split()) > len(longest_user_content.split()):
+                if not longest_user_content or len(item["content"].split()) > len(longest_user_content.split()):
                     longest_user_content = item["content"]
                     longest_user_index = i
 

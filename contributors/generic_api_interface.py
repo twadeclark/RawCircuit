@@ -56,24 +56,24 @@ class GenericApiInterface(AbstractAIUnit):
         print(results)
 
         # big problems:
-        if results.get('error') is not None:
+        if results.get('error'):
             print("Error: ", results['error'])
 
-        if results.get('errors') is not None:
+        if results.get('errors'):
             print("Errors: ", results['errors'])
 
         # small problems:
-        if results.get('warning') is not None:
+        if results.get('warning'):
             print("Warning: ", results['warning'])
 
-        if results.get('warnings') is not None:
+        if results.get('warnings'):
             print("Warnings: ", results['warnings'])
 
         # success stories:
-        if results.get('generated_text') is not None:
+        if results.get('generated_text'):
             response = results['generated_text']
 
-        if results.get('summary_text') is not None:
+        if results.get('summary_text'):
             response = results['summary_text']
 
         return response

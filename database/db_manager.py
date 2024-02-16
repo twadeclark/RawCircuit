@@ -19,7 +19,7 @@ class DBManager:
                 """,
                 (url,))
             row = cur.fetchone()
-            if row is None:
+            if not row:
                 return False
             return row[0]
 
@@ -41,7 +41,7 @@ class DBManager:
                 LIMIT 1
                 """)
             row = cur.fetchone()
-            if row is None:
+            if not row:
                 return None
             return Article(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9],row[10],row[11],row[12],row[13],row[14],row[15])
 
@@ -54,7 +54,7 @@ class DBManager:
                 ORDER BY added_timestamp, rec_order
                 """)
             row = cur.fetchone()
-            if row is None:
+            if not row:
                 return None
             return Article(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9],row[10],row[11],row[12],row[13],row[14],row[15])
 
@@ -67,7 +67,7 @@ class DBManager:
                 ORDER BY added_timestamp, rec_order
                 """)
             row = cur.fetchone()
-            if row is None:
+            if not row:
                 return None
             return Article(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9],row[10],row[11],row[12],row[13],row[14],row[15])
 
@@ -110,7 +110,7 @@ class DBManager:
                 WHERE success IS NULL
                 """)
             rows = cur.fetchall()
-            if rows is None:
+            if not rows:
                 return None
             return rows
 
@@ -144,6 +144,6 @@ class DBManager:
                 """,
                 (list_of_model_names,))
             rows = cur.fetchall()
-            if rows is None:
+            if not rows:
                 return None
             return rows

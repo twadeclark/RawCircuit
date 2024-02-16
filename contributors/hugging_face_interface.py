@@ -15,30 +15,30 @@ class HuggingFaceInterface(AbstractAIUnit):
     def fetch_inference(self, model, formatted_messages):
         headers = {"Authorization": f"Bearer {self.api_key}"}
         this_api_endpoint = self.base_url + model['name']
+        formatted_messages_with_chat_template_applied = None
 
-        if 'summary specialist' in formatted_messages[0]["content"]:
+        if isinstance(formatted_messages, str):
             max_length = 500
             min_length = 400
             temperature = 0.1
             repetition_penalty = 1.0
+            formatted_messages_with_chat_template_applied = formatted_messages
         else:
             # flavors - https://huggingface.co/docs/api-inference/detailed_parameters#text-generation-task
             max_length = random.randint(1, 10) * 25
             min_length = max_length // 2
             temperature = random.uniform(0.0, 2.0)
             repetition_penalty = random.uniform(0.0, 2.0)
+            kwargs = {}
+            kwargs["token"] = self.api_key
+            tokenizer = AutoTokenizer.from_pretrained(model["name"], **kwargs)
+            formatted_messages_with_chat_template_applied = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
 
         temperature_as_string = "{:.1f}".format(temperature)
         repetition_penalty_as_string = "{:.1f}".format(repetition_penalty)
 
         flavors = f" \t min_length: {min_length},  \t max_length: {max_length}, \t temperature: {temperature_as_string}, \t repetition_penalty: {repetition_penalty_as_string}"
 
-        kwargs = {}
-        kwargs["token"] = self.api_key
-
-        tokenizer = AutoTokenizer.from_pretrained(model["name"], **kwargs)
-
-        formatted_messages_with_chat_template_applied = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
 
         q = {
             "inputs": formatted_messages_with_chat_template_applied,
@@ -77,25 +77,25 @@ class HuggingFaceInterface(AbstractAIUnit):
         results = self.find_keys(data, target_keys)
 
         # big problems:
-        if results.get('error') is not None:
+        if results.get('error'):
             print("Error: ", results['error'])
 
-        if results.get('errors') is not None:
+        if results.get('errors'):
             print("Errors: ", results['errors'])
 
         # small problems:
-        if results.get('warning') is not None:
+        if results.get('warning'):
             print("Warning: ", results['warning'])
 
-        if results.get('warnings') is not None:
+        if results.get('warnings'):
             print("Warnings: ", results['warnings'])
 
         # success stories:
         response = None
-        if results.get('generated_text') is not None:
+        if results.get('generated_text'):
             response = results['generated_text']
 
-        if results.get('summary_text') is not None:
+        if results.get('summary_text'):
             response = results['summary_text']
 
         return response, flavors

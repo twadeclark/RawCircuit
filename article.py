@@ -19,6 +19,18 @@ class Article:
 
         self.unstored_tags = []
         self.unstored_category = None
+        self.model = None
+
+        self.summary_prompt = None
+        self.summary_prompt_keywords = None
+        self.summary = None
+        self.summary_flavors = None
+
+        self.first_comment_prompt = None
+        self.first_comment_prompt_keywords = None
+        self.first_comment = None
+        self.first_comment_flavors = None
+
 
     def __str__(self):
         return (self.id or "N/A") + "\n" + \

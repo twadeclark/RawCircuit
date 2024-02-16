@@ -29,11 +29,11 @@ class HuggingfaceModelSearch:
 
         # check the db again for a model
         models_with_none_success = self.db_manager.get_models_with_none_success()
-        if models_with_none_success is not None:
+        if models_with_none_success:
             ret_val = models_with_none_success[0][0]
             return ret_val
 
-        while next_url_link is not None:
+        while next_url_link:
             response = requests.get(
                                     next_url_link,
                                     headers={},
@@ -43,7 +43,7 @@ class HuggingfaceModelSearch:
 
             # check the db again for a model
             models_with_none_success = self.db_manager.get_models_with_none_success()
-            if models_with_none_success is not None:
+            if models_with_none_success:
                 ret_val = models_with_none_success[0][0]
                 return ret_val
 
@@ -64,5 +64,5 @@ class HuggingfaceModelSearch:
             # if model["id"] not in rows:
             if model["id"] not in [item for sublist in rows for item in sublist]:
                 self.db_manager.insert_model_record(model["id"])
-        next_url_link = response.links['next']['url'] if response.links['next']['url'] is not None else None
+        next_url_link = response.links['next']['url'] or ""
         return next_url_link

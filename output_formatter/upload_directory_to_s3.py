@@ -3,7 +3,6 @@ import os
 import boto3
 from botocore.exceptions import NoCredentialsError
 
-# def upload_directory_to_s3(local_directory, bucket_name, s3_directory, aws_access_key_id=None, aws_secret_access_key=None, region_name=None):
 def upload_directory_to_s3(config_aws_s3_bucket_details, config_publishing_details_local_publish_path):
     bucket_name = config_aws_s3_bucket_details["bucket_name"]
     s3_directory = config_aws_s3_bucket_details["s3_directory"]
@@ -28,7 +27,7 @@ def upload_directory_to_s3(config_aws_s3_bucket_details, config_publishing_detai
             s3_path = os.path.join(s3_directory, relative_path).replace(os.sep, '/')
 
             content_type, _ = mimetypes.guess_type(local_path)
-            if content_type is None:
+            if not content_type:
                 content_type = 'binary/octet-stream'
 
             print(f"Uploading {local_path} to {bucket_name}/{s3_path} with Content-Type {content_type}")

@@ -4,14 +4,19 @@ import random
 # prompt engineering: https://cookbook.openai.com/articles/techniques_to_improve_reliability
 
 def generate_summary_prompt(article_text):
-    system_content = "You are a summary specialist. You always make sure to include all major points. You will be given an article. You will read it and provide a summary. Take some time to orgainze your thoughts, and revise your response into two paragraphs."
+    # system_content = "You are a summary specialist. You always make sure to include all major points. You will be given an article. You will read it and provide a summary. Take some time to orgainze your thoughts, and revise your response into two paragraphs."
     # system_content = "summarize:"
-    formatted_messages = []
-    formatted_messages.append({"role": "system", "content": system_content})
-    formatted_messages.append({"role": "user", "content": article_text})
+
+    # formatted_messages = []
+    # formatted_messages.append({"role": "system", "content": system_content})
+    # formatted_messages.append({"role": "user", "content": article_text})
+
     # formatted_messages.append({"role": "user", "content": system_content})
     # formatted_messages.append({"role": "assistant", "content": "Please provide the article to summarize."})
     # formatted_messages.append({"role": "user", "content": article_text})
+
+    formatted_messages = "Summarize the text between the three backticks:\n```" + article_text + "```\nThe summary is:\n"
+
     return formatted_messages, "Summary."
 
 def generate_first_comment_prompt(summary_text):

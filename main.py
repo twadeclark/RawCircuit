@@ -18,50 +18,49 @@ from vocabulary.news_search import SearchTerms
 MAX_TOKENS_FOR_SUMMARY = 1500
 
 def main():
-    summary_model = None
+    model = {} # empty to select new model from Huggingface
 
-    summary_model = {
-                        "name":"tiiuae/falcon-7b-instruct",
-                        "interface":"HuggingFaceInterface",
-                        "max_tokens":MAX_TOKENS_FOR_SUMMARY
-                    }
+    # model = {
+    #                     "name":"tiiuae/falcon-7b-instruct",
+    #                     "interface":"HuggingFaceInterface",
+    #                     "max_tokens":MAX_TOKENS_FOR_SUMMARY
+    #                 }
 
 
-    comment_thread_manager = CommentThreadManager()
     config = configparser.ConfigParser()
     config.read('config.ini')
     ai_manager = AIManager(config)
-    search_terms = SearchTerms()
     db_manager = DBManager(config['postgresql'])
     news_aggregator_manager = NewsAggregatorManager(config, db_manager, None)
+    comment_thread_manager = CommentThreadManager()
+    search_terms = SearchTerms()
+    hfms = HuggingfaceModelSearch(db_manager)
 
-    continuity_multiplier = float(config.get('general_configurations', 'continuity_multiplier'))
-    qty_addl_comments = int(config.get('general_configurations', 'qty_addl_comments'))
-    number_of_models_to_try = int(config.get('general_configurations', 'number_of_models_to_try'))
 
     article_to_process = db_manager.get_next_article_to_process()
 
-    if article_to_process is None:
+    if not article_to_process:
         print("Fetching new articles from aggregator...")
         num_articles_returned = news_aggregator_manager.fetch_new_articles_into_db()
-        if num_articles_returned == 0:
+        if not num_articles_returned:
             HALTING_ERROR = "HALTING_ERROR: No new articles returned from aggregator. Exiting..."
             print(HALTING_ERROR)
             return HALTING_ERROR
         print("New articles fetched: ", num_articles_returned)
         article_to_process = db_manager.get_next_article_to_process()
 
-    if article_to_process is None:
-        HALTING_ERROR = "HALTING_ERROR: article_to_process is None. Exiting..."
+    if not article_to_process:
+        HALTING_ERROR = "HALTING_ERROR: No article_to_process. Exiting..."
         print(HALTING_ERROR)
         return HALTING_ERROR
 
     db_manager.update_process_time(article_to_process)
+
     comment_thread_manager.set_article(article_to_process)
     print("Article: ", article_to_process.title)
     print("url    :", article_to_process.url)
 
-    if article_to_process.scraped_website_content is None or len(article_to_process.scraped_website_content) == 0:
+    if not article_to_process.scraped_website_content:
         print("Content not found. Scraping article...")
 
         db_manager.update_scrape_time(article_to_process)
@@ -71,109 +70,117 @@ def main():
             print(HALTING_ERROR)
             return HALTING_ERROR
 
-        article_to_process.scraped_website_content = extract_pure_text_from_raw_html(raw_html_from_url)
-        article_text_based_on_content_hint = get_article_text_based_on_content_hint(article_to_process.content, raw_html_from_url)
-        if article_text_based_on_content_hint is not None and len(article_text_based_on_content_hint) > 0:
-            article_to_process.scraped_website_content = extract_pure_text_from_raw_html(article_text_based_on_content_hint)
+        article_to_process.scraped_website_content = extract_pure_text_from_raw_html(
+                                                        get_article_text_based_on_content_hint(article_to_process.content, raw_html_from_url)
+                                                        or raw_html_from_url
+                                                        )
 
-    if article_to_process.scraped_website_content is None or len(article_to_process.scraped_website_content) == 0:
-        HALTING_ERROR = "HALTING_ERROR: Error scraping website content. Exiting..."
-        print(HALTING_ERROR)
-        return HALTING_ERROR
+        if not article_to_process.scraped_website_content:
+            HALTING_ERROR = "HALTING_ERROR: Error scraping website content. Exiting..."
+            print(HALTING_ERROR)
+            return HALTING_ERROR
 
-    db_manager.update_scraped_website_content(article_to_process)
+        db_manager.update_scraped_website_content(article_to_process)
 
     search_terms.categorize_article_add_tags(article_to_process)
     print("category :", article_to_process.unstored_category)
     print("tags     :", article_to_process.unstored_tags)
 
-    summary_prompt, prompt_keywords = generate_summary_prompt(article_to_process.scraped_website_content)
-    print("    summary_prompt: ", summary_prompt)
 
-    summary, flavors = None, None
-    hfms = HuggingfaceModelSearch(db_manager)
+    def fetch_summary_and_record_model_results():
+        max_words_cnt =  article_to_process.model["max_tokens"] // 2
+        shortened_content = ' '.join(article_to_process.scraped_website_content.split()[:max_words_cnt])
+        article_to_process.summary_prompt, article_to_process.summary_prompt_keywords = generate_summary_prompt(shortened_content)
+        print("    summary_prompt: ", article_to_process.summary_prompt)
 
-    if summary_model is not None:
-        hfms.only_insert_model_into_database_if_not_already_there(summary_model["name"])
-        summary, flavors = fetch_summary_and_record_model_results(summary_model, ai_manager, summary_prompt, hfms)
+        try:
+            article_to_process.summary, article_to_process.summary_flavors = ai_manager.fetch_inference(article_to_process.model, article_to_process.summary_prompt)
+            length_of_summary = str(len(article_to_process.summary)) if article_to_process.summary is not None else "None."
+            print(f"    Successful fetch. length_of_summary: {length_of_summary}")
+            hfms.update_model_record(article_to_process.model["name"], True, "length_of_summary: " + length_of_summary)
+        except Exception as e:
+            print(f"    Model '{article_to_process.model["name"]}' no worky: ", str(e))
+            hfms.update_model_record(article_to_process.model["name"], False, str(e))
+        return
+
+    if model:
+        article_to_process.model = model
+        hfms.only_insert_model_into_database_if_not_already_there(article_to_process.model["name"])
+        fetch_summary_and_record_model_results()
     else:
-        while summary is None and number_of_models_to_try > 0:
-            number_of_models_to_try = number_of_models_to_try - 1
-            summary_model_name = hfms.fetch_next_model_name_from_huggingface()
+        cnt = int(config.get('general_configurations', 'number_of_models_to_try'))
 
-            if summary_model_name is None:
+        while not article_to_process.summary and cnt > 0:
+            cnt -= 1
+
+            model_name_temp = hfms.fetch_next_model_name_from_huggingface()
+            if not model_name_temp:
                 HALTING_ERROR = "HALTING_ERROR: No new models available from Huggingface. Exiting... \t" + \
                 print(HALTING_ERROR)
                 return HALTING_ERROR
 
-            print("    Trying model: ", summary_model_name)
-            summary_model = {"name": summary_model_name, "interface":"HuggingFaceInterface", "max_tokens":MAX_TOKENS_FOR_SUMMARY}
-            summary, flavors = fetch_summary_and_record_model_results(summary_model, ai_manager, summary_prompt, hfms)
+            article_to_process.model = {"name"      : model_name_temp,
+                                        "interface" : "HuggingFaceInterface", 
+                                        "max_tokens": MAX_TOKENS_FOR_SUMMARY
+                                        }
+            print("    Trying model: ", article_to_process.model["name"])
+            fetch_summary_and_record_model_results()
 
-    #TODO: we need to decide what to do if we do not get a summary.
-        # we halt currently. maybe we should try another model? or try the next article?
-        # same questions for first_comment below
-    if summary is None or len(summary) == 0:
-        model_name = summary_model["name"] if summary_model["name"] is not None else ""
-        article_id = article_to_process.id if article_to_process.id is not None else ""
+    if not article_to_process.summary:
         HALTING_ERROR = "HALTING_ERROR: No summary generated. Exiting... \t" + \
-                        f"article_id: {article_id} \t" + \
-                        f"model: {model_name} \t" + \
+                        f"article_id: {article_to_process.id or ""} \t" + \
+                        f"model: {article_to_process.model["name"] or ""} \t" + \
                         f"length_of_scraped_website_content: {len(article_to_process.scraped_website_content)}"
         print(HALTING_ERROR)
         return HALTING_ERROR
 
-    summary = extract_pure_text_from_raw_html(summary)
     comment_thread_manager.add_comment(0,
-                                       summary,
-                                       get_polite_name(summary_model["name"]),
-                                       prompt_keywords + " | " + flavors,
+                                       article_to_process.summary,
+                                       get_polite_name(article_to_process.model["name"]),
+                                       article_to_process.summary_prompt_keywords + " | " + article_to_process.summary_flavors,
                                        datetime.now()
                                        )
 
-    first_comment_prompt, prompt_keywords = generate_first_comment_prompt(summary)
-    print("    first_comment_prompt: ", first_comment_prompt)
+    article_to_process.first_comment_prompt, article_to_process.first_comment_prompt_keywords = generate_first_comment_prompt(article_to_process.summary)
+    print("    first_comment_prompt: ", article_to_process.first_comment_prompt)
 
-    first_comment_model = summary_model.copy()
+    article_to_process.first_comment, article_to_process.first_comment_flavors = ai_manager.fetch_inference(article_to_process.model,
+                                                                                                            article_to_process.first_comment_prompt)
 
-    first_comment, flavors = ai_manager.fetch_inference(first_comment_model, first_comment_prompt)
-    if first_comment is None or len(first_comment) == 0:
-        model_name = first_comment_model["name"] if first_comment_model["name"] is not None else ""
-        article_id = article_to_process.id if article_to_process.id is not None else ""
+    if not article_to_process.first_comment:
         HALTING_ERROR = "HALTING_ERROR: No first comment generated. Exiting... \t" + \
-                        f"article_id: {article_id} \t" + \
-                        f"model: {model_name} \t" + \
-                        f"length_of_first_comment: {len(first_comment)}"
+                        f"article_id: {article_to_process.id or ""} \t" + \
+                        f"model: {article_to_process.model["name"] or ""}"
         print(HALTING_ERROR)
         return HALTING_ERROR
 
     comment_thread_manager.add_comment(0,
-                                       first_comment,
-                                       get_polite_name(first_comment_model["name"]),
-                                       prompt_keywords  + " | " +  flavors,
+                                       article_to_process.first_comment,
+                                       get_polite_name(article_to_process.model["name"]),
+                                       article_to_process.first_comment_prompt_keywords  + " | " +  article_to_process.first_comment_flavors,
                                        datetime.now()
                                        )
 
-    loop_comment_model = summary_model.copy()
+
+    qty_addl_comments = int(config.get('general_configurations', 'qty_addl_comments'))
+    continuity_multiplier = float(config.get('general_configurations', 'continuity_multiplier'))
 
     for _ in range(1, qty_addl_comments):
         parent_index = random.randint(0, int(comment_thread_manager.get_comments_length() * continuity_multiplier))
         parent_index = min(parent_index, comment_thread_manager.get_comments_length() - 1)
         parent_comment = comment_thread_manager.get_comment(parent_index)["comment"]
 
-        loop_comment_prompt, prompt_keywords = generate_loop_prompt(summary, parent_comment)
+        loop_comment_prompt, prompt_keywords = generate_loop_prompt(article_to_process.summary, parent_comment)
         print("    loop_comment_prompt: ", loop_comment_prompt)
 
-        temp_loop_comment_model = loop_comment_model.copy() # in case we want to change the model for each comment, we do something like this: if loop_comment_model == None: temp_loop_comment_model = ai_manager.get_random_model()
-
-        loop_comment, flavors = ai_manager.fetch_inference(temp_loop_comment_model, loop_comment_prompt)
-        if loop_comment is None or len(loop_comment) == 0:
-            print(f"No loop comment generated. model: {temp_loop_comment_model["name"]} Skipping...")
+        loop_comment, flavors = ai_manager.fetch_inference(article_to_process.model, loop_comment_prompt)
+        if not loop_comment:
+            print(f"No loop comment generated. model: {article_to_process.model["name"]} Skipping...")
             continue
 
         comment_thread_manager.add_comment(parent_index,
                                            loop_comment,
-                                           get_polite_name(temp_loop_comment_model["name"]),
+                                           get_polite_name(article_to_process.model["name"]),
                                            prompt_keywords  + " | " +  flavors,
                                            datetime.now()
                                            )
@@ -202,7 +209,7 @@ def main():
         number_of_files_pushed = upload_directory_to_s3(config["aws_s3_bucket_details"], config["publishing_details"]["local_publish_path"])
         published_to_s3 = f"PUSHED files to S3: {number_of_files_pushed} \t"
 
-    article_id = article_to_process.id if article_to_process.id is not None else ""
+    article_id = article_to_process.id or ""
     SUCCESS =   "SUCCESS: \t" + \
                 f"article_id: {article_id} \t" + \
                 pushed_to_pelican + \
@@ -211,16 +218,6 @@ def main():
     print(SUCCESS)
     return SUCCESS
 
-def fetch_summary_and_record_model_results(summary_model, ai_manager, summary_prompt, hfms):
-    summary, flavors = None, None
-    try:
-        summary, flavors = ai_manager.fetch_inference(summary_model, summary_prompt)
-        length_of_summary = str(len(summary)) if summary is not None else "None."
-        hfms.update_model_record(summary_model["name"], True, "length_of_summary: " + length_of_summary)
-    except Exception as e:
-        print(f"    Model '{summary_model["name"]}' no worky: ", str(e))
-        hfms.update_model_record(summary_model["name"], False, str(e))
-    return summary, flavors
 
 
 if __name__ == "__main__":

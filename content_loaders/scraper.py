@@ -121,7 +121,7 @@ def get_article_text_based_on_content_hint(article_to_process_content, raw_html)
         content_truncated = article_to_process_content.split('…', 1)[0]
         full_article = extract_article(raw_html, content_truncated, plus_chars)
 
-        if full_article is None or len(full_article) == 0: # then we extract pure text and try again
+        if not full_article: # then we extract pure text and try again
             full_article = extract_article(extract_pure_text_from_raw_html(raw_html), extract_pure_text_from_raw_html(content_truncated), plus_chars)
 
         return full_article
