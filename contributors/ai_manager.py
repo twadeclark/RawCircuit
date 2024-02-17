@@ -15,18 +15,15 @@ class AIManager:
             # 'GenericApiInterface': GenericApiInterface(config["GenericApiInterface"]),
         }
 
-    def fetch_inference(self, model, formatted_messages):
+    def fetch_inference(self, model, formatted_messages, is_summary=False):
         interface = self.interface_list.get(model["interface"])
-        word_limit = model["max_tokens"] // 2
 
-        if isinstance(formatted_messages, str):
-            pass
-
-        else:
-            formatted_messages = _truncate_user_messages_if_needed(formatted_messages, word_limit)
+        if not is_summary:
+            word_limit = model["max_tokens"] // 2
+            formatted_messages = truncate_user_messages_if_needed(formatted_messages, word_limit)
 
         # let's go!
-        response, flavors = interface.fetch_inference(model, formatted_messages)
+        response, flavors = interface.fetch_inference(model, formatted_messages, is_summary)
 
         # remove the prompt from the response
         if response:
@@ -42,18 +39,6 @@ class AIManager:
 
         return response, flavors
 
-
-def _truncate_from_marker(input_string, marker="###"):
-    marker_index = input_string.find(marker)
-
-    if marker_index == -1:
-        return input_string
-
-    truncated_string = input_string[:marker_index]
-    removed_text = input_string[marker_index:]
-    print(f"\n    Removed text for {marker} from here -->{removed_text}<-- to here.\n\n")
-
-    return truncated_string
 
 def _calculate_word_count(list_of_dicts):
     combined_string = " ".join(item["content"] for item in list_of_dicts)
@@ -77,7 +62,7 @@ def _reduce_content(list_of_dicts, word_limit):
 
     return list_of_dicts
 
-def _truncate_user_messages_if_needed(list_of_dicts, word_limit):
+def truncate_user_messages_if_needed(list_of_dicts, word_limit):
     #TODO: https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
 
     while _calculate_word_count(list_of_dicts) > word_limit:
@@ -93,6 +78,18 @@ def _truncate_user_messages_if_needed(list_of_dicts, word_limit):
             list_of_dicts = _reduce_content(list_of_dicts, word_limit)
 
     return list_of_dicts
+
+def _truncate_from_marker(input_string, marker="###"):
+    marker_index = input_string.find(marker)
+
+    if marker_index == -1:
+        return input_string
+
+    truncated_string = input_string[:marker_index]
+    removed_text = input_string[marker_index:]
+    print(f"\n    Removed text for {marker} from here -->{removed_text}<-- to here.\n\n")
+
+    return truncated_string
 
 def _remove_end_repetitions(text): # sometimes models with wild settings get stuck in a loop and repeat the same word or punctuation over and over
     # catch repeated words at the end of text, possibly followed by punctuation and spaces. Also catches repeated punctuation or characters.

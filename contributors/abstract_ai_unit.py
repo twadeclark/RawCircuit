@@ -6,5 +6,5 @@ class AbstractAIUnit(ABC):
         pass
 
     @abstractmethod
-    def fetch_inference(self, model, formatted_messages):
+    def fetch_inference(self, model, formatted_messages, is_summary):
         pass

@@ -1,7 +1,7 @@
 import re
 from dateutil import parser
 
-# 🦾  ♻️  🪸  🚡  🪒  ⚗️  🪩  🪤  🧉  🐚  🪶  🃏  🦤  🧃  🪽  🫎  🪬  🧌  🏺  🧦  🥌  📇  🗃️  🦪
+# 🦾  ♻️   🚡  🪒  🪩  🪤  🧉  🐚  🪶  🃏  🧃  🪽  🫎  🪬  🧌  🏺  🧦  🥌  📇  🗃️  🦪
 
 def format_to_markdown(article, comment_thread_manager):
     markdown = ""
@@ -42,6 +42,10 @@ def format_to_markdown(article, comment_thread_manager):
         markdown += get_badges(comment["prompt_keywords"])
 
         markdown += ("\n\n***\n\n")
+
+    if article.summary_dump:
+        markdown += (f"🦪 <span style='font-size: xx-small;'>View Source for Original Content:</span> <!-- {str(article.shortened_content).replace("\n", " ")} -->\n")
+        markdown += (f"⚗️ <span style='font-size: xx-small;'>View Source for Original Content:</span> <!-- {article.summary_dump.replace("\n", " ")} -->\n")
 
     markdown += (f"⏱️ <span style='font-size: xx-small;'>Processed in {comment_thread_manager.get_duration()}</span>\n") #  ⏱️  ⌛
 

@@ -61,7 +61,6 @@ class HuggingfaceModelSearch:
         list_of_id_from_response = [model["id"] for model in response.json()] # id is the model_name from huggingface
         rows = self.db_manager.get_model_name_list_by_list_of_model_names(list_of_id_from_response)
         for model in response.json():
-            # if model["id"] not in rows:
             if model["id"] not in [item for sublist in rows for item in sublist]:
                 self.db_manager.insert_model_record(model["id"])
         next_url_link = response.links['next']['url'] or ""

@@ -3,24 +3,27 @@ import random
 
 # prompt engineering: https://cookbook.openai.com/articles/techniques_to_improve_reliability
 
-def generate_summary_prompt(article_text):
-    # system_content = "You are a summary specialist. You always make sure to include all major points. You will be given an article. You will read it and provide a summary. Take some time to orgainze your thoughts, and revise your response into two paragraphs."
+def generate_summary_prompt_instruct(article_text):
+    # instruct
+    formatted_messages = "You are a summary expert. Read the text between the three backticks, then provide a short summary in your own words.\n```" + article_text + "```\nThe summary is:"
+    return formatted_messages
 
-    # formatted_messages.append({"role": "user", "content": system_content})
-    # formatted_messages.append({"role": "assistant", "content": "Please provide the article to summarize."})
-    # formatted_messages.append({"role": "user", "content": article_text})
+def generate_summary_prompt_instruct_chat(article_text):
+    #instruct-chat
+    system_content = "You are a summary expert. Read the text between the three backticks, then provide a short summary in your own words.\n```" + article_text + "```\nThe summary is:"
+    formatted_messages = []
+    formatted_messages.append({"role": "user", "content": system_content})
+    return formatted_messages
 
-    # 
-    # formatted_messages = "Summarize the text between the three backticks:\n```" + article_text + "```\nThe summary is:\n"
-
-
+def generate_summary_prompt_chat(article_text):
     # good for TinyLlama 1.1B Chat V1.0
-    system_content = "You are a summary expert. You will provide a summary of the user message."
+    system_content = "You are a summary expert. Read the user message, then provide a short summary in your own words."
     formatted_messages = []
     formatted_messages.append({"role": "system", "content": system_content})
     formatted_messages.append({"role": "user", "content": article_text})
+    return formatted_messages
 
-    return formatted_messages, "Summary."
+
 
 def generate_first_comment_prompt(summary_text):
     descriptor1 = get_descriptor()
@@ -211,6 +214,13 @@ def get_descriptor():
         "zealous"
     ]
     return random.choice(descriptor_list)
+
+# respond as if a philosopher, like Socrates, Plato, Aristotle, Friedrich Nietzsche, Jean-Paul Sartre, Simone de Beauvoir, Albert Camus, Karl Marx, Immanuel Kant, John Stuart Mill, David Hume, René Descartes, Thomas Hobbes, John Locke, George Berkeley, Baruch Spinoza, Gottfried Wilhelm Leibniz, Voltaire, Jean-Jacques Rousseau, Adam Smith, Edmund Burke, Jeremy Bentham, Mary Wollstonecraft, Johann Gottlieb Fichte, Friedrich Schelling, Arthur Schopenhauer, G.W.F. Hegel, Johann Wolfgang von Goethe, Johann Gottfried Herder, 
+# other famouse personalities such as
+# respond as if a famous author, like William Shakespeare, Charles Dickens, Mark Twain, Jane Austen, Fyodor Dostoevsky, Leo Tolstoy, Franz Kafka, George Orwell, J.R.R. Tolkien, J.K. Rowling, Stephen King, Agatha Christie, Ernest Hemingway, Virginia Woolf, James Joyce, 
+# respond as if a famous artist, like Leonardo da Vinci, Michelangelo, Raphael, Sandro Botticelli, Titian, Caravaggio, Artemisia Gentileschi, Rembrandt, Johannes Vermeer, Francisco Goya, Édouard Manet, Claude Monet, Pierre-Auguste Renoir, Edgar Degas, Paul Cézanne, Vincent van Gogh, Pablo Picasso, Salvador Dalí, Frida Kahlo, Georgia O'Keeffe, Jackson Pollock, Andy Warhol, 
+# respond as if a famous musician, like Johann Sebastian Bach, Wolfgang Amadeus Mozart, Ludwig van Beethoven, Franz Schubert, Frédéric Chopin, Richard Wagner, Giuseppe Verdi, Johannes Brahms, Pyotr Ilyich Tchaikovsky, Gustav Mahler, Igor Stravinsky, Arnold Schoenberg, John Cage, Philip Glass, Steve Reich, 
+# respond as if a famous filmmaker, like Charlie Chaplin, Orson Welles, Alfred Hitchcock, Akira Kurosawa, Ingmar Bergman, Federico Fellini, Stanley Kubrick, Steven Spielberg, Martin Scorsese, Quentin Tarantino, David Lynch, Christopher Nolan, Wes Anderson, 
 
 
 ###

@@ -25,6 +25,8 @@ class Article:
         self.summary_prompt_keywords = None
         self.summary = None
         self.summary_flavors = None
+        self.summary_dump = None
+        self.shortened_content = None
 
         self.first_comment_prompt = None
         self.first_comment_prompt_keywords = None

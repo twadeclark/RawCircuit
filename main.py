@@ -12,19 +12,19 @@ from output_formatter.comment_thread_manager import CommentThreadManager
 from output_formatter.markdown_formatter import format_to_markdown
 from output_formatter.publish_pelican import publish_pelican
 from output_formatter.upload_directory_to_s3 import upload_directory_to_s3
-from prompt_generator.instruction_generator import generate_loop_prompt, generate_first_comment_prompt, generate_summary_prompt
+from prompt_generator.instruction_generator import generate_loop_prompt, generate_first_comment_prompt, generate_summary_prompt_chat, generate_summary_prompt_instruct, generate_summary_prompt_instruct_chat
 from vocabulary.news_search import SearchTerms
 
-MAX_TOKENS_FOR_SUMMARY = 1500
+MAX_TOKENS_FOR_SUMMARY = 1400
 
 def main():
     model = {} # empty to select new model from Huggingface
 
-    # model = {
-    #                     "name":"TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-    #                     "interface":"HuggingFaceInterface",
-    #                     "max_tokens":MAX_TOKENS_FOR_SUMMARY
-    #                 }
+    model = {
+                        "name":"OpenAssistant/oasst-sft-1-pythia-12b",
+                        "interface":"HuggingFaceInterface",
+                        "max_tokens":MAX_TOKENS_FOR_SUMMARY
+                    }
 
 
     config = configparser.ConfigParser()
@@ -37,6 +37,8 @@ def main():
     hfms = HuggingfaceModelSearch(db_manager)
 
 
+
+    ### get next article to process
     article_to_process = db_manager.get_next_article_to_process()
 
     if not article_to_process:
@@ -87,26 +89,74 @@ def main():
     print("tags     :", article_to_process.unstored_tags)
 
 
-    def fetch_summary_and_record_model_results():
-        max_words_cnt =  article_to_process.model["max_tokens"] // 2
-        shortened_content = ' '.join(article_to_process.scraped_website_content.split()[:max_words_cnt])
-        article_to_process.summary_prompt, article_to_process.summary_prompt_keywords = generate_summary_prompt(shortened_content)
-        print("    summary_prompt: ", article_to_process.summary_prompt)
 
-        try:
-            article_to_process.summary, article_to_process.summary_flavors = ai_manager.fetch_inference(article_to_process.model, article_to_process.summary_prompt)
-            length_of_summary = str(len(article_to_process.summary)) if article_to_process.summary is not None else "None."
-            print(f"    Successful fetch. length_of_summary: {length_of_summary}")
-            hfms.update_model_record(article_to_process.model["name"], True, "length_of_summary: " + length_of_summary)
-        except Exception as e:
-            print(f"    Model '{article_to_process.model["name"]}' no worky: ", str(e))
-            hfms.update_model_record(article_to_process.model["name"], False, str(e))
-        return
+    ### pick model and fetch summary
+    max_words_cnt =  MAX_TOKENS_FOR_SUMMARY // 2
+    shortened_content = ' '.join(article_to_process.scraped_website_content.split()[:max_words_cnt])
+    article_to_process.shortened_content = shortened_content
+    print("    shortened_content: ", shortened_content, "\n")
+
+    def get_summary_and_record_model_results():
+        def fetch_summary_and_record_model_results(model_temp, summary_prompt_temp):
+            summary_temp = None
+            try:
+                summary_temp, _ = ai_manager.fetch_inference(model_temp, summary_prompt_temp, True)
+                length_of_summary = str(len(summary_temp))
+                print(f"    Successful fetch. length_of_summary: {length_of_summary}", "\n")
+                hfms.update_model_record(model_temp["name"], True, "length_of_summary: " + str(len(summary_temp)))
+                return summary_temp, True
+            except Exception as e:
+                print(f"    Model '{model_temp["name"]}' no worky: ", str(e), "\n")
+                hfms.update_model_record(model_temp["name"], False, str(e))
+                return summary_temp, False
+
+        summary_instruct = summary_instruct_chat = summary_chat = None
+        still_healthy = True
+
+        print("    Template instruct...")
+        summary_instruct, still_healthy = fetch_summary_and_record_model_results(article_to_process.model, generate_summary_prompt_instruct(shortened_content))
+
+        if still_healthy:
+            print("    Template instruct_chat...")
+            summary_instruct_chat, still_healthy = fetch_summary_and_record_model_results(article_to_process.model, generate_summary_prompt_instruct_chat(shortened_content))
+        else:
+            print("    Not still_healthy. Skipping instruct_chat...")
+
+        if still_healthy:
+            print("    Template chat...")
+            summary_chat, still_healthy = fetch_summary_and_record_model_results(article_to_process.model, generate_summary_prompt_chat(shortened_content))
+        else:
+            print("    Not still_healthy. Skipping chat...")
+
+        summary_dump = ""
+        summary_selected = ""
+
+        if summary_instruct:
+            summary_dump += f"Instruct Template:<br />{summary_instruct}<br />"
+            if len(summary_instruct) > len(summary_selected):
+                summary_selected = summary_instruct
+
+        if summary_instruct_chat:
+            summary_dump += f"Instruct Chat Template:<br />{summary_instruct_chat}<br />"
+            if len(summary_instruct_chat) > len(summary_selected):
+                summary_selected = summary_instruct_chat
+
+        if summary_chat:
+            summary_dump += f"Chat Template:<br />{summary_chat}<br />"
+            if len(summary_chat) > len(summary_selected):
+                summary_selected = summary_chat
+
+        if summary_selected:
+            summary_selected = summary_selected.replace("\n", " ")
+        if summary_dump:
+            summary_dump = summary_dump.replace("\n", " ")
+        return summary_selected, summary_dump
+
 
     if model:
         article_to_process.model = model
         hfms.only_insert_model_into_database_if_not_already_there(article_to_process.model["name"])
-        fetch_summary_and_record_model_results()
+        article_to_process.summary, article_to_process.summary_dump = get_summary_and_record_model_results()
     else:
         cnt = int(config.get('general_configurations', 'number_of_models_to_try'))
 
@@ -123,8 +173,8 @@ def main():
                                         "interface" : "HuggingFaceInterface", 
                                         "max_tokens": MAX_TOKENS_FOR_SUMMARY
                                         }
-            print("    Trying model: ", article_to_process.model["name"])
-            fetch_summary_and_record_model_results()
+            print("\n    Trying model: ", article_to_process.model["name"])
+        article_to_process.summary, article_to_process.summary_dump = get_summary_and_record_model_results()
 
     if not article_to_process.summary:
         HALTING_ERROR = "HALTING_ERROR: No summary generated. Exiting... \t" + \
@@ -134,6 +184,9 @@ def main():
         print(HALTING_ERROR)
         return HALTING_ERROR
 
+    article_to_process.summary_prompt_keywords = "summary"
+    article_to_process.summary_flavors = "summary"
+
     comment_thread_manager.add_comment(0,
                                        article_to_process.summary,
                                        get_polite_name(article_to_process.model["name"]),
@@ -141,11 +194,13 @@ def main():
                                        datetime.now()
                                        )
 
+
+
+    ### fetch first comment
     article_to_process.first_comment_prompt, article_to_process.first_comment_prompt_keywords = generate_first_comment_prompt(article_to_process.summary)
     print("    first_comment_prompt: ", article_to_process.first_comment_prompt)
 
-    article_to_process.first_comment, article_to_process.first_comment_flavors = ai_manager.fetch_inference(article_to_process.model,
-                                                                                                            article_to_process.first_comment_prompt)
+    article_to_process.first_comment, article_to_process.first_comment_flavors = ai_manager.fetch_inference(article_to_process.model, article_to_process.first_comment_prompt)
 
     if not article_to_process.first_comment:
         HALTING_ERROR = "HALTING_ERROR: No first comment generated. Exiting... \t" + \
@@ -162,6 +217,8 @@ def main():
                                        )
 
 
+
+    ### generate additional comments
     qty_addl_comments = int(config.get('general_configurations', 'qty_addl_comments'))
     continuity_multiplier = float(config.get('general_configurations', 'continuity_multiplier'))
 
@@ -184,6 +241,7 @@ def main():
                                            prompt_keywords  + " | " +  flavors,
                                            datetime.now()
                                            )
+
 
 
     ### formatting and publishing

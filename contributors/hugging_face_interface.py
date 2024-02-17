@@ -4,51 +4,44 @@ import requests
 from transformers import AutoTokenizer
 from contributors.abstract_ai_unit import AbstractAIUnit
 
-# NOTE: HuggingFace Free Interface does not stream
-
 
 class HuggingFaceInterface(AbstractAIUnit):
     def __init__(self, config):
         self.api_key = config["api_key"]
         self.base_url = config["base_url"]
 
-    def fetch_inference(self, model, formatted_messages):
+    def fetch_inference(self, model, formatted_messages, is_summary):
         headers = {"Authorization": f"Bearer {self.api_key}"}
         this_api_endpoint = self.base_url + model['name']
-        formatted_messages_with_chat_template_applied = None
+        formatted_messages_as_string = None
 
-        if isinstance(formatted_messages, str):
-            # max_length = 500
-            # min_length = 400
+        if is_summary:
             max_new_tokens = 250
             temperature = 0.7
             repetition_penalty = 1.0
-            formatted_messages_with_chat_template_applied = formatted_messages
         else:
-            # flavors - https://huggingface.co/docs/api-inference/detailed_parameters#text-generation-task
             max_new_tokens = random.randint(1, 10) * 25
-            # max_length = random.randint(1, 10) * 25
-            # min_length = max_length // 2
             temperature = random.uniform(0.0, 2.0)
             repetition_penalty = random.uniform(0.0, 2.0)
+
+        if isinstance(formatted_messages, str):
+            formatted_messages_as_string = formatted_messages
+        else:
             kwargs = {}
             kwargs["token"] = self.api_key
             tokenizer = AutoTokenizer.from_pretrained(model["name"], **kwargs)
-            formatted_messages_with_chat_template_applied = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
+            formatted_messages_as_string = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
 
         temperature_as_string = "{:.1f}".format(temperature)
         repetition_penalty_as_string = "{:.1f}".format(repetition_penalty)
 
-        # flavors = f" \t min_length: {min_length},  \t max_length: {max_length}, \t temperature: {temperature_as_string}, \t repetition_penalty: {repetition_penalty_as_string}"
         flavors = f" \t max_new_tokens: {max_new_tokens}, \t temperature: {temperature_as_string}, \t repetition_penalty: {repetition_penalty_as_string}"
 
-        print("\n\n",formatted_messages_with_chat_template_applied,"\n\n")
+        # print("\n\n",formatted_messages_with_chat_template_applied.strip)
 
         q = {
-            "inputs": formatted_messages_with_chat_template_applied,
+            "inputs": formatted_messages_as_string,
             "parameters": { 
-                            # "max_length"            : max_length,
-                            # "min_length"            : min_length,
                             "max_new_tokens"        : max_new_tokens,
                             "temperature"           : temperature,
                             "repetition_penalty"    : repetition_penalty,
@@ -73,7 +66,7 @@ class HuggingFaceInterface(AbstractAIUnit):
                 print(chunk, end="")
                 all_chunks += chunk
 
-            print("\n")
+            print()
             response.close()
             return json.loads(all_chunks)
 
