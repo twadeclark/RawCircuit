@@ -5,6 +5,28 @@ import selenium
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from error_handler import FatalError
+
+def fetch_and_set_scraped_website_content(article_to_process, db_manager):
+    print("Content not in database. Scraping article...")
+
+    db_manager.update_scrape_time(article_to_process)
+    raw_html_from_url, fetch_success = fetch_raw_html_from_url(article_to_process.url)
+    if not fetch_success:
+        raise FatalError("Error with fetch_raw_html_from_url. Exiting...")
+
+    article_to_process.scraped_website_content = extract_pure_text_from_raw_html(
+                                                    get_article_text_based_on_content_hint(article_to_process.content, raw_html_from_url)
+                                                    or raw_html_from_url
+                                                    )
+
+    if not article_to_process.scraped_website_content:
+        raise FatalError("Error scraping website content. Exiting...")
+
+    db_manager.update_scraped_website_content(article_to_process)
+
+
+
 
 def fetch_raw_html_from_url(url):
     driver = webdriver.Chrome()

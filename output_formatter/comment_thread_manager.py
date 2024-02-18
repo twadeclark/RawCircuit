@@ -21,6 +21,8 @@ class CommentThreadManager:
         return self.start_time
 
     def set_article(self, article):
+        print("Article: ", article.title)
+        print("url    :", article.url)
         self.article = article
 
     def get_comments_length(self):

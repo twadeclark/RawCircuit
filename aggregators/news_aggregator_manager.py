@@ -1,7 +1,8 @@
 import datetime
 import random
-from aggregators.rss_feeder import RSSFeeder
+# from aggregators.rss_feeder import RSSFeeder
 from article import Article
+from error_handler import FatalError
 from .newsapiorg_news import NewsApiOrgNews
 
 class NewsAggregatorManager:
@@ -16,6 +17,21 @@ class NewsAggregatorManager:
             self.aggregator = random.choice(self.aggregators)
         else:
             self.aggregator = self.get_aggregator_by_name(aggregator_name)
+
+    def get_next_article_to_process(self):
+        article_to_process = self.db_manager.get_next_article_to_process()
+
+        if not article_to_process:
+            print("Fetching new articles from aggregator...")
+            num_articles_returned = self.fetch_new_articles_into_db()
+            if not num_articles_returned:
+                raise FatalError("No new articles returned from aggregator. Exiting...")
+            print("New articles fetched: ", num_articles_returned)
+            article_to_process = self.db_manager.get_next_article_to_process()
+
+        if not article_to_process:
+            raise FatalError("No article_to_process. Exiting...")
+        return article_to_process
 
     def get_aggregator_by_name(self, aggregator_name):
         for aggregator in self.aggregators:

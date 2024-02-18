@@ -1,19 +1,91 @@
 import re
 from contributors.hugging_face_interface import HuggingFaceInterface
-from contributors.litellm_interface import LiteLLMInterface
 from contributors.local_openai_interface import LocalOpenAIInterface
 from contributors.transformers_interface import TransformersInterface
+from prompt_generator.instruction_generator import generate_summary_prompt_chat, generate_summary_prompt_instruct, generate_summary_prompt_instruct_chat
 
 class AIManager:
     def __init__(self, config):
         self.config = config
         self.interface_list = {
-            'LocalOpenAIInterface': LocalOpenAIInterface(config["LocalOpenAIInterface"]),
-            'LiteLLMInterface': LiteLLMInterface(config["LiteLLMInterface"]),
             'HuggingFaceInterface': HuggingFaceInterface(config["HuggingFace"]),
+            'LocalOpenAIInterface': LocalOpenAIInterface(config["LocalOpenAIInterface"]),
             'TransformersInterface': TransformersInterface(config["TransformersInterface"]),
+            # 'LiteLLMInterface': LiteLLMInterface(config["LiteLLMInterface"]),
             # 'GenericApiInterface': GenericApiInterface(config["GenericApiInterface"]),
         }
+
+
+
+    def fetch_summary_and_record_model_results(self, hfms, model_temp, summary_prompt_temp):
+        summary_temp = None
+        try:
+            summary_temp, _ = self.fetch_inference(model_temp, summary_prompt_temp, True)
+            length_of_summary = str(len(summary_temp))
+            print(f"    Successful fetch. length_of_summary: {length_of_summary}", "\n")
+            hfms.update_model_record(model_temp["name"], True, "length_of_summary: " + str(len(summary_temp)))
+            return summary_temp, True
+        except Exception as e:
+            print(f"    Model '{model_temp["name"]}' no worky: ", str(e), "\n")
+            hfms.update_model_record(model_temp["name"], False, str(e))
+            return summary_temp, False
+
+
+    def get_summary_and_record_model_results(self, article_to_process, hfms):
+        summary_instruct = summary_instruct_chat = summary_chat = None
+        fetch_success = True
+
+        # if fetch_success:
+        #     print("    Template instruct...")
+        #     summary_instruct, fetch_success = self.fetch_summary_and_record_model_results(hfms, article_to_process.model, generate_summary_prompt_instruct(article_to_process.shortened_content))
+
+        # if fetch_success:
+        #     print("    Template instruct_chat...")
+        #     summary_instruct_chat, fetch_success = self.fetch_summary_and_record_model_results(hfms, article_to_process.model, generate_summary_prompt_instruct_chat(article_to_process.shortened_content))
+        # else:
+        #     print("    No fetch_success. Skipping instruct_chat...")
+
+        # if fetch_success:
+        #     print("    Template chat...")
+        #     summary_chat, fetch_success = self.fetch_summary_and_record_model_results(hfms, article_to_process.model, generate_summary_prompt_chat(article_to_process.shortened_content))
+        # else:
+        #     print("    No fetch_success. Skipping chat...")
+
+        summary_instruct, fetch_success = self.fetch_summary_and_record_model_results(hfms, article_to_process.model, generate_summary_prompt_instruct(article_to_process.shortened_content))
+        summary_instruct_chat, fetch_success = self.fetch_summary_and_record_model_results(hfms, article_to_process.model, generate_summary_prompt_instruct_chat(article_to_process.shortened_content))
+        summary_chat, fetch_success = self.fetch_summary_and_record_model_results(hfms, article_to_process.model, generate_summary_prompt_chat(article_to_process.shortened_content))
+
+
+
+        summary_dump = ""
+        summary_selected = ""
+
+        if summary_instruct:
+            summary_dump += f"Instruct Template:<br />{summary_instruct}<br />"
+            if len(summary_instruct) > len(summary_selected):
+                summary_selected = summary_instruct
+
+        if summary_instruct_chat:
+            summary_dump += f"Instruct Chat Template:<br />{summary_instruct_chat}<br />"
+            if len(summary_instruct_chat) > len(summary_selected):
+                summary_selected = summary_instruct_chat
+
+        if summary_chat:
+            summary_dump += f"Chat Template:<br />{summary_chat}<br />"
+            if len(summary_chat) > len(summary_selected):
+                summary_selected = summary_chat
+
+        if summary_selected:
+            summary_selected = summary_selected.replace("\n", " ")
+        if summary_dump:
+            summary_dump = summary_dump.replace("\n", " ")
+        return summary_selected, summary_dump
+
+
+
+
+
+
 
     def fetch_inference(self, model, formatted_messages, is_summary=False):
         interface = self.interface_list.get(model["interface"])

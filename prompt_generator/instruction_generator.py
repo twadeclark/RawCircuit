@@ -215,6 +215,7 @@ def get_descriptor():
     ]
     return random.choice(descriptor_list)
 
+# respond in the form of a python script
 # respond as if a philosopher, like Socrates, Plato, Aristotle, Friedrich Nietzsche, Jean-Paul Sartre, Simone de Beauvoir, Albert Camus, Karl Marx, Immanuel Kant, John Stuart Mill, David Hume, René Descartes, Thomas Hobbes, John Locke, George Berkeley, Baruch Spinoza, Gottfried Wilhelm Leibniz, Voltaire, Jean-Jacques Rousseau, Adam Smith, Edmund Burke, Jeremy Bentham, Mary Wollstonecraft, Johann Gottlieb Fichte, Friedrich Schelling, Arthur Schopenhauer, G.W.F. Hegel, Johann Wolfgang von Goethe, Johann Gottfried Herder, 
 # other famouse personalities such as
 # respond as if a famous author, like William Shakespeare, Charles Dickens, Mark Twain, Jane Austen, Fyodor Dostoevsky, Leo Tolstoy, Franz Kafka, George Orwell, J.R.R. Tolkien, J.K. Rowling, Stephen King, Agatha Christie, Ernest Hemingway, Virginia Woolf, James Joyce, 

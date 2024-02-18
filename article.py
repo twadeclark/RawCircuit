@@ -22,9 +22,7 @@ class Article:
         self.model = None
 
         self.summary_prompt = None
-        self.summary_prompt_keywords = None
         self.summary = None
-        self.summary_flavors = None
         self.summary_dump = None
         self.shortened_content = None
 

@@ -36,3 +36,6 @@ class SearchTerms():
 
         article_to_process.unstored_category = best_fit_category
         article_to_process.unstored_tags = all_assigned_tags
+
+        print("category :", article_to_process.unstored_category)
+        print("tags     :", article_to_process.unstored_tags)
