@@ -26,11 +26,6 @@ class Article:
         self.summary_dump = None
         self.shortened_content = None
 
-        self.first_comment_prompt = None
-        self.first_comment_prompt_keywords = None
-        self.first_comment = None
-        self.first_comment_flavors = None
-
 
     def __str__(self):
         return (self.id or "N/A") + "\n" + \

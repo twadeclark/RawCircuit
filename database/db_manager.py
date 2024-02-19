@@ -143,3 +143,8 @@ class DBManager:
                 (list_of_model_names,))
             rows = cur.fetchall()
             return rows
+
+    def only_insert_model_into_database_if_not_already_there(self, model_name):
+        rows = self.get_model_name_list_by_list_of_model_names([model_name])
+        if len(rows) == 0:
+            self.insert_model_record(model_name)

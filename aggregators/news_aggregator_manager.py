@@ -18,21 +18,6 @@ class NewsAggregatorManager:
         else:
             self.aggregator = self.get_aggregator_by_name(aggregator_name)
 
-    def get_next_article_to_process(self):
-        article_to_process = self.db_manager.get_next_article_to_process()
-
-        if not article_to_process:
-            print("Fetching new articles from aggregator...")
-            num_articles_returned = self.fetch_new_articles_into_db()
-            if not num_articles_returned:
-                raise FatalError("No new articles returned from aggregator. Exiting...")
-            print("New articles fetched: ", num_articles_returned)
-            article_to_process = self.db_manager.get_next_article_to_process()
-
-        if not article_to_process:
-            raise FatalError("No article_to_process. Exiting...")
-        return article_to_process
-
     def get_aggregator_by_name(self, aggregator_name):
         for aggregator in self.aggregators:
             if aggregator.get_name() == aggregator_name:
@@ -73,9 +58,6 @@ class NewsAggregatorManager:
 
     def update_scrape_time(self, article):
         self.db_manager.update_scrape_time(article)
-
-    def update_process_time(self, article):
-        self.db_manager.update_process_time(article)
 
     def update_scraped_website_content(self, article):
         self.db_manager.update_scraped_website_content(article)

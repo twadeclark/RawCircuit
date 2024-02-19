@@ -14,7 +14,7 @@ class SearchTerms():
         return random_category, random_term
 
     def categorize_article_add_tags(self, article_to_process):
-        article_text = article_to_process.scraped_website_content.lower()
+        article_text = article_to_process.shortened_content.lower()
 
         best_fit_category = None
         best_fit_score = 0
