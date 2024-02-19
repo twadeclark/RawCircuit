@@ -55,7 +55,6 @@ class ArticleManager:
         if not self.article_to_process.scraped_website_content:
             self._fetch_and_set_scraped_website_content()
 
-        # self.article_to_process.shortened_content = ' '.join(self.article_to_process.scraped_website_content.split()[:(max_tokens_for_summary // 2)])
         self.article_to_process.shortened_content = ' '.join(self.article_to_process.scraped_website_content.split()[:(self.model_info_from_config["max_tokens"] // 2)])
         print("    shortened_content: ", self.article_to_process.shortened_content, "\n")
 
@@ -65,7 +64,6 @@ class ArticleManager:
 
     def get_summary_model_defined(self):
         self.article_to_process.model = self.model_info_from_config
-        self.db_manager.only_insert_model_into_database_if_not_already_there(self.article_to_process.model["name"])
         self.article_to_process.summary, self.article_to_process.summary_dump = self.ai_manager.get_summary_and_record_model_results(self.article_to_process)
 
     def get_summary_find_model(self):
@@ -86,12 +84,15 @@ class ArticleManager:
             self.article_to_process.summary, self.article_to_process.summary_dump = self.ai_manager.get_summary_and_record_model_results(self.article_to_process) #TODO: clean up
 
     def add_summary_to_comment_thread_manager(self):
-        self.comment_thread_manager.add_comment(0,
-                                                self.article_to_process.summary,
-                                                scraper.get_polite_name(self.article_to_process.model["name"]),
-                                                "summary | summary",
-                                                datetime.now()
-                                                )
+        if not self.article_to_process.summary:
+            raise FatalError("No summary generated. Exiting...")
+        else:
+            self.comment_thread_manager.add_comment(0,
+                                                    self.article_to_process.summary,
+                                                    scraper.get_polite_name(self.article_to_process.model["name"]),
+                                                    "summary | summary",
+                                                    datetime.now()
+                                                    )
 
     def fetch_and_add_first_comment(self):
         first_comment_prompt, first_comment_prompt_keywords = instruction_generator.generate_first_comment_prompt(self.article_to_process.summary)

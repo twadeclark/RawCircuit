@@ -1,20 +1,15 @@
 from article_manager.article_manager import ArticleManager
-from error_handler import FatalError
 
 
 def main():
-
     article_manager = ArticleManager()
 
     article_manager.load_news_article()
 
-    if article_manager.model_info_from_config["name"]:
+    if article_manager.model_info_from_config["name"] or article_manager.model_info_from_config["interface"] == "LocalOpenAIInterface":
         article_manager.get_summary_model_defined()
     else:
         article_manager.get_summary_find_model()
-
-    if not article_manager.article_to_process.summary:
-        raise FatalError("No summary generated. Exiting...")
 
     article_manager.add_summary_to_comment_thread_manager()
     article_manager.fetch_and_add_first_comment()
