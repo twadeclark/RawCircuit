@@ -14,7 +14,7 @@ from output_formatter.comment_thread_manager import CommentThreadManager
 from output_formatter import markdown_formatter
 from output_formatter import publish_pelican
 from output_formatter import upload_directory_to_s3
-from prompt_generator import instruction_generator
+from prompt_generator.instruction_generator import InstructionGenerator
 from vocabulary.news_search import SearchTerms
 
 
@@ -24,7 +24,8 @@ class ArticleManager:
         self.config = configparser.ConfigParser()
         self.config.read('config.ini')
         self.db_manager = DBManager(self.config['postgresql'])
-        self.ai_manager = AIManager(self.config, self.db_manager)
+        self.instruction_generator =  InstructionGenerator(self.config.get('general_configurations', 'prompt_tier'))
+        self.ai_manager = AIManager(self.config, self.db_manager, self.instruction_generator)
         self.news_aggregator_manager = NewsAggregatorManager(self.config, self.db_manager, None) #TODO: news aggregator type should come from config
         self.search_terms = SearchTerms()
         self.hfms = HuggingfaceModelSearch(self.db_manager)
@@ -95,7 +96,7 @@ class ArticleManager:
                                                     )
 
     def fetch_and_add_first_comment(self):
-        first_comment_prompt, first_comment_prompt_keywords = instruction_generator.generate_first_comment_prompt(self.article_to_process.summary)
+        first_comment_prompt, first_comment_prompt_keywords = self.instruction_generator.generate_first_comment_prompt(self.article_to_process.summary)
         print("    first_comment_prompt: ", first_comment_prompt)
 
         first_comment, first_comment_flavors = self.ai_manager.fetch_inference(self.article_to_process.model, first_comment_prompt, 0.0)
@@ -125,7 +126,7 @@ class ArticleManager:
             parent_comment = self.comment_thread_manager.get_comment(parent_index)["comment"]
             temperature += temperature_increase
 
-            loop_comment_prompt, prompt_keywords = instruction_generator.generate_loop_prompt(self.article_to_process.summary, parent_comment)
+            loop_comment_prompt, prompt_keywords = self.instruction_generator.generate_loop_prompt(self.article_to_process.summary, parent_comment)
             print("\n    loop_comment_prompt: ", loop_comment_prompt)
 
             loop_comment, flavors = self.ai_manager.fetch_inference(self.article_to_process.model, loop_comment_prompt, temperature)

@@ -2,10 +2,9 @@ import re
 from contributors.hugging_face_interface import HuggingFaceInterface
 from contributors.local_openai_interface import LocalOpenAIInterface
 from contributors.transformers_interface import TransformersInterface
-from prompt_generator.instruction_generator import generate_summary_prompt_chat, generate_summary_prompt_instruct, generate_summary_prompt_instruct_chat
 
 class AIManager:
-    def __init__(self, config, db_manager):
+    def __init__(self, config, db_manager, instruction_generator):
         self.config = config
         self.db_manager = db_manager
         self.interface_list = {
@@ -15,6 +14,8 @@ class AIManager:
             # 'LiteLLMInterface': LiteLLMInterface(config["LiteLLMInterface"]),
             # 'GenericApiInterface': GenericApiInterface(config["GenericApiInterface"]),
         }
+        self.instruction_generator = instruction_generator
+
 
     def fetch_summary_and_record_model_results(self, model_temp, summary_prompt_temp):
         summary_temp = None
@@ -33,9 +34,9 @@ class AIManager:
         summary_instruct = summary_instruct_chat = summary_chat = None
         fetch_success = True
 
-        summary_instruct, fetch_success = self.fetch_summary_and_record_model_results(article_to_process.model, generate_summary_prompt_instruct(article_to_process.shortened_content))
-        summary_instruct_chat, fetch_success = self.fetch_summary_and_record_model_results(article_to_process.model, generate_summary_prompt_instruct_chat(article_to_process.shortened_content))
-        summary_chat, fetch_success = self.fetch_summary_and_record_model_results(article_to_process.model, generate_summary_prompt_chat(article_to_process.shortened_content))
+        summary_instruct, fetch_success = self.fetch_summary_and_record_model_results(article_to_process.model, self.instruction_generator.generate_summary_prompt_instruct(article_to_process.shortened_content))
+        summary_instruct_chat, fetch_success = self.fetch_summary_and_record_model_results(article_to_process.model, self.instruction_generator.generate_summary_prompt_instruct_chat(article_to_process.shortened_content))
+        summary_chat, fetch_success = self.fetch_summary_and_record_model_results(article_to_process.model, self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content))
 
         summary_dump = ""
         summary_selected = ""
@@ -64,9 +65,9 @@ class AIManager:
     def fetch_inference(self, model, formatted_messages, temperature):
         interface = self.interface_list.get(model["interface"])
 
-        if not isinstance(formatted_messages, str):
-            word_limit = model["max_tokens"] // 2
-            formatted_messages = truncate_user_messages_if_needed(formatted_messages, word_limit)
+        # if not isinstance(formatted_messages, str):
+        #     word_limit = model["max_tokens"] // 2
+        #     formatted_messages = truncate_user_messages_if_needed(formatted_messages, word_limit)
 
         # let's go!
         response, flavors = interface.fetch_inference(model, formatted_messages, temperature)

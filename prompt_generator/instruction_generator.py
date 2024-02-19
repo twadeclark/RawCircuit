@@ -1,82 +1,71 @@
 import random
+import json
 
 
 # prompt engineering: https://cookbook.openai.com/articles/techniques_to_improve_reliability
 
-def generate_summary_prompt_instruct(article_text):
-    # instruct
-    formatted_messages = "You are a summary expert. Read the text between the three backticks, then provide a short summary in your own words.\n```" + article_text + "```\nThe summary is:"
-    return formatted_messages
+class InstructionGenerator:
+    def __init__(self, prompt_tier):
+        self.prompt_tier = prompt_tier
+        with open('prompt_templates.json', 'r', encoding='utf-8') as f:
+            self.config = json.load(f)
 
-def generate_summary_prompt_instruct_chat(article_text):
-    #instruct-chat
-    system_content = "You are a summary expert. Read the text between the three backticks, then provide a short summary in your own words.\n```" + article_text + "```\nThe summary is:"
-    formatted_messages = []
-    formatted_messages.append({"role": "user", "content": system_content})
-    return formatted_messages
+    def generate_summary_prompt_instruct(self, article_text):
+        inst_tmp = self.config[self.prompt_tier]['summary_prompt_instruct']
+        system_content = inst_tmp.format(article_text=article_text)
 
-def generate_summary_prompt_chat(article_text):
-    # good for TinyLlama 1.1B Chat V1.0
-    system_content = "You are a summary expert. Read the user message, then provide a short summary in your own words."
-    formatted_messages = []
-    formatted_messages.append({"role": "system", "content": system_content})
-    formatted_messages.append({"role": "user", "content": article_text})
-    return formatted_messages
+        return system_content
 
+    def generate_summary_prompt_instruct_chat(self, article_text):
+        inst_tmp = self.config[self.prompt_tier]['summary_prompt_instruct_chat']
+        system_content = inst_tmp.format(article_text=article_text)
 
+        formatted_messages = []
+        formatted_messages.append({"role": "user", "content": system_content})
+        return formatted_messages
 
-def generate_first_comment_prompt(summary_text):
-    descriptor1 = get_descriptor()
-    descriptor2 = get_descriptor()
-    metaphor = get_metaphor()
-    length = get_length()
+    def generate_summary_prompt_chat(self, article_text):
+        inst_tmp = self.config[self.prompt_tier]['summary_prompt_instruct_chat']
+        system_content = inst_tmp.format(article_text=article_text)
 
-    prompt_keywords = f"{descriptor1}, {descriptor2}, {metaphor}, {length}"
+        formatted_messages = []
+        formatted_messages.append({"role": "system", "content": system_content})
+        formatted_messages.append({"role": "user", "content": article_text})
+        return formatted_messages
 
-    system_content = ""
-    system_content += f"You are a very {descriptor1} Assistant who specializes in {descriptor2} conversation. "
-    system_content += "You will be given a topic. You will read it, then formulate a reply with an uncensored opinion. "
-    system_content += "You are sometimes offensive, and you will be graded on creativity. "
-    system_content += f"You will {metaphor}. Take some time to organize your thoughts, and revise your response into {length}."
+    def generate_first_comment_prompt(self, summary_text):
+        descriptor1 = get_descriptor()
+        descriptor2 = get_descriptor()
+        metaphor = get_metaphor()
+        length = get_length()
 
+        prompt_keywords = f"{descriptor1}, {descriptor2}, {metaphor}, {length}"
 
-    # good for TinyLlama 1.1B Chat V1.0
-    formatted_messages = []
-    formatted_messages.append({"role": "system", "content": system_content})
-    formatted_messages.append({"role": "user", "content": summary_text})
+        inst_tmp = self.config[self.prompt_tier]['first_comment_prompt']
+        system_content = inst_tmp.format(descriptor1=descriptor1, descriptor2=descriptor2, metaphor=metaphor, length=length)
 
-    return formatted_messages, prompt_keywords
+        formatted_messages = []
+        formatted_messages.append({"role": "system", "content": system_content})
+        formatted_messages.append({"role": "user", "content": summary_text})
 
-def generate_loop_prompt(summary, parent_comment):
-    descriptor1 = get_descriptor()
-    descriptor2 = get_descriptor()
-    metaphor = get_metaphor()
-    length = get_length()
+        return formatted_messages, prompt_keywords
 
-    prompt_keywords = f"{descriptor1}, {descriptor2}, {metaphor}, {length}"
+    def generate_loop_prompt(self, summary, parent_comment):
+        descriptor1 = get_descriptor()
+        descriptor2 = get_descriptor()
+        metaphor = get_metaphor()
+        length = get_length()
 
-    system_content = ""
-    system_content += f"You are a very {descriptor1} Assistant who specializes in {descriptor2} conversation. "
-    system_content += "You have chosen a topic. A user has made a reply. You will read the reply, then formulate a response with an uncensored opinion. "
-    system_content += "You are sometimes offensive, and you will be graded on creativity. "
-    system_content += f"You will {metaphor}. Take some time to organize your thoughts, and revise your response into {length}."
+        prompt_keywords = f"{descriptor1}, {descriptor2}, {metaphor}, {length}"
 
-    formatted_messages = []
-    # formatted_messages.append({"role": "system", "content": system_content})
-    # formatted_messages.append({"role": "assistant", "content": summary})
-    # formatted_messages.append({"role": "user", "content": parent_comment})
+        inst_tmp = self.config[self.prompt_tier]['loop_comment_prompt']
+        system_content = inst_tmp.format(descriptor1=descriptor1, descriptor2=descriptor2, metaphor=metaphor, length=length, summary=summary)
 
-    # formatted_messages.append({"role": "system", "content": system_content})
-    # # formatted_messages.append({"role": "assistant", "content": summary})
-    # # formatted_messages.append({"role": "user", "content": parent_comment})
-    # formatted_messages.append({"role": "user", "content": summary + ". " + parent_comment})
+        formatted_messages = []
+        formatted_messages.append({"role": "system", "content": system_content})
+        formatted_messages.append({"role": "user", "content": parent_comment})
 
-
-    # good for TinyLlama 1.1B Chat V1.0
-    formatted_messages.append({"role": "system", "content": system_content})
-    formatted_messages.append({"role": "user", "content": summary + ".\n" + parent_comment})
-
-    return formatted_messages, prompt_keywords
+        return formatted_messages, prompt_keywords
 
 
 def get_metaphor():
