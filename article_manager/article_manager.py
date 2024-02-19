@@ -98,7 +98,7 @@ class ArticleManager:
         first_comment_prompt, first_comment_prompt_keywords = instruction_generator.generate_first_comment_prompt(self.article_to_process.summary)
         print("    first_comment_prompt: ", first_comment_prompt)
 
-        first_comment, first_comment_flavors = self.ai_manager.fetch_inference(self.article_to_process.model, first_comment_prompt)
+        first_comment, first_comment_flavors = self.ai_manager.fetch_inference(self.article_to_process.model, first_comment_prompt, 0.0)
 
         if not first_comment:
             raise FatalError("No first comment generated. Exiting...")
@@ -111,18 +111,24 @@ class ArticleManager:
                                                 )
 
     def generate_additional_comments(self):
-        qty_addl_comments = int(self.config.get('general_configurations', 'qty_addl_comments'))
         continuity_multiplier = float(self.config.get('general_configurations', 'continuity_multiplier'))
+        number_of_comments_between_min_max_temperature = int(self.config.get('general_configurations', 'number_of_comments_between_min_max_temperature'))
+        max_comment_temperature = float(self.config.get('general_configurations', 'max_comment_temperature'))
+        min_comment_temperature = float(self.config.get('general_configurations', 'min_comment_temperature'))
+        temp_pct_increase = float( 1 / (number_of_comments_between_min_max_temperature + 2))
+        temperature_increase = float(temp_pct_increase * (max_comment_temperature - min_comment_temperature))
+        temperature = float(0.0 + temperature_increase)
 
-        for _ in range(1, qty_addl_comments):
+        for _ in range(1, number_of_comments_between_min_max_temperature + 2):
             parent_index = random.randint(0, int(self.comment_thread_manager.get_comments_length() * continuity_multiplier))
             parent_index = min(parent_index, self.comment_thread_manager.get_comments_length() - 1)
             parent_comment = self.comment_thread_manager.get_comment(parent_index)["comment"]
+            temperature += temperature_increase
 
             loop_comment_prompt, prompt_keywords = instruction_generator.generate_loop_prompt(self.article_to_process.summary, parent_comment)
             print("\n    loop_comment_prompt: ", loop_comment_prompt)
 
-            loop_comment, flavors = self.ai_manager.fetch_inference(self.article_to_process.model, loop_comment_prompt)
+            loop_comment, flavors = self.ai_manager.fetch_inference(self.article_to_process.model, loop_comment_prompt, temperature)
             if not loop_comment:
                 print(f"No loop comment generated. model: {self.article_to_process.model["name"]} Skipping...")
                 continue

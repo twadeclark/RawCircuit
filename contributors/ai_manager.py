@@ -19,7 +19,7 @@ class AIManager:
     def fetch_summary_and_record_model_results(self, model_temp, summary_prompt_temp):
         summary_temp = None
         try:
-            summary_temp, _ = self.fetch_inference(model_temp, summary_prompt_temp, True)
+            summary_temp, _ = self.fetch_inference(model_temp, summary_prompt_temp, 0.0)
             length_of_summary = len(str(summary_temp))
             print(f"    Successful fetch. length_of_summary: {length_of_summary}")
             self.db_manager.update_model_record(model_temp["name"], True, f"length_of_summary: {length_of_summary}")
@@ -33,21 +33,9 @@ class AIManager:
         summary_instruct = summary_instruct_chat = summary_chat = None
         fetch_success = True
 
-        # if fetch_success:
-        #     print("    Template instruct...")
         summary_instruct, fetch_success = self.fetch_summary_and_record_model_results(article_to_process.model, generate_summary_prompt_instruct(article_to_process.shortened_content))
-
-        # if fetch_success:
-        #     print("    Template instruct_chat...")
         summary_instruct_chat, fetch_success = self.fetch_summary_and_record_model_results(article_to_process.model, generate_summary_prompt_instruct_chat(article_to_process.shortened_content))
-        # else:
-        #     print("    No fetch_success. Skipping instruct_chat...")
-
-        # if fetch_success:
-        #     print("    Template chat...")
         summary_chat, fetch_success = self.fetch_summary_and_record_model_results(article_to_process.model, generate_summary_prompt_chat(article_to_process.shortened_content))
-        # else:
-        #     print("    No fetch_success. Skipping chat...")
 
         summary_dump = ""
         summary_selected = ""
@@ -73,15 +61,15 @@ class AIManager:
             summary_dump = summary_dump.replace("\n", " ")
         return summary_selected, summary_dump
 
-    def fetch_inference(self, model, formatted_messages, is_summary=False):
+    def fetch_inference(self, model, formatted_messages, temperature):
         interface = self.interface_list.get(model["interface"])
 
-        if not is_summary:
+        if not isinstance(formatted_messages, str):
             word_limit = model["max_tokens"] // 2
             formatted_messages = truncate_user_messages_if_needed(formatted_messages, word_limit)
 
         # let's go!
-        response, flavors = interface.fetch_inference(model, formatted_messages, is_summary)
+        response, flavors = interface.fetch_inference(model, formatted_messages, temperature)
 
         # remove the prompt from the response
         if response:

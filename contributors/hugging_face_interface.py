@@ -1,5 +1,4 @@
 import json
-import random
 import requests
 from transformers import AutoTokenizer
 from contributors.abstract_ai_unit import AbstractAIUnit
@@ -10,19 +9,12 @@ class HuggingFaceInterface(AbstractAIUnit):
         self.api_key = config["api_key"]
         self.base_url = config["base_url"]
 
-    def fetch_inference(self, model, formatted_messages, is_summary):
+    def fetch_inference(self, model, formatted_messages, temperature):
         headers = {"Authorization": f"Bearer {self.api_key}"}
         this_api_endpoint = self.base_url + model['name']
         formatted_messages_as_string = None
 
-        if is_summary:
-            max_new_tokens = 250
-            temperature = 0.7
-            repetition_penalty = 1.0
-        else:
-            max_new_tokens = random.randint(1, 10) * 25
-            temperature = random.uniform(0.0, 2.0)
-            repetition_penalty = random.uniform(0.0, 2.0)
+        max_new_tokens = 250
 
         if isinstance(formatted_messages, str):
             formatted_messages_as_string = formatted_messages
@@ -33,9 +25,8 @@ class HuggingFaceInterface(AbstractAIUnit):
             formatted_messages_as_string = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
 
         temperature_as_string = "{:.1f}".format(temperature)
-        repetition_penalty_as_string = "{:.1f}".format(repetition_penalty)
 
-        flavors = f" \t max_new_tokens: {max_new_tokens}, \t temperature: {temperature_as_string}, \t repetition_penalty: {repetition_penalty_as_string}"
+        flavors = f" \t max_new_tokens: {max_new_tokens}, \t temperature: {temperature_as_string}"
 
         # print("\n\n",formatted_messages_with_chat_template_applied.strip)
 
@@ -44,7 +35,6 @@ class HuggingFaceInterface(AbstractAIUnit):
             "parameters": { 
                             "max_new_tokens"        : max_new_tokens,
                             "temperature"           : temperature,
-                            "repetition_penalty"    : repetition_penalty,
                             "max_time"              : 120,
                             "do_sample"             : True,
                             "return_full_text"      : False
