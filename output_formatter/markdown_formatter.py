@@ -1,7 +1,7 @@
 import re
 from dateutil import parser
 
-# 🦾  ♻️   🚡  🪒  🪩  🪤  🧉  🐚  🪶  🃏  🧃  🪽  🫎  🪬  🧌  🏺  🧦  🥌  📇  🗃️  🦪
+# 🦾  ♻️   🚡  🪒  🪩  🪤  🧉  🐚  🪶  🃏  🧃  🪽  🫎  🪬  🧌  🏺  📇  🗃️  🦪
 
 def format_to_markdown(article, comment_thread_manager):
     markdown = ""
@@ -9,6 +9,11 @@ def format_to_markdown(article, comment_thread_manager):
     title = re.sub(r"\[.*\]", "", article.title).strip()
     title = re.sub(r'\([^)]*\)', '', article.title)
     title = re.sub(r'\{[^)]*\}', '', article.title)
+    title = title.replace("\n", " ")
+    title = title.replace("\r", " ")
+    title = title.replace("\t", " ")
+    title = " ".join(title.split())
+    title = title.strip()
 
     comment = comment_thread_manager.get_comment(0)
 
@@ -37,7 +42,8 @@ def format_to_markdown(article, comment_thread_manager):
             parent_comment = re.sub(r"[\n\r]", " ", parent_comment)
             markdown += (f"><span style='font-size: smaller;'>{parent_comment}</span>\n\n")
 
-        markdown += (f"{comment["comment"]}\n\n")
+        poem_formatter = re.sub(r"[\n\r]", "  \n", comment["comment"])
+        markdown += (f"{poem_formatter}\n\n")
 
         markdown += get_badges(comment["prompt_keywords"])
 
@@ -59,7 +65,8 @@ def get_badges(prompt_keywords):
         arrow_chars = '↜↝↫↬↭↯↰↱↲↳↴↵↶↷↸↹↺↻⇜⇝'
         char_pos = sum(ord(c) for c in prompt_phrase) % (len(arrow_chars))
         selected_arrow = arrow_chars[char_pos]
-        ret_val += (f"<span title='{prompt_phrase}'> 🎭{selected_arrow}</span> ∙ ")
+        prompt_phrase_clean = re.sub(r'[\'"]', '', prompt_phrase)
+        ret_val += (f"<span title='{prompt_phrase_clean}'> 🎭{selected_arrow}</span> ∙ ")
 
     if 'max_tokens' in prompt_keywords:
         max_tokens = int(re.search(r'max_tokens: (\d+)', prompt_keywords).group(1)) # 25 - 250
@@ -99,6 +106,21 @@ def get_badges(prompt_keywords):
         repetition_penalty_rotate = int(repetition_penalty * -30) # -2 - 2
         repetition_penalty_as_string = "{:.1f}".format(repetition_penalty)
         ret_val += (f"<span title='repetition_penalty = {repetition_penalty_as_string}'> 🦤</span><span style='display: inline-block; transform: rotate({repetition_penalty_rotate}deg);'>→</span>")
+
+    if 'time_to_first_token' in prompt_keywords:
+        time_to_first_token = float(re.search(r'time_to_first_token: ([\d.-]+)', prompt_keywords).group(1))
+        time_to_first_token_rotate = int((time_to_first_token - 10) * -6)
+        time_to_first_token_as_string = "{:.3f}".format(time_to_first_token)
+        ret_val += (f"<span title='time_to_first_token = {time_to_first_token_as_string} sec'> 🧦</span><span style='display: inline-block; transform: rotate({time_to_first_token_rotate}deg);'>→</span>")
+
+    if 'tokens_per_second' in prompt_keywords:
+        tokens_per_second = float(re.search(r'tokens_per_second: ([\d.-]+)', prompt_keywords).group(1))
+        tokens_per_second_rotate = int((tokens_per_second - 15) * -4)
+        tokens_per_second_as_string = "{:.2f}".format(tokens_per_second)
+        ret_val += (f"<span title='tokens_per_second = {tokens_per_second_as_string}  t/s'> 🥌</span><span style='display: inline-block; transform: rotate({tokens_per_second_rotate}deg);'>→</span>")
+
+    # rotation is 60 minumum to -60 maximum, 120 swing
+    # if min is 0, then: rotation = int((x - (maximum / 2)) * -(60 / (maximum / 2)))
 
     return ret_val
 

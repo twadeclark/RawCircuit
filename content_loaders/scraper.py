@@ -23,23 +23,28 @@ def fetch_raw_html_from_url(url):
 
 def get_polite_name(in_val):
     s = in_val
-    s = re.sub(r'^.*?/', '', s)
-    s = re.sub(r'[^.\w]', ' ', s)
-    s = re.sub(r'_', ' ', s)
+    s = re.sub(r'^.*?/', '', s) # just the text after the last slash
+    s = re.sub(r'[^.\w]', ' ', s) # replace all non-alphanumeric characters with a space
+    s = re.sub(r'\.(?=[qQ])', ' ', s) # replace all periods followed by a q with a space
+    # s = re.sub(r'_', ' ', s) # replace all underscores with a space
 
-    s = " ".join(s.split())
+    s = " ".join(s.split()) # remove extra spaces
 
-    if s and s[0].isalpha():
+    if s and s[0].isalpha(): # capitalize the first letter of the string
         s = s[0].upper() + s[1:]
     result = [s[0]] if s else []
 
-    for i in range(1, len(s)):
+    for i in range(1, len(s)): # capitalize the first letter of each word
         if s[i-1] == ' ' and s[i].isalpha():
             result.append(s[i].upper())
         else:
             result.append(s[i])
 
-    return ''.join(result)
+    ret_val = ''.join(result) # join the list of characters into a string
+    ret_val = " ".join(ret_val.split()) # remove extra spaces
+    ret_val = ret_val.strip()
+
+    return ret_val
 
 def extract_pure_text_from_raw_html(html):
     text = strip_html_tags(html)
