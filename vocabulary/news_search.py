@@ -1,4 +1,5 @@
 import random
+import re
 import yaml
 
 
@@ -14,6 +15,64 @@ class SearchTerms():
         return random_category, random_term
 
     def categorize_article_add_tags(self, article_to_process):
+        # self._category_and_tags_by_content(article_to_process)
+        self._category_and_tags_by_model(article_to_process)
+
+        print("category :", article_to_process.unstored_category)
+        print("tags     :", article_to_process.unstored_tags)
+
+    def _category_and_tags_by_model(self, article_to_process):
+        model_name = article_to_process.model["name"]
+        all_assigned_tags = []
+        best_fit_category = ""
+
+        if 'chat' in model_name.lower():
+            all_assigned_tags.append("chat")
+
+        if 'instruct' in model_name.lower():
+            all_assigned_tags.append("instruct")
+
+        if 'gguf' in model_name.lower():
+            all_assigned_tags.append("gguf")
+
+        if 'code' in model_name.lower():
+            all_assigned_tags.append("code")
+
+        if 'uncensored' in model_name.lower():
+            all_assigned_tags.append("uncensored")
+
+        if 'tiny' in model_name.lower():
+            all_assigned_tags.append("tiny")
+
+        # token_count = just the numbers from a regex does this: match a non-number character, followed one or more number characters, followed by a b or B, followed by an underscore or non-letter character or end of string
+        token_count = re.findall(r'(?<!\d)\d+[bB](?![a-zA-Z])', model_name)
+        if token_count:
+            all_assigned_tags.append(f"{token_count[0].lower()}")
+
+
+        if 'gpt' in model_name.lower():
+            best_fit_category = "gpt"
+
+        if 'falcon' in model_name.lower():
+            best_fit_category = "falcon"
+            
+        if 'phi' in model_name.lower():
+            best_fit_category = "phi"
+
+        if 'llama' in model_name.lower():
+            best_fit_category = "llama"
+
+        if 'mistral' in model_name.lower():
+            best_fit_category = "mistral"
+
+        if 'mixtral' in model_name.lower():
+            best_fit_category = "mixtral"
+
+        article_to_process.unstored_category = best_fit_category
+        article_to_process.unstored_tags = all_assigned_tags
+
+
+    def _category_and_tags_by_content(self, article_to_process):
         article_text = article_to_process.shortened_content.lower()
 
         best_fit_category = None
@@ -36,6 +95,3 @@ class SearchTerms():
 
         article_to_process.unstored_category = best_fit_category
         article_to_process.unstored_tags = all_assigned_tags
-
-        print("category :", article_to_process.unstored_category)
-        print("tags     :", article_to_process.unstored_tags)

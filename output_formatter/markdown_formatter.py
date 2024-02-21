@@ -24,6 +24,8 @@ def format_to_markdown(article, comment_thread_manager):
     markdown += (f"Category: {comment_thread_manager.get_category()}\n")
     markdown += (f"featured_image: {article.url_to_image}\n")
     markdown += (f"comments_intro: {comment["comment"]}\n")
+    markdown += (f"author_full_name: {article.model['name']}\n")
+    markdown += (f"author_stats: {get_badges(comment["prompt_keywords"])}\n")
 
     markdown += ("<span style='font-size: smaller;'>")
     markdown += (f"[original article]({article.url}) from *{article.source_name}* by *{article.author}* at *{parse_date_into_pretty_string(article.published_at)}* ")
@@ -32,7 +34,7 @@ def format_to_markdown(article, comment_thread_manager):
 
     for i in range(1, comment_thread_manager.get_comments_length()):
         comment = comment_thread_manager.get_comment(i)
-        markdown += (f"<span style='font-size: smaller;'>**{comment["author"]}** *on {parse_date_into_pretty_string(comment["date"])}*</span>\n\n")
+        markdown += (f"<span style='font-size: smaller;' title='{article.model['name']}'>**🤖 {comment["author"]}** *on {parse_date_into_pretty_string(comment["date"])}*</span>\n\n")
 
         p = int(comment["parent"])
         if (p + 1) != i :
@@ -49,8 +51,10 @@ def format_to_markdown(article, comment_thread_manager):
 
         markdown += ("\n\n***\n\n")
 
-    if article.summary_dump:
+    if article.shortened_content:
         markdown += (f"🦪 <span style='font-size: xx-small;'>View Source for Original Content.</span> <!-- {str(article.shortened_content).replace("\n", " ")} -->\n")
+
+    if article.summary_dump:
         markdown += (f"⚗️ <span style='font-size: xx-small;'>View Source for Summaries.</span> <!-- {article.summary_dump.replace("\n", " ")} -->\n")
 
     markdown += (f"⏱️ <span style='font-size: xx-small;'>Processed in {comment_thread_manager.get_duration()}</span>\n") #  ⏱️  ⌛
@@ -115,7 +119,7 @@ def get_badges(prompt_keywords):
 
     if 'tokens_per_second' in prompt_keywords:
         tokens_per_second = float(re.search(r'tokens_per_second: ([\d.-]+)', prompt_keywords).group(1))
-        tokens_per_second_rotate = int((tokens_per_second - 15) * -4)
+        tokens_per_second_rotate = int((tokens_per_second - 30) * -2)
         tokens_per_second_as_string = "{:.2f}".format(tokens_per_second)
         ret_val += (f"<span title='tokens_per_second = {tokens_per_second_as_string}  t/s'> 🥌</span><span style='display: inline-block; transform: rotate({tokens_per_second_rotate}deg);'>→</span>")
 

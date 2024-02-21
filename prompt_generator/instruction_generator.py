@@ -15,7 +15,7 @@ class InstructionGenerator:
 
     def get_random_value(self, category):
         return random.choice(self.values[category])
-    
+
     def generate_summary_prompt_instruct(self, article_text):
         categories = self.values.keys()
         selected_values = {category: self.get_random_value(category) for category in categories}
@@ -23,8 +23,9 @@ class InstructionGenerator:
         placeholders = set(re.findall(r'\{(\w+)\}', inst_tmp))
         filtered_selected_values = {k: v for k, v in selected_values.items() if k in placeholders}
         system_content = inst_tmp.format(article_text=article_text, **filtered_selected_values)
+        prompt_keywords = ', '.join(filtered_selected_values.values())
 
-        return system_content
+        return system_content, prompt_keywords
 
     def generate_summary_prompt_instruct_chat(self, article_text):
         categories = self.values.keys()
@@ -33,10 +34,11 @@ class InstructionGenerator:
         placeholders = set(re.findall(r'\{(\w+)\}', inst_tmp))
         filtered_selected_values = {k: v for k, v in selected_values.items() if k in placeholders}
         system_content = inst_tmp.format(article_text=article_text, **filtered_selected_values)
+        prompt_keywords = ', '.join(filtered_selected_values.values())
 
         formatted_messages = []
         formatted_messages.append({"role": "user", "content": system_content})
-        return formatted_messages
+        return formatted_messages, prompt_keywords
 
     def generate_summary_prompt_chat(self, article_text):
         categories = self.values.keys()
@@ -45,11 +47,12 @@ class InstructionGenerator:
         placeholders = set(re.findall(r'\{(\w+)\}', inst_tmp))
         filtered_selected_values = {k: v for k, v in selected_values.items() if k in placeholders}
         system_content = inst_tmp.format(**filtered_selected_values)
+        prompt_keywords = ', '.join(filtered_selected_values.values())
 
         formatted_messages = [{"role": "system", "content": system_content},
                               {"role": "user", "content": article_text}]
 
-        return formatted_messages
+        return formatted_messages, prompt_keywords
 
     def generate_first_comment_prompt(self, summary_text):
         categories = self.values.keys()

@@ -10,7 +10,7 @@ class LocalOpenAIInterface(AbstractAIUnit):
     def fetch_inference(self, model, formatted_messages, temperature):
         client = OpenAI(base_url=self.base_url, api_key=self.api_key)
         content = ""
-        
+
         max_tokens = 250
 
         stream = client.chat.completions.create( timeout=6000, # 100 minutes
@@ -69,11 +69,10 @@ class LocalOpenAIInterface(AbstractAIUnit):
             parts = chunk.model.split("\\")
             if parts:
                 if len(parts) >= 3:
+                    model["name"] = f"{parts[-3]}/{parts[-1]}"
                     model_name = parts[-1]
                     model_name = model_name.strip()
                     if model_name.lower().endswith(".gguf"):
                         model_name = model_name[:-5]
-            if model_name:
-                model["name"] = model_name
 
         return content, flavors

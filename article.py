@@ -17,14 +17,15 @@ class Article:
         self.scraped_website_content = scraped_website_content
         self.processed_timestamp = processed_timestamp
 
+        self.model = None
+        self.shortened_content = None
         self.unstored_tags = []
         self.unstored_category = None
-        self.model = None
 
-        self.summary_prompt = None
-        self.summary = None
         self.summary_dump = None
-        self.shortened_content = None
+        self.summary = None
+        self.summary_prompt_keywords = None
+        self.summary_flavors = None
 
 
     def __str__(self):

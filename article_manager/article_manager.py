@@ -29,10 +29,10 @@ class ArticleManager:
         self.news_aggregator_manager = NewsAggregatorManager(self.config, self.db_manager, None) #TODO: news aggregator type should come from config
         self.search_terms = SearchTerms()
         self.hfms = HuggingfaceModelSearch(self.db_manager)
-        self.model_info_from_config = {  "name"      : self.config.get('model_info', 'model_name'),
-                        "interface" : self.config.get('model_info', 'interface'),
-                        "max_tokens": self.config.getint('model_info', 'max_tokens')}
-        print("model:", self.model_info_from_config)
+        self.model_info_from_config = { "name"      : self.config.get('model_info', 'model_name'),
+                                        "interface" : self.config.get('model_info', 'interface'),
+                                        "max_tokens": self.config.getint('model_info', 'max_tokens')}
+        print("model_info_from_config:", self.model_info_from_config)
         self.article_to_process = None
 
     def load_news_article(self):
@@ -56,16 +56,18 @@ class ArticleManager:
         if not self.article_to_process.scraped_website_content:
             self._fetch_and_set_scraped_website_content()
 
-        self.article_to_process.shortened_content = ' '.join(self.article_to_process.scraped_website_content.split()[:(self.model_info_from_config["max_tokens"] // 2)])
+        shortened_content_tmp = ' '.join(self.article_to_process.scraped_website_content.split()[:(self.model_info_from_config["max_tokens"] // 2)])
+        shortened_content_tmp = scraper.extract_pure_text_from_raw_html(shortened_content_tmp)
+        self.article_to_process.shortened_content = shortened_content_tmp
         print("    shortened_content: ", self.article_to_process.shortened_content, "\n")
 
-        self.search_terms.categorize_article_add_tags(self.article_to_process)
+        # self.search_terms.categorize_article_add_tags(self.article_to_process)
 
 
 
     def get_summary_model_defined(self):
         self.article_to_process.model = self.model_info_from_config
-        self.article_to_process.summary, self.article_to_process.summary_dump = self.ai_manager.get_summary_and_record_model_results(self.article_to_process)
+        self.ai_manager.get_and_set_summary_and_record_model_results(self.article_to_process)
 
     def get_summary_find_model(self):
         cnt = int(self.config.get('general_configurations', 'number_of_models_to_try'))
@@ -82,7 +84,7 @@ class ArticleManager:
                                                 "max_tokens": self.model_info_from_config["max_tokens"]
                                             }
             print("\nTrying model: ", self.article_to_process.model["name"])
-            self.article_to_process.summary, self.article_to_process.summary_dump = self.ai_manager.get_summary_and_record_model_results(self.article_to_process) #TODO: clean up
+            self.ai_manager.get_and_set_summary_and_record_model_results(self.article_to_process) #TODO: clean up
 
     def add_summary_to_comment_thread_manager(self):
         if not self.article_to_process.summary:
@@ -91,7 +93,8 @@ class ArticleManager:
             self.comment_thread_manager.add_comment(0,
                                                     self.article_to_process.summary,
                                                     scraper.get_polite_name(self.article_to_process.model["name"]),
-                                                    "summary | summary",
+                                                    # "summary | summary",
+                                                    self.article_to_process.summary_prompt_keywords  + " | " +  self.article_to_process.summary_flavors,
                                                     datetime.now()
                                                     )
 
@@ -142,6 +145,8 @@ class ArticleManager:
                                                     )
 
     def format_and_publish(self):
+        self.search_terms.categorize_article_add_tags(self.article_to_process)
+
         local_content_path = self.config.get('publishing_details', 'local_content_path')
         formatted_post = markdown_formatter.format_to_markdown(self.article_to_process, self.comment_thread_manager)
         print("\nPost sucessfully formatted. ", len(formatted_post), "characters")

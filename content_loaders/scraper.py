@@ -27,8 +27,7 @@ def get_polite_name(in_val):
     s = re.sub(r'[^.\w]', ' ', s) # replace all non-alphanumeric characters with a space
     s = re.sub(r'\.(?=[qQ])', ' ', s) # replace all periods followed by a q with a space
     # s = re.sub(r'_', ' ', s) # replace all underscores with a space
-
-    s = " ".join(s.split()) # remove extra spaces
+    # s = " ".join(s.split()) # remove extra spaces
 
     if s and s[0].isalpha(): # capitalize the first letter of the string
         s = s[0].upper() + s[1:]
@@ -41,6 +40,7 @@ def get_polite_name(in_val):
             result.append(s[i])
 
     ret_val = ''.join(result) # join the list of characters into a string
+    ret_val = re.sub(r'\.(?=[gG][gG][uU][fF])', ' ', ret_val) # replace period followed by gguf with a space
     ret_val = " ".join(ret_val.split()) # remove extra spaces
     ret_val = ret_val.strip()
 

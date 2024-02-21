@@ -2,6 +2,7 @@ import re
 from contributors.hugging_face_interface import HuggingFaceInterface
 from contributors.local_openai_interface import LocalOpenAIInterface
 from contributors.transformers_interface import TransformersInterface
+from content_loaders import scraper
 
 class AIManager:
     def __init__(self, config, db_manager, instruction_generator):
@@ -19,48 +20,65 @@ class AIManager:
 
     def fetch_summary_and_record_model_results(self, model_temp, summary_prompt_temp):
         summary_temp = None
+        flavors = None
         try:
-            summary_temp, _ = self.fetch_inference(model_temp, summary_prompt_temp, 0.0)
+            summary_temp, flavors = self.fetch_inference(model_temp, summary_prompt_temp, 0.0)
             length_of_summary = len(str(summary_temp))
             print(f"    Successful fetch. length_of_summary: {length_of_summary}")
             self.db_manager.update_model_record(model_temp["name"], True, f"length_of_summary: {length_of_summary}")
-            return summary_temp, True
+            return summary_temp, flavors, True
         except Exception as e:
             print(f"    Model '{model_temp["name"]}' no worky: ", str(e), "\n")
             self.db_manager.update_model_record(model_temp["name"], False, str(e))
-            return summary_temp, False
+            return summary_temp, flavors, False
 
-    def get_summary_and_record_model_results(self, article_to_process):
+    def get_and_set_summary_and_record_model_results(self, article_to_process):
         summary_instruct = summary_instruct_chat = summary_chat = None
-        fetch_success = True
+        # fetch_success = True
 
-        summary_instruct, fetch_success = self.fetch_summary_and_record_model_results(article_to_process.model, self.instruction_generator.generate_summary_prompt_instruct(article_to_process.shortened_content))
-        summary_instruct_chat, fetch_success = self.fetch_summary_and_record_model_results(article_to_process.model, self.instruction_generator.generate_summary_prompt_instruct_chat(article_to_process.shortened_content))
-        summary_chat, fetch_success = self.fetch_summary_and_record_model_results(article_to_process.model, self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content))
+        summary_prompt_instruct,        summary_prompt_instruct_prompt_keywords         = self.instruction_generator.generate_summary_prompt_instruct(article_to_process.shortened_content)
+        summary_prompt_instruct_chat,   summary_prompt_instruct_chat_prompt_keywords    = self.instruction_generator.generate_summary_prompt_instruct_chat(article_to_process.shortened_content)
+        summary_prompt_chat,            summary_prompt_chat_prompt_keywords             = self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content)
 
+        summary_instruct,       summary_instruct_flavors, _      = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct)
+        summary_instruct_chat,  summary_instruct_chat_flavors, _ = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct_chat)
+        summary_chat,           summary_chat_flavors, _          = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_chat)
+
+        selected_summary = ""
+        selected_prompt_keywords = ""
+        selected_flavors = ""
         summary_dump = ""
-        summary_selected = ""
 
         if summary_instruct:
             summary_dump += f"⚗️ Instruct Template: {summary_instruct} "
-            if len(summary_instruct) > len(summary_selected):
-                summary_selected = summary_instruct
+            if len(summary_instruct) > len(selected_summary):
+                selected_summary = summary_instruct
+                selected_prompt_keywords = summary_prompt_instruct_prompt_keywords
+                selected_flavors = summary_instruct_flavors
 
         if summary_instruct_chat:
             summary_dump += f"⚗️ Instruct Chat Template: {summary_instruct_chat} "
-            if len(summary_instruct_chat) > len(summary_selected):
-                summary_selected = summary_instruct_chat
+            if len(summary_instruct_chat) > len(selected_summary):
+                selected_summary = summary_instruct_chat
+                selected_prompt_keywords = summary_prompt_instruct_chat_prompt_keywords
+                selected_flavors = summary_instruct_chat_flavors
 
         if summary_chat:
             summary_dump += f"⚗️ Chat Template: {summary_chat} "
-            if len(summary_chat) > len(summary_selected):
-                summary_selected = summary_chat
+            if len(summary_chat) > len(selected_summary):
+                selected_summary = summary_chat
+                selected_prompt_keywords = summary_prompt_chat_prompt_keywords
+                selected_flavors = summary_chat_flavors
 
-        if summary_selected:
-            summary_selected = summary_selected.replace("\n", " ")
         if summary_dump:
             summary_dump = summary_dump.replace("\n", " ")
-        return summary_selected, summary_dump
+        if selected_summary:
+            selected_summary = selected_summary.replace("\n", " ")
+
+        article_to_process.summary_dump             = scraper.extract_pure_text_from_raw_html(summary_dump)
+        article_to_process.summary                  = selected_summary
+        article_to_process.summary_prompt_keywords  = selected_prompt_keywords
+        article_to_process.summary_flavors          = selected_flavors
 
     def fetch_inference(self, model, formatted_messages, temperature):
         interface = self.interface_list.get(model["interface"])
