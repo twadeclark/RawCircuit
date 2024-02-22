@@ -1,4 +1,5 @@
 import json
+import time
 import requests
 from transformers import AutoTokenizer
 from contributors.abstract_ai_unit import AbstractAIUnit
@@ -13,8 +14,10 @@ class HuggingFaceInterface(AbstractAIUnit):
         headers = {"Authorization": f"Bearer {self.api_key}"}
         this_api_endpoint = self.base_url + model['name']
         formatted_messages_as_string = None
-
         max_new_tokens = 250
+
+        if temperature == 0.0:
+            temperature = 0.001
 
         if isinstance(formatted_messages, str):
             formatted_messages_as_string = formatted_messages
@@ -24,13 +27,7 @@ class HuggingFaceInterface(AbstractAIUnit):
             tokenizer = AutoTokenizer.from_pretrained(model["name"], **kwargs)
             formatted_messages_as_string = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
 
-        temperature_as_string = "{:.1f}".format(temperature)
-
-        flavors = f" \t max_new_tokens: {max_new_tokens}, \t temperature: {temperature_as_string}"
-
-        # print("\n\n",formatted_messages_with_chat_template_applied.strip)
-
-        q = {
+        payload = {
             "inputs": formatted_messages_as_string,
             "parameters": { 
                             "max_new_tokens"        : max_new_tokens,
@@ -45,22 +42,35 @@ class HuggingFaceInterface(AbstractAIUnit):
                             }
             }
 
+        start_time = time.time()
+        first_chunk_time = None
+        token_count = 0
+        end_time = None
+        all_chunks = ""
 
-        print("    flavors: ", flavors)
+        response = requests.post(this_api_endpoint, headers=headers, json=payload, timeout=120)
 
-        def query(payload):
-            response = requests.post(this_api_endpoint, headers=headers, json=payload, timeout=120)
-            all_chunks = ""
+        for chunk in response.iter_content(decode_unicode=True):
+            token_count += 1
+            if first_chunk_time is None:
+                first_chunk_time = time.time()
 
-            for chunk in response.iter_content(decode_unicode=True):
-                print(chunk, end="")
-                all_chunks += chunk
+            print(chunk, end="")
+            all_chunks += chunk
 
-            print()
-            response.close()
-            return json.loads(all_chunks)
+        response.close()
+        data = json.loads(all_chunks)
+        end_time = time.time()
 
-        data = query(q)
+        print()
+
+        time_to_first_token = first_chunk_time - start_time
+        tokens_per_second = token_count / (end_time - start_time)
+
+        max_tokens_as_string = str(max_new_tokens)
+        temperature_as_string = "{:.1f}".format(temperature)
+        flavors = f" \t max_tokens: {max_tokens_as_string}, \t temperature: {temperature_as_string}, \t time_to_first_token: {time_to_first_token:.3f}, \t tokens_per_second: {tokens_per_second:.2f}"
+        print(flavors)
 
         target_keys = ['error', 'errors', 'warning', 'warnings', 'generated_text', 'summary_text']
         results = self.find_keys(data, target_keys)

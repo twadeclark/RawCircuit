@@ -165,3 +165,4 @@ models.json
 config.yaml
 prompt_generator/instruction-templates/
 aggregators/future_aggregator_list.txt
+db.json

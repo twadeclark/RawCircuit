@@ -26,23 +26,36 @@ class AIManager:
             length_of_summary = len(str(summary_temp))
             print(f"    Successful fetch. length_of_summary: {length_of_summary}")
             self.db_manager.update_model_record(model_temp["name"], True, f"length_of_summary: {length_of_summary}")
-            return summary_temp, flavors, True
+            return summary_temp, flavors, None
         except Exception as e:
             print(f"    Model '{model_temp["name"]}' no worky: ", str(e), "\n")
-            self.db_manager.update_model_record(model_temp["name"], False, str(e))
-            return summary_temp, flavors, False
+            if model_temp["name"]:
+                self.db_manager.update_model_record(model_temp["name"], False, str(e))
+            return summary_temp, flavors, str(e)
 
     def get_and_set_summary_and_record_model_results(self, article_to_process):
         summary_instruct = summary_instruct_chat = summary_chat = None
-        # fetch_success = True
+        error_message = None
 
         summary_prompt_instruct,        summary_prompt_instruct_prompt_keywords         = self.instruction_generator.generate_summary_prompt_instruct(article_to_process.shortened_content)
-        summary_prompt_instruct_chat,   summary_prompt_instruct_chat_prompt_keywords    = self.instruction_generator.generate_summary_prompt_instruct_chat(article_to_process.shortened_content)
-        summary_prompt_chat,            summary_prompt_chat_prompt_keywords             = self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content)
+        print(f"    summary_prompt_instruct_prompt_keywords: {summary_prompt_instruct_prompt_keywords}")
+        summary_instruct,       summary_instruct_flavors, error_message      = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct)
 
-        summary_instruct,       summary_instruct_flavors, _      = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct)
-        summary_instruct_chat,  summary_instruct_chat_flavors, _ = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct_chat)
-        summary_chat,           summary_chat_flavors, _          = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_chat)
+        summary_prompt_instruct_chat,   summary_prompt_instruct_chat_prompt_keywords    = self.instruction_generator.generate_summary_prompt_instruct_chat(article_to_process.shortened_content)
+        print(f"    summary_prompt_instruct_chat_prompt_keywords: {summary_prompt_instruct_chat_prompt_keywords}")
+        summary_instruct_chat,  summary_instruct_chat_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct_chat)
+
+        # mistral / mixtral tell us we need to swith the first role name to assistant
+        summary_prompt_chat,            summary_prompt_chat_prompt_keywords             = self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content)
+        print(f"    summary_prompt_chat_prompt_keywords: {summary_prompt_chat_prompt_keywords}")
+        summary_chat,           summary_chat_flavors, error_message          = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_chat)
+        if error_message:
+            if "Conversation roles must alternate" in error_message:
+                print("    Conversation roles must alternate. Doing this now.")
+                self.instruction_generator.handle_conversation_roles_must_alternate() # this will hold effect for all remaning calls to the instruction_generator
+                summary_prompt_chat,    summary_prompt_chat_prompt_keywords             = self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content)
+                print(f"    summary_prompt_chat_prompt_keywords: {summary_prompt_chat_prompt_keywords}")
+                summary_chat,   summary_chat_flavors, error_message          = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_chat)
 
         selected_summary = ""
         selected_prompt_keywords = ""

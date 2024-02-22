@@ -9,7 +9,7 @@ class HuggingfaceModelSearch:
         # we check db first and grab a model if we can
         models_with_none_success = self.db_manager.get_models_with_none_success()
         if models_with_none_success:
-            ret_val = models_with_none_success[0][0]
+            ret_val = models_with_none_success[0]["model_name"]
             return ret_val
 
         # if none in the db, we get the first page of the huggingface api results
@@ -29,7 +29,7 @@ class HuggingfaceModelSearch:
         # check the db again for a model
         models_with_none_success = self.db_manager.get_models_with_none_success()
         if models_with_none_success:
-            ret_val = models_with_none_success[0][0]
+            ret_val = models_with_none_success[0]["model_name"]
             return ret_val
 
         while next_url_link:
@@ -43,7 +43,7 @@ class HuggingfaceModelSearch:
             # check the db again for a model
             models_with_none_success = self.db_manager.get_models_with_none_success()
             if models_with_none_success:
-                ret_val = models_with_none_success[0][0]
+                ret_val = models_with_none_success[0]["model_name"]
                 return ret_val
 
         return None # no new models found!

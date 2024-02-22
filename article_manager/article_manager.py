@@ -23,7 +23,7 @@ class ArticleManager:
         self.comment_thread_manager = CommentThreadManager()
         self.config = configparser.ConfigParser()
         self.config.read('config.ini')
-        self.db_manager = DBManager(self.config['postgresql'])
+        self.db_manager = DBManager(self.config)
         self.instruction_generator =  InstructionGenerator(self.config.get('general_configurations', 'prompt_tier'))
         self.ai_manager = AIManager(self.config, self.db_manager, self.instruction_generator)
         self.news_aggregator_manager = NewsAggregatorManager(self.config, self.db_manager, None) #TODO: news aggregator type should come from config
@@ -149,7 +149,7 @@ class ArticleManager:
 
         local_content_path = self.config.get('publishing_details', 'local_content_path')
         formatted_post = markdown_formatter.format_to_markdown(self.article_to_process, self.comment_thread_manager)
-        print("\nPost sucessfully formatted. ", len(formatted_post), "characters")
+        print("\nPost sucessfully formatted. ", len(formatted_post), "characters", "\t(", self.article_to_process.title, ")")
 
         unique_seconds = int(time.time())
         file_name = "formatted_post_" + str(unique_seconds) + ".md"

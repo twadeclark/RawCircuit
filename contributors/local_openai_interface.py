@@ -51,11 +51,8 @@ class LocalOpenAIInterface(AbstractAIUnit):
 
         print()
 
-        time_to_first_token = 0.0
-        if first_chunk_time:
-            time_to_first_token = first_chunk_time - start_time
-
-        tokens_per_second = token_count / (end_time - start_time)
+        time_to_first_token = first_chunk_time - start_time
+        tokens_per_second = token_count / (end_time - first_chunk_time)
 
         max_tokens_as_string = str(max_tokens)
         temperature_as_string = "{:.2f}".format(temperature)

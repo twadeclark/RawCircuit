@@ -119,7 +119,7 @@ def get_badges(prompt_keywords):
 
     if 'tokens_per_second' in prompt_keywords:
         tokens_per_second = float(re.search(r'tokens_per_second: ([\d.-]+)', prompt_keywords).group(1))
-        tokens_per_second_rotate = int((tokens_per_second - 30) * -2)
+        tokens_per_second_rotate = int((tokens_per_second - 60) * -1)
         tokens_per_second_as_string = "{:.2f}".format(tokens_per_second)
         ret_val += (f"<span title='tokens_per_second = {tokens_per_second_as_string}  t/s'> 🥌</span><span style='display: inline-block; transform: rotate({tokens_per_second_rotate}deg);'>→</span>")
 
