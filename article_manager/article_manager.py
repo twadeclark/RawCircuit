@@ -4,6 +4,7 @@ import os
 import random
 import time
 
+import logging
 from aggregators.news_aggregator_manager import NewsAggregatorManager
 from content_loaders import scraper
 from contributors.ai_manager import AIManager
@@ -17,9 +18,13 @@ from output_formatter import upload_directory_to_s3
 from prompt_generator.instruction_generator import InstructionGenerator
 from vocabulary.news_search import SearchTerms
 
+from log_config import setup_logging
+setup_logging()
+
 
 class ArticleManager:
     def __init__(self):
+        self.logger = logging.getLogger(__name__)
         self.comment_thread_manager = CommentThreadManager()
         self.config = configparser.ConfigParser()
         self.config.read('config.ini')
@@ -32,18 +37,18 @@ class ArticleManager:
         self.model_info_from_config = { "name"      : self.config.get('model_info', 'model_name'),
                                         "interface" : self.config.get('model_info', 'interface'),
                                         "max_tokens": self.config.getint('model_info', 'max_tokens')}
-        print("model_info_from_config:", self.model_info_from_config)
+        self.logger.info("model_info_from_config: %s", self.model_info_from_config)
         self.article_to_process = None
 
     def load_news_article(self):
         atp = self.db_manager.get_next_article_to_process()
 
         if not atp:
-            print("Fetching new articles from aggregator...")
+            self.logger.info("Fetching new articles from aggregator...")
             num_articles_returned = self.news_aggregator_manager.fetch_new_articles_into_db()
             if not num_articles_returned:
                 raise FatalError("No new articles returned from aggregator. Exiting...")
-            print("New articles fetched: ", num_articles_returned)
+            self.logger.info("New articles fetched: %s", num_articles_returned)
             atp = self.db_manager.get_next_article_to_process()
 
         if not atp:
@@ -59,7 +64,7 @@ class ArticleManager:
         shortened_content_tmp = ' '.join(self.article_to_process.scraped_website_content.split()[:(self.model_info_from_config["max_tokens"] // 2)])
         shortened_content_tmp = scraper.extract_pure_text_from_raw_html(shortened_content_tmp)
         self.article_to_process.shortened_content = shortened_content_tmp
-        print("    shortened_content: ", self.article_to_process.shortened_content, "\n")
+        self.logger.info("    shortened_content: %s", self.article_to_process.shortened_content)
 
         # self.search_terms.categorize_article_add_tags(self.article_to_process)
 
@@ -83,7 +88,7 @@ class ArticleManager:
                                                 "interface" : self.model_info_from_config["interface"],
                                                 "max_tokens": self.model_info_from_config["max_tokens"]
                                             }
-            print("\nTrying model: ", self.article_to_process.model["name"])
+            self.logger.info("\nTrying model: %s", self.article_to_process.model["name"])
             self.ai_manager.get_and_set_summary_and_record_model_results(self.article_to_process) #TODO: clean up
 
     def add_summary_to_comment_thread_manager(self):
@@ -100,7 +105,7 @@ class ArticleManager:
 
     def fetch_and_add_first_comment(self):
         first_comment_prompt, first_comment_prompt_keywords = self.instruction_generator.generate_first_comment_prompt(self.article_to_process.summary)
-        print("    first_comment_prompt: ", first_comment_prompt)
+        self.logger.info("    first_comment_prompt: %s", first_comment_prompt)
 
         first_comment, first_comment_flavors = self.ai_manager.fetch_inference(self.article_to_process.model, first_comment_prompt, 0.0)
 
@@ -130,11 +135,11 @@ class ArticleManager:
             temperature += temperature_increase
 
             loop_comment_prompt, prompt_keywords = self.instruction_generator.generate_loop_prompt(self.article_to_process.summary, parent_comment)
-            print("\n    loop_comment_prompt: ", loop_comment_prompt)
+            self.logger.info("\n    loop_comment_prompt: %s", loop_comment_prompt)
 
             loop_comment, flavors = self.ai_manager.fetch_inference(self.article_to_process.model, loop_comment_prompt, temperature)
             if not loop_comment:
-                print(f"No loop comment generated. model: {self.article_to_process.model["name"]} Skipping...")
+                self.logger.info("No loop comment generated. model: %s Skipping...", self.article_to_process.model["name"])
                 continue
 
             self.comment_thread_manager.add_comment(parent_index,
@@ -149,7 +154,7 @@ class ArticleManager:
 
         local_content_path = self.config.get('publishing_details', 'local_content_path')
         formatted_post = markdown_formatter.format_to_markdown(self.article_to_process, self.comment_thread_manager)
-        print("\nPost sucessfully formatted. ", len(formatted_post), "characters", "\t(", self.article_to_process.title, ")")
+        self.logger.info("\nPost sucessfully formatted. %s characters \t(%s)", len(formatted_post), self.article_to_process.title)
 
         unique_seconds = int(time.time())
         file_name = "formatted_post_" + str(unique_seconds) + ".md"
@@ -157,7 +162,7 @@ class ArticleManager:
 
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(formatted_post)
-        print("     Formatted post saved to:", file_path)
+        self.logger.info("     Formatted post saved to: %s", file_path)
 
         pushed_to_pelican = "NOT published by Pelican. \t"
         if self.config.getboolean('publishing_details', 'publish_to_pelican'):
@@ -174,7 +179,7 @@ class ArticleManager:
 
 
     def _fetch_and_set_scraped_website_content(self):
-        print("Content not in database. Scraping article...")
+        self.logger.info("Content not in database. Scraping article...")
 
         self.db_manager.update_scrape_time(self.article_to_process)
         raw_html_from_url, fetch_success = scraper.fetch_raw_html_from_url(self.article_to_process.url)

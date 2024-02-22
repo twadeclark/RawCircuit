@@ -78,9 +78,11 @@ class HuggingFaceInterface(AbstractAIUnit):
         # big problems:
         if results.get('error'):
             print("Error: ", results['error'])
+            raise SystemError(f"Error: {results['error']}")
 
         if results.get('errors'):
             print("Errors: ", results['errors'])
+            raise SystemError(f"Error: {results['error']}")
 
         # small problems:
         if results.get('warning'):

@@ -9,10 +9,10 @@ class AIManager:
         self.config = config
         self.db_manager = db_manager
         self.interface_list = {
-            'HuggingFaceInterface': HuggingFaceInterface(config["HuggingFace"]),
-            'LocalOpenAIInterface': LocalOpenAIInterface(config["LocalOpenAIInterface"]),
+            'HuggingFaceInterface' : HuggingFaceInterface(config["HuggingFace"]),
+            'LocalOpenAIInterface' : LocalOpenAIInterface(config["LocalOpenAIInterface"]),
             'TransformersInterface': TransformersInterface(config["TransformersInterface"]),
-            # 'LiteLLMInterface': LiteLLMInterface(config["LiteLLMInterface"]),
+            # 'LiteLLMInterface'   : LiteLLMInterface(config["LiteLLMInterface"]),
             # 'GenericApiInterface': GenericApiInterface(config["GenericApiInterface"]),
         }
         self.instruction_generator = instruction_generator
@@ -37,25 +37,44 @@ class AIManager:
         summary_instruct = summary_instruct_chat = summary_chat = None
         error_message = None
 
-        summary_prompt_instruct,        summary_prompt_instruct_prompt_keywords         = self.instruction_generator.generate_summary_prompt_instruct(article_to_process.shortened_content)
+        summary_prompt_instruct, summary_prompt_instruct_prompt_keywords = self.instruction_generator.generate_summary_prompt_instruct(article_to_process.shortened_content)
         print(f"    summary_prompt_instruct_prompt_keywords: {summary_prompt_instruct_prompt_keywords}")
-        summary_instruct,       summary_instruct_flavors, error_message      = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct)
+        summary_instruct, summary_instruct_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct)
 
-        summary_prompt_instruct_chat,   summary_prompt_instruct_chat_prompt_keywords    = self.instruction_generator.generate_summary_prompt_instruct_chat(article_to_process.shortened_content)
+        if error_message:
+            if "Read timed out" in error_message:
+                print("    Summary attempt timed out. Trying again.")
+                summary_instruct, summary_instruct_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct)
+                if "Read timed out" in error_message:
+                    print("    Summary attempt timed out again. Exiting.")
+                    article_to_process.summary = ""
+                    return
+
+            if "You are trying to access a gated repo" in error_message:
+                print("    Gated repo error. Exiting.")
+                article_to_process.summary = ""
+                return
+
+            if "Model requires a Pro subscription" in error_message:
+                print("    Pro subscription error. Exiting.")
+                article_to_process.summary = ""
+                return
+
+        summary_prompt_instruct_chat, summary_prompt_instruct_chat_prompt_keywords = self.instruction_generator.generate_summary_prompt_instruct_chat(article_to_process.shortened_content)
         print(f"    summary_prompt_instruct_chat_prompt_keywords: {summary_prompt_instruct_chat_prompt_keywords}")
         summary_instruct_chat,  summary_instruct_chat_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct_chat)
 
         # mistral / mixtral tell us we need to swith the first role name to assistant
-        summary_prompt_chat,            summary_prompt_chat_prompt_keywords             = self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content)
+        summary_prompt_chat, summary_prompt_chat_prompt_keywords = self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content)
         print(f"    summary_prompt_chat_prompt_keywords: {summary_prompt_chat_prompt_keywords}")
-        summary_chat,           summary_chat_flavors, error_message          = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_chat)
+        summary_chat, summary_chat_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_chat)
         if error_message:
             if "Conversation roles must alternate" in error_message:
                 print("    Conversation roles must alternate. Doing this now.")
                 self.instruction_generator.handle_conversation_roles_must_alternate() # this will hold effect for all remaning calls to the instruction_generator
-                summary_prompt_chat,    summary_prompt_chat_prompt_keywords             = self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content)
+                summary_prompt_chat, summary_prompt_chat_prompt_keywords = self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content)
                 print(f"    summary_prompt_chat_prompt_keywords: {summary_prompt_chat_prompt_keywords}")
-                summary_chat,   summary_chat_flavors, error_message          = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_chat)
+                summary_chat, summary_chat_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_chat)
 
         selected_summary = ""
         selected_prompt_keywords = ""

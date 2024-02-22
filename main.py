@@ -1,7 +1,12 @@
+import logging
 from article_manager.article_manager import ArticleManager
-
+from log_config import setup_logging
+setup_logging()
 
 def main():
+    logger = logging.getLogger(__name__)
+    logger.critical("Starting main()")
+
     article_manager = ArticleManager()
 
     article_manager.load_news_article()
@@ -16,11 +21,17 @@ def main():
     article_manager.generate_additional_comments()
     final_results = article_manager.format_and_publish()
 
-    print ( "SUCCESS: \t" + \
-            f"article_id: {article_manager.article_to_process.id} \t" + \
-            final_results + \
-            f"Elapsed time: {article_manager.comment_thread_manager.get_duration()}\n")
+    logger.critical (   "SUCCESS: \t" + \
+                        f"article_id: {article_manager.article_to_process.id} \t" + \
+                        final_results + \
+                        f"Elapsed time: {article_manager.comment_thread_manager.get_duration()}\n")
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.critical("An terrible error occurred.")
+        logger.exception(e)
+        raise e

@@ -12,6 +12,7 @@ class HuggingfaceModelSearch:
             ret_val = models_with_none_success[0]["model_name"]
             return ret_val
 
+        # https://huggingface.co/spaces/enzostvs/hub-api-playground
         # if none in the db, we get the first page of the huggingface api results
         response = requests.get(
                                 "https://huggingface.co/api/models",
