@@ -31,7 +31,7 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        logger = logging.getLogger(__name__)
-        logger.critical("An terrible error occurred.")
-        logger.exception(e)
+        main_logger = logging.getLogger(__name__)
+        main_logger.critical("An terrible error occurred.")
+        main_logger.exception(e)
         raise e

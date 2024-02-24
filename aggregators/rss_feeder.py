@@ -1,4 +1,7 @@
-import feedparser
+try:
+    import feedparser
+except ImportError:
+    feedparser = None
 
 class RSSFeeder:
     def __init__(self, config):

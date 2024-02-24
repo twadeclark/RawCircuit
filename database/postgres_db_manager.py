@@ -1,6 +1,12 @@
 from datetime import datetime
-import psycopg2
-from psycopg2.extras import DictCursor
+try:
+    import psycopg2
+except ImportError:
+    psycopg2 = None
+try:
+    from psycopg2.extras import DictCursor
+except ImportError:
+    DictCursor = None
 from article import Article
 
 

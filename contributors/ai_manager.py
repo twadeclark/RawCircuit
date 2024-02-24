@@ -82,21 +82,21 @@ class AIManager:
         summary_dump = ""
 
         if summary_instruct:
-            summary_dump += f"⚗️ Instruct Template: {summary_instruct} "
+            summary_dump += f"⚗️ Instruct Template: {scraper.extract_pure_text_from_raw_html(summary_instruct)} "
             if len(summary_instruct) > len(selected_summary):
                 selected_summary = summary_instruct
                 selected_prompt_keywords = summary_prompt_instruct_prompt_keywords
                 selected_flavors = summary_instruct_flavors
 
         if summary_instruct_chat:
-            summary_dump += f"⚗️ Instruct Chat Template: {summary_instruct_chat} "
+            summary_dump += f"⚗️ Instruct Chat Template: {scraper.extract_pure_text_from_raw_html(summary_instruct_chat)} "
             if len(summary_instruct_chat) > len(selected_summary):
                 selected_summary = summary_instruct_chat
                 selected_prompt_keywords = summary_prompt_instruct_chat_prompt_keywords
                 selected_flavors = summary_instruct_chat_flavors
 
         if summary_chat:
-            summary_dump += f"⚗️ Chat Template: {summary_chat} "
+            summary_dump += f"⚗️ Chat Template: {scraper.extract_pure_text_from_raw_html(summary_chat)} "
             if len(summary_chat) > len(selected_summary):
                 selected_summary = summary_chat
                 selected_prompt_keywords = summary_prompt_chat_prompt_keywords
@@ -107,7 +107,7 @@ class AIManager:
         if selected_summary:
             selected_summary = selected_summary.replace("\n", " ")
 
-        article_to_process.summary_dump             = scraper.extract_pure_text_from_raw_html(summary_dump)
+        article_to_process.summary_dump             = summary_dump
         article_to_process.summary                  = selected_summary
         article_to_process.summary_prompt_keywords  = selected_prompt_keywords
         article_to_process.summary_flavors          = selected_flavors

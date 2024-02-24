@@ -1,4 +1,7 @@
-from transformers import pipeline
+try:
+    from transformers import pipeline
+except ImportError:
+    pipeline = None
 from contributors.abstract_ai_unit import AbstractAIUnit
 
 

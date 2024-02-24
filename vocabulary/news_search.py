@@ -1,6 +1,9 @@
 import random
 import re
-import yaml
+try:
+    import yaml
+except ImportError:
+    yaml = None
 
 
 class SearchTerms():

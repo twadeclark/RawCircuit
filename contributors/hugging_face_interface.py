@@ -1,8 +1,12 @@
 import json
 import time
 import requests
-from transformers import AutoTokenizer
+try:
+    from transformers import AutoTokenizer
+except ImportError:
+    AutoTokenizer = None
 from contributors.abstract_ai_unit import AbstractAIUnit
+# from prompt_generator.apply_chat_template_cheater import ApplyChatTemplateCheater
 
 
 class HuggingFaceInterface(AbstractAIUnit):
@@ -21,11 +25,23 @@ class HuggingFaceInterface(AbstractAIUnit):
 
         if isinstance(formatted_messages, str):
             formatted_messages_as_string = formatted_messages
+            print(formatted_messages_as_string)
         else:
             kwargs = {}
             kwargs["token"] = self.api_key
             tokenizer = AutoTokenizer.from_pretrained(model["name"], **kwargs)
             formatted_messages_as_string = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
+
+
+            # atct = ApplyChatTemplateCheater()
+            # formatted_messages_as_string = atct.apply_chat_template(formatted_messages, model['name'])
+            print(formatted_messages_as_string)
+
+
+
+
+
+
 
         payload = {
             "inputs": formatted_messages_as_string,

@@ -1,5 +1,8 @@
 import time
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 from contributors.abstract_ai_unit import AbstractAIUnit
 
 class LocalOpenAIInterface(AbstractAIUnit):

@@ -6,6 +6,7 @@ import time
 
 import logging
 from aggregators.news_aggregator_manager import NewsAggregatorManager
+from article import Article
 from content_loaders import scraper
 from contributors.ai_manager import AIManager
 from contributors.huggingface_model_search import HuggingfaceModelSearch
@@ -41,18 +42,37 @@ class ArticleManager:
         self.article_to_process = None
 
     def load_news_article(self):
-        atp = self.db_manager.get_next_article_to_process()
-
-        if not atp:
-            self.logger.info("Fetching new articles from aggregator...")
-            num_articles_returned = self.news_aggregator_manager.fetch_new_articles_into_db()
-            if not num_articles_returned:
-                raise FatalError("No new articles returned from aggregator. Exiting...")
-            self.logger.info("New articles fetched: %s", num_articles_returned)
+        if self.config.getboolean('model_info', 'use_specific_article') and self.config.get('model_info', 'specific_article_url'):
+            atp =   Article(    id = None,
+                                aggregator = "tmorganclark.com",
+                                source_id = None,
+                                source_name = "Thomas News Service",
+                                author = self.config.get('model_info', 'specific_article_author'),
+                                title = self.config.get('model_info', 'specific_article_title'),
+                                description = None,
+                                url = self.config.get('model_info', 'specific_article_url'),
+                                url_to_image= None,
+                                published_at = datetime.now(),
+                                content = None,
+                                rec_order = 0,
+                                added_timestamp = datetime.now(),
+                                scraped_timestamp = None,
+                                scraped_website_content = None,
+                                processed_timestamp = None
+                                )
+        else:
             atp = self.db_manager.get_next_article_to_process()
 
-        if not atp:
-            raise FatalError("No article_to_process. Exiting...")
+            if not atp:
+                self.logger.info("Fetching new articles from aggregator...")
+                num_articles_returned = self.news_aggregator_manager.fetch_new_articles_into_db()
+                if not num_articles_returned:
+                    raise FatalError("No new articles returned from aggregator. Exiting...")
+                self.logger.info("New articles fetched: %s", num_articles_returned)
+                atp = self.db_manager.get_next_article_to_process()
+
+            if not atp:
+                raise FatalError("No article_to_process. Exiting...")
 
         self.article_to_process = atp
         self.db_manager.update_process_time(self.article_to_process)
