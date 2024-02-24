@@ -4,7 +4,7 @@ phases:
   install:
     commands:
       - echo Installing source dependencies...
-      - pip install -r requirements.txt -t .
+      - pip install -r requirements_for_lambda.txt -t .
   pre_build:
     commands:
       - echo Pre-build phase...
