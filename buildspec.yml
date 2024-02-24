@@ -22,3 +22,8 @@ phases:
 artifacts:
   files:
     - function.zip
+
+logs:
+  s3:
+    bucket: rawcircuit.click
+    region: us-west-2
