@@ -29,7 +29,7 @@ class AIManager:
             self.db_manager.update_model_record(model_temp["name"], True, f"length_of_summary: {length_of_summary}")
             return summary_temp, flavors, None
         except Exception as e:
-            print(f"    Model '{model_temp["name"]}' no worky: ", str(e), "\n")
+            print(f"    Model '{model_temp['name']}' no worky: ", str(e), "\n")
             if model_temp["name"]:
                 self.db_manager.update_model_record(model_temp["name"], False, str(e))
             return summary_temp, flavors, str(e)

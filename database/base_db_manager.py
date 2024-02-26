@@ -53,6 +53,10 @@ class BaseDBManager(ABC):
         pass
 
     @abstractmethod
+    def update_model_record_template(self, model_name, template):
+        pass
+
+    @abstractmethod
     def get_model_name_list_by_list_of_model_names(self, list_of_model_names):
         pass
 

@@ -110,6 +110,11 @@ class TinyDBManager(BaseDBManager):
             "disposition": disposition
         }, Query().model_name == model_name)
 
+    def update_model_record_template(self, model_name, template):
+        self.db.table("model_records").update({
+            "template": template
+        }, Query().model_name == model_name)
+
     def get_model_name_list_by_list_of_model_names(self, list_of_model_names):
         # Search for models matching names in the list
         ret_val = self.db.table("model_records").search(Query().model_name.one_of(list_of_model_names))

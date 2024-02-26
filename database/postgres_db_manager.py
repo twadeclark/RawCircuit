@@ -134,6 +134,16 @@ class PostgresDBManager:
                 (datetime.now(), success_bit, disposition, model_name))
             self.conn.commit()
 
+    def update_model_record_template(self, model_name, template):
+        with self.conn.cursor() as cur:
+            cur.execute("""
+                UPDATE model_records
+                SET template = %s
+                WHERE model_name = %s
+                """,
+                (template, model_name))
+            self.conn.commit()
+
     def get_model_name_list_by_list_of_model_names(self, list_of_model_names):
         with self.conn.cursor(cursor_factory=DictCursor) as cur:
             cur.execute("""

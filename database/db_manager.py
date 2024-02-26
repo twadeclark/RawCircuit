@@ -46,6 +46,9 @@ class DBManager:
     def update_model_record(self, model_name, success, disposition):
         return self.conn.update_model_record(model_name, success, disposition)
 
+    def update_model_record_template(self, model_name, template):
+        return self.conn.update_model_record_template( model_name, template)
+
     def get_model_name_list_by_list_of_model_names(self, list_of_model_names):
         return self.conn.get_model_name_list_by_list_of_model_names(list_of_model_names)
 

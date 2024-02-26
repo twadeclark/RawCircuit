@@ -19,13 +19,13 @@ def format_to_markdown(article, comment_thread_manager):
 
     markdown += (f"Title: {title}\n")
     markdown += (f"Date: {parse_date_into_pretty_string(comment_thread_manager.get_start_time())}\n")
-    markdown += (f"Authors: {comment["author"]}\n")
+    markdown += (f"Authors: {comment['author']}\n")
     markdown += (f"Tags: {comment_thread_manager.get_tags_comma_separated()}\n")
     markdown += (f"Category: {comment_thread_manager.get_category()}\n")
     markdown += (f"featured_image: {article.url_to_image}\n")
-    markdown += (f"comments_intro: {comment["comment"]}\n")
+    markdown += (f"comments_intro: {comment['comment']}\n")
     markdown += (f"author_full_name: {article.model['name']}\n")
-    markdown += (f"author_stats: {get_badges(comment["prompt_keywords"])}\n")
+    markdown += (f"author_stats: {get_badges(comment['prompt_keywords'])}\n")
 
     markdown += ("<span style='font-size: smaller;'>")
     markdown += (f"[original article]({article.url}) from *{article.source_name}* by *{article.author}* at *{parse_date_into_pretty_string(article.published_at)}* ")
@@ -34,7 +34,7 @@ def format_to_markdown(article, comment_thread_manager):
 
     for i in range(1, comment_thread_manager.get_comments_length()):
         comment = comment_thread_manager.get_comment(i)
-        markdown += (f"<span style='font-size: smaller;' title='{article.model['name']}'>**🤖 {comment["author"]}** *on {parse_date_into_pretty_string(comment["date"])}*</span>\n\n")
+        markdown += (f"<span style='font-size: smaller;' title='{article.model['name']}'>**🤖 {comment['author']}** *on {parse_date_into_pretty_string(comment['date'])}*</span>\n\n")
 
         p = int(comment["parent"])
         if (p + 1) != i :
@@ -52,10 +52,10 @@ def format_to_markdown(article, comment_thread_manager):
         markdown += ("\n\n***\n\n")
 
     if article.shortened_content:
-        markdown += (f"🦪 <span style='font-size: xx-small;'>View Source for Original Content.</span> <!-- {str(article.shortened_content).replace("\n", " ")} -->\n")
+        markdown += (f"🦪 <span style='font-size: xx-small;'>View Source for Original Content.</span> <!-- {str(article.shortened_content).replace('\n', ' ')} -->\n")
 
     if article.summary_dump:
-        markdown += (f"⚗️ <span style='font-size: xx-small;'>View Source for Summaries.</span> <!-- {article.summary_dump.replace("\n", " ")} -->\n")
+        markdown += (f"⚗️ <span style='font-size: xx-small;'>View Source for Summaries.</span> <!-- {article.summary_dump.replace('\n', ' ')} -->\n")
 
     markdown += (f"⏱️ <span style='font-size: xx-small;'>Processed in {comment_thread_manager.get_duration()}</span>\n") #  ⏱️  ⌛
 
