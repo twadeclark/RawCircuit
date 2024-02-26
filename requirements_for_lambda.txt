@@ -1,7 +1,4 @@
-beautifulsoup4==4.12.3
-newsapi_python==0.2.7
 python_dateutil==2.8.2
 Requests==2.31.0
-selenium==4.18.1
 tinydb==4.8.0
 transformers==4.37.2

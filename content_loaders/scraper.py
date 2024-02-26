@@ -1,10 +1,21 @@
 import re
-from bs4 import BeautifulSoup, Comment
-from selenium import webdriver
-import selenium
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+try:
+    from bs4 import BeautifulSoup, Comment
+except ImportError:
+    BeautifulSoup = None
+    Comment = None
+try:
+    import selenium
+    from selenium import webdriver
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+except ImportError:
+    selenium = None
+    webdriver = None
+    By = None
+    WebDriverWait = None
+    EC = None
 
 
 def fetch_raw_html_from_url(url):

@@ -2,8 +2,10 @@ import datetime
 import random
 # from aggregators.rss_feeder import RSSFeeder
 from article import Article
-from error_handler import FatalError
-from .newsapiorg_news import NewsApiOrgNews
+try:
+    from .newsapiorg_news import NewsApiOrgNews
+except ImportError:
+    NewsApiOrgNews = None
 
 class NewsAggregatorManager:
 
