@@ -22,7 +22,8 @@ class AIManager:
         summary_temp = None
         flavors = None
         try:
-            summary_temp, flavors = self.fetch_inference(model_temp, summary_prompt_temp, 0.0)
+            summary_temperature = float(self.config.get('general_configurations', 'summary_temperature'))
+            summary_temp, flavors = self.fetch_inference(model_temp, summary_prompt_temp, summary_temperature)
             length_of_summary = len(str(summary_temp))
             print(f"    Successful fetch. length_of_summary: {length_of_summary}")
             self.db_manager.update_model_record(model_temp["name"], True, f"length_of_summary: {length_of_summary}")
@@ -37,33 +38,54 @@ class AIManager:
         summary_instruct = summary_instruct_chat = summary_chat = None
         error_message = None
 
-        summary_prompt_instruct, summary_prompt_instruct_prompt_keywords = self.instruction_generator.generate_summary_prompt_instruct(article_to_process.shortened_content)
-        print(f"    summary_prompt_instruct_prompt_keywords: {summary_prompt_instruct_prompt_keywords}")
-        summary_instruct, summary_instruct_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct)
+        summary_prompt_instruct_prompt_keywords = summary_instruct_flavors = ""
+        # summary_prompt_instruct, summary_prompt_instruct_prompt_keywords = self.instruction_generator.generate_summary_prompt_instruct(article_to_process.shortened_content)
+        # print(f"    summary_prompt_instruct_prompt_keywords: {summary_prompt_instruct_prompt_keywords}")
+        # summary_instruct, summary_instruct_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct)
 
-        if error_message:
-            if "Read timed out" in error_message:
-                print("    Summary attempt timed out. Trying again.")
-                summary_instruct, summary_instruct_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct)
-                if "Read timed out" in error_message:
-                    print("    Summary attempt timed out again. Exiting.")
-                    article_to_process.summary = ""
-                    return
+        # if error_message:
+        #     if "Read timed out" in error_message:
+        #         print("    Summary attempt timed out. Trying again.")
+        #         summary_instruct, summary_instruct_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct)
+        #         if "Read timed out" in error_message:
+        #             print("    Summary attempt timed out again. Exiting.")
+        #             article_to_process.summary = ""
+        #             return
 
-            if "You are trying to access a gated repo" in error_message:
-                print("    Gated repo error. Exiting.")
-                article_to_process.summary = ""
-                return
+        #     if "You are trying to access a gated repo" in error_message:
+        #         print("    Gated repo error. Exiting.")
+        #         article_to_process.summary = ""
+        #         return
 
-            if "Model requires a Pro subscription" in error_message:
-                print("    Pro subscription error. Exiting.")
-                article_to_process.summary = ""
-                return
+        #     if "Model requires a Pro subscription" in error_message:
+        #         print("    Pro subscription error. Exiting.")
+        #         article_to_process.summary = ""
+        #         return
 
         summary_prompt_instruct_chat, summary_prompt_instruct_chat_prompt_keywords = self.instruction_generator.generate_summary_prompt_instruct_chat(article_to_process.shortened_content)
         print(f"    summary_prompt_instruct_chat_prompt_keywords: {summary_prompt_instruct_chat_prompt_keywords}")
         summary_instruct_chat,  summary_instruct_chat_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct_chat)
 
+        if error_message:
+            if "Read timed out" in error_message:
+                print("    Summary attempt timed out again. Exiting.")
+                article_to_process.summary = ""
+                return
+            elif "You are trying to access a gated repo" in error_message:
+                print("    Gated repo error. Exiting.")
+                article_to_process.summary = ""
+                return
+
+            elif "Model requires a Pro subscription" in error_message:
+                print("    Pro subscription error. Exiting.")
+                article_to_process.summary = ""
+                return
+            else:
+                print("    Unknown Error. Exiting.")
+                print(f"    error_message: {error_message}")
+                article_to_process.summary = ""
+                return
+            
         # mistral / mixtral tell us we need to swith the first role name to assistant
         summary_prompt_chat, summary_prompt_chat_prompt_keywords = self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content)
         print(f"    summary_prompt_chat_prompt_keywords: {summary_prompt_chat_prompt_keywords}")

@@ -93,6 +93,15 @@ def remove_all_quote(text):
     text = re.sub(r'[\'"`“”‘’]', '', text)
     return text
 
+def quick_clean(text):
+    if "…" in text:
+        text = text[:text.find("…")]
+    text = text.strip()
+    if text[-1] != ".":
+        text += "."
+    text += " "
+    return text
+
 def extract_last_integer(s):
     if not isinstance(s, str):
         return None

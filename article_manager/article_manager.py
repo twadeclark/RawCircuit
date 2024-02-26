@@ -42,15 +42,15 @@ class ArticleManager:
         self.article_to_process = None
 
     def load_news_article(self):
-        if self.config.getboolean('model_info', 'use_specific_article') and self.config.get('model_info', 'specific_article_url'):
+        if self.config.getboolean('article_selector', 'use_specific_article') and self.config.get('article_selector', 'specific_article_url'):
             atp =   Article(    id = None,
                                 aggregator = "tmorganclark.com",
                                 source_id = None,
                                 source_name = "Thomas News Service",
-                                author = self.config.get('model_info', 'specific_article_author'),
-                                title = self.config.get('model_info', 'specific_article_title'),
+                                author = self.config.get('article_selector', 'specific_article_author'),
+                                title = self.config.get('article_selector', 'specific_article_title'),
                                 description = None,
-                                url = self.config.get('model_info', 'specific_article_url'),
+                                url = self.config.get('article_selector', 'specific_article_url'),
                                 url_to_image= None,
                                 published_at = datetime.now(),
                                 content = None,
@@ -71,23 +71,23 @@ class ArticleManager:
                 self.logger.info("New articles fetched: %s", num_articles_returned)
                 atp = self.db_manager.get_next_article_to_process()
 
-            if not atp:
-                raise FatalError("No article_to_process. Exiting...")
+        if not atp:
+            raise FatalError("No article_to_process. Exiting...")
 
         self.article_to_process = atp
         self.db_manager.update_process_time(self.article_to_process)
         self.comment_thread_manager.set_article(self.article_to_process) #TODO: this seems like it should be set later, after the article has been processed
 
         if not self.article_to_process.scraped_website_content:
-            self._fetch_and_set_scraped_website_content()
+            if self.config.getboolean('article_selector', 'use_info_from_aggregator_instead_of_fetch'):
+                self._use_info_from_aggregator_instead_of_fetch()
+            else:
+                self._fetch_and_set_scraped_website_content()
 
         shortened_content_tmp = ' '.join(self.article_to_process.scraped_website_content.split()[:(self.model_info_from_config["max_tokens"] // 2)])
         shortened_content_tmp = scraper.extract_pure_text_from_raw_html(shortened_content_tmp)
         self.article_to_process.shortened_content = shortened_content_tmp
         self.logger.info("    shortened_content: %s", self.article_to_process.shortened_content)
-
-        # self.search_terms.categorize_article_add_tags(self.article_to_process)
-
 
 
     def get_summary_model_defined(self):
@@ -212,5 +212,35 @@ class ArticleManager:
 
         if not self.article_to_process.scraped_website_content:
             raise FatalError("Error scraping website content. Exiting...")
+
+        self.db_manager.update_scraped_website_content(self.article_to_process)
+
+    def _use_info_from_aggregator_instead_of_fetch(self):
+        self.logger.info("Using info from aggregator instead of fetch..")
+        self.db_manager.update_scrape_time(self.article_to_process)
+
+        title_clause = source_name_clause = author_clause = description_clause = content_clause = ""
+
+        if self.article_to_process.title:
+            title_clause = f"The title of this article is {self.article_to_process.title}. "
+
+        if self.article_to_process.source_name:
+            source_name_clause = f"The news source is {self.article_to_process.source_name}. "
+
+        if self.article_to_process.author:
+            author_clause = f"The author is {self.article_to_process.author}. "
+
+        if self.article_to_process.description:
+            description_clause = scraper.extract_pure_text_from_raw_html(scraper.quick_clean(self.article_to_process.description))
+
+        if self.article_to_process.content:
+            content_clause = scraper.extract_pure_text_from_raw_html(scraper.quick_clean(self.article_to_process.content))
+
+        fake_content = f"{title_clause}{source_name_clause}{author_clause}{description_clause}{content_clause}"
+        self.article_to_process.scraped_website_content = fake_content
+        self.logger.info("fake_content: %s", fake_content)
+
+        if not self.article_to_process.scraped_website_content:
+            raise FatalError("Error assembling fake content. Exiting...")
 
         self.db_manager.update_scraped_website_content(self.article_to_process)

@@ -25,23 +25,13 @@ class HuggingFaceInterface(AbstractAIUnit):
 
         if isinstance(formatted_messages, str):
             formatted_messages_as_string = formatted_messages
-            print(formatted_messages_as_string)
         else:
             kwargs = {}
             kwargs["token"] = self.api_key
             tokenizer = AutoTokenizer.from_pretrained(model["name"], **kwargs)
             formatted_messages_as_string = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
 
-
-            # atct = ApplyChatTemplateCheater()
-            # formatted_messages_as_string = atct.apply_chat_template(formatted_messages, model['name'])
-            print(formatted_messages_as_string)
-
-
-
-
-
-
+        print(f"formatted_messages_as_string={formatted_messages_as_string}")
 
         payload = {
             "inputs": formatted_messages_as_string,
@@ -83,6 +73,10 @@ class HuggingFaceInterface(AbstractAIUnit):
         time_to_first_token = first_chunk_time - start_time
         tokens_per_second = token_count / (end_time - start_time)
 
+
+        print(f"        total time: {end_time - start_time:.3f}")
+
+
         max_tokens_as_string = str(max_new_tokens)
         temperature_as_string = "{:.1f}".format(temperature)
         flavors = f" \t max_tokens: {max_tokens_as_string}, \t temperature: {temperature_as_string}, \t time_to_first_token: {time_to_first_token:.3f}, \t tokens_per_second: {tokens_per_second:.2f}"
@@ -96,16 +90,9 @@ class HuggingFaceInterface(AbstractAIUnit):
             print("Error: ", results['error'])
             raise SystemError(f"Error: {results['error']}")
 
-        if results.get('errors'):
-            print("Errors: ", results['errors'])
-            raise SystemError(f"Error: {results['error']}")
-
         # small problems:
         if results.get('warning'):
             print("Warning: ", results['warning'])
-
-        if results.get('warnings'):
-            print("Warnings: ", results['warnings'])
 
         # success stories:
         response = None
