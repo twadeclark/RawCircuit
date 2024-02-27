@@ -148,19 +148,26 @@ class ArticleManager:
         temperature_increase = float(temp_pct_increase * (max_comment_temperature - min_comment_temperature))
         temperature = float(0.0 + temperature_increase)
 
-        for _ in range(1, number_of_comments_between_min_max_temperature + 2):
+        for loop_cnt in range(1, number_of_comments_between_min_max_temperature + 2):
+            print(f"            a. Loop start. loop_cnt: {loop_cnt}")
             parent_index = random.randint(0, int(self.comment_thread_manager.get_comments_length() * continuity_multiplier))
+            print(f"            b. Loop start. loop_cnt: {loop_cnt}")
             parent_index = min(parent_index, self.comment_thread_manager.get_comments_length() - 1)
+            print(f"            c. Loop start. loop_cnt: {loop_cnt}")
             parent_comment = self.comment_thread_manager.get_comment(parent_index)["comment"]
+            print(f"            d. Loop start. loop_cnt: {loop_cnt}")
             temperature += temperature_increase
 
             loop_comment_prompt, prompt_keywords = self.instruction_generator.generate_loop_prompt(self.article_to_process.summary, parent_comment)
+            print(f"            e. Loop start. loop_cnt: {loop_cnt}")
             self.logger.info("\n    loop_comment_prompt: %s", loop_comment_prompt)
 
             loop_comment, flavors = self.ai_manager.fetch_inference(self.article_to_process.model, loop_comment_prompt, temperature)
+            print(f"            f. Loop start. loop_cnt: {loop_cnt}")
             if not loop_comment:
                 self.logger.info("No loop comment generated. model: %s Skipping...", self.article_to_process.model["name"])
                 continue
+            print(f"            g. Loop start. loop_cnt: {loop_cnt}")
 
             self.comment_thread_manager.add_comment(parent_index,
                                                     loop_comment,
@@ -168,32 +175,42 @@ class ArticleManager:
                                                     prompt_keywords  + " | " +  flavors,
                                                     datetime.now()
                                                     )
+            print(f"            Loop done. loop_cnt: {loop_cnt}")
 
     def format_and_publish(self):
+        print(f"            a. format_and_publish")
         self.search_terms.categorize_article_add_tags(self.article_to_process)
+        print(f"            b. format_and_publish")
 
         local_content_path = self.config.get('publishing_details', 'local_content_path')
+        print(f"            c. format_and_publish")
         formatted_post = markdown_formatter.format_to_markdown(self.article_to_process, self.comment_thread_manager)
+        print(f"            d. format_and_publish")
         self.logger.info("\nPost sucessfully formatted. %s characters \t(%s)", len(formatted_post), self.article_to_process.title)
 
         unique_seconds = int(time.time())
         file_name = "formatted_post_" + str(unique_seconds) + ".md"
         file_path = os.path.join(local_content_path, file_name)
 
+        print(f"            e. format_and_publish")
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(formatted_post)
         self.logger.info("     Formatted post saved to: %s", file_path)
+        print(f"            f. format_and_publish")
 
         pushed_to_pelican = "NOT published by Pelican. \t"
+        print(f"            g. format_and_publish")
         if self.config.getboolean('publishing_details', 'publish_to_pelican'):
             publish_pelican.publish_pelican(self.config["publishing_details"])
             pushed_to_pelican = "PUBLISHED by Pelican. \t"
 
+        print(f"            h. format_and_publish")
         published_to_s3 = "NOT pushed to S3. \t"
         if self.config.getboolean('aws_s3_bucket_details', 'publish_to_s3'):
             number_of_files_pushed = upload_directory_to_s3.upload_directory_to_s3(self.config["aws_s3_bucket_details"], self.config["publishing_details"]["local_publish_path"])
             published_to_s3 = f"PUSHED files to S3: {number_of_files_pushed} \t"
 
+        print(f"            i. format_and_publish")
         return pushed_to_pelican + published_to_s3
 
 

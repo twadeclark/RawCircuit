@@ -17,14 +17,18 @@ def main():
         article_manager.get_summary_find_model()
 
     article_manager.add_summary_to_comment_thread_manager()
+    print("fetch_and_add_first_comment")
     article_manager.fetch_and_add_first_comment()
+    print("generate_additional_comments")
     article_manager.generate_additional_comments()
+    print("format_and_publish")
     final_results = article_manager.format_and_publish()
 
     logger.critical (   "SUCCESS: \t" + \
                         f"article_id: {article_manager.article_to_process.id} \t" + \
                         final_results + \
                         f"Elapsed time: {article_manager.comment_thread_manager.get_duration()}\n")
+    print("end.")
 
 
 if __name__ == "__main__":
