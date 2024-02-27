@@ -1,12 +1,16 @@
 import json
 import time
 import requests
+import logging
 try:
     from transformers import AutoTokenizer
 except ImportError:
     AutoTokenizer = None
 from contributors.abstract_ai_unit import AbstractAIUnit
 # from prompt_generator.apply_chat_template_cheater import ApplyChatTemplateCheater
+
+from log_config import setup_logging
+setup_logging()
 
 
 class HuggingFaceInterface(AbstractAIUnit):
@@ -23,6 +27,8 @@ class HuggingFaceInterface(AbstractAIUnit):
         if temperature == 0.0:
             temperature = 0.001
 
+        self.logger.info("(model, formatted_messages, temperature) %s, %s, %s", model, formatted_messages, temperature)
+
         if isinstance(formatted_messages, str):
             formatted_messages_as_string = formatted_messages
         else:
@@ -32,6 +38,7 @@ class HuggingFaceInterface(AbstractAIUnit):
             formatted_messages_as_string = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
 
         print(f"formatted_messages_as_string={formatted_messages_as_string}")
+        self.logger.info("formatted_messages_as_string= %s", formatted_messages_as_string)
 
         payload = {
             "inputs": formatted_messages_as_string,
@@ -47,6 +54,8 @@ class HuggingFaceInterface(AbstractAIUnit):
                             "stream": True
                             }
             }
+
+        self.logger.info("payload= %s", payload)
 
         start_time = time.time()
         first_chunk_time = None
@@ -67,6 +76,8 @@ class HuggingFaceInterface(AbstractAIUnit):
         response.close()
         data = json.loads(all_chunks)
         end_time = time.time()
+
+        self.logger.info("data= %s", data)
 
         print()
 

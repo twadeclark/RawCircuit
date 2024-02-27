@@ -1,11 +1,16 @@
 import re
+import logging
 from contributors.hugging_face_interface import HuggingFaceInterface
 from contributors.local_openai_interface import LocalOpenAIInterface
 from contributors.transformers_interface import TransformersInterface
 from content_loaders import scraper
 
+from log_config import setup_logging
+setup_logging()
+
 class AIManager:
     def __init__(self, config, db_manager, instruction_generator):
+        self.logger = logging.getLogger(__name__)
         self.config = config
         self.db_manager = db_manager
         self.interface_list = {
@@ -142,7 +147,12 @@ class AIManager:
         #     formatted_messages = truncate_user_messages_if_needed(formatted_messages, word_limit)
 
         # let's go!
-        response, flavors = interface.fetch_inference(model, formatted_messages, temperature)
+        self.logger.info("\n    let's go! fetch_inference(model, formatted_messages, temperature) %s, %s, %s", model, formatted_messages, temperature)
+
+        try:
+            response, flavors = interface.fetch_inference(model, formatted_messages, temperature)
+        except Exception as e:
+            self.logger.error("fetch_inference failed: %s", e)
 
         # remove the prompt from the response
         if response:
