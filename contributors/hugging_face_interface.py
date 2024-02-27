@@ -15,6 +15,7 @@ setup_logging()
 
 class HuggingFaceInterface(AbstractAIUnit):
     def __init__(self, config):
+        self.logger = logging.getLogger(__name__)
         self.api_key = config["api_key"]
         self.base_url = config["base_url"]
 
