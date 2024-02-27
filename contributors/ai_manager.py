@@ -149,10 +149,7 @@ class AIManager:
         # let's go!
         self.logger.info("\n    let's go! fetch_inference(model, formatted_messages, temperature) %s, %s, %s", model, formatted_messages, temperature)
 
-        try:
-            response, flavors = interface.fetch_inference(model, formatted_messages, temperature)
-        except Exception as e:
-            self.logger.error("fetch_inference failed: %s", e)
+        response, flavors = interface.fetch_inference(model, formatted_messages, temperature)
 
         # remove the prompt from the response
         if response:
