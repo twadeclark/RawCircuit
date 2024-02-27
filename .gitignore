@@ -168,3 +168,5 @@ aggregators/future_aggregator_list.txt
 db.json
 clean_env/
 prompt_generator/apply_chat_template_cheater.py
+config_alternate.ini
+app.log.1

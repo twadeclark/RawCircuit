@@ -30,11 +30,11 @@ class AIManager:
             summary_temperature = float(self.config.get('general_configurations', 'summary_temperature'))
             summary_temp, flavors = self.fetch_inference(model_temp, summary_prompt_temp, summary_temperature)
             length_of_summary = len(str(summary_temp))
-            print(f"    Successful fetch. length_of_summary: {length_of_summary}")
+            self.logger.info(f"    Successful fetch. length_of_summary: {length_of_summary}")
             self.db_manager.update_model_record(model_temp["name"], True, f"length_of_summary: {length_of_summary}")
             return summary_temp, flavors, None
         except Exception as e:
-            print(f"    Model '{model_temp['name']}' no worky: ", str(e), "\n")
+            self.logger.info(f"    Model '{model_temp['name']}' no worky: ", str(e))
             if model_temp["name"]:
                 self.db_manager.update_model_record(model_temp["name"], False, str(e))
             return summary_temp, flavors, str(e)
@@ -68,39 +68,38 @@ class AIManager:
         #         return
 
         summary_prompt_instruct_chat, summary_prompt_instruct_chat_prompt_keywords = self.instruction_generator.generate_summary_prompt_instruct_chat(article_to_process.shortened_content)
-        print(f"    summary_prompt_instruct_chat_prompt_keywords: {summary_prompt_instruct_chat_prompt_keywords}")
+        self.logger.info(f"    summary_prompt_instruct_chat_prompt_keywords: {summary_prompt_instruct_chat_prompt_keywords}")
         summary_instruct_chat,  summary_instruct_chat_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct_chat)
 
         if error_message:
             if "Read timed out" in error_message:
-                print("    Summary attempt timed out again. Exiting.")
+                self.logger.info("    Summary attempt timed out again. Exiting.")
                 article_to_process.summary = ""
                 return
             elif "You are trying to access a gated repo" in error_message:
-                print("    Gated repo error. Exiting.")
+                self.logger.info("    Gated repo error. Exiting.")
                 article_to_process.summary = ""
                 return
 
             elif "Model requires a Pro subscription" in error_message:
-                print("    Pro subscription error. Exiting.")
+                self.logger.info("    Pro subscription error. Exiting.")
                 article_to_process.summary = ""
                 return
             else:
-                print("    Unknown Error. Exiting.")
-                print(f"    error_message: {error_message}")
+                self.logger.info(f"    Unknown Error. Exiting. error_message: {error_message}")
                 article_to_process.summary = ""
                 return
             
         # mistral / mixtral tell us we need to swith the first role name to assistant
         summary_prompt_chat, summary_prompt_chat_prompt_keywords = self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content)
-        print(f"    summary_prompt_chat_prompt_keywords: {summary_prompt_chat_prompt_keywords}")
+        self.logger.info(f"    summary_prompt_chat_prompt_keywords: {summary_prompt_chat_prompt_keywords}")
         summary_chat, summary_chat_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_chat)
         if error_message:
             if "Conversation roles must alternate" in error_message:
-                print("    Conversation roles must alternate. Doing this now.")
+                self.logger.info("    Conversation roles must alternate. Doing this now.")
                 self.instruction_generator.handle_conversation_roles_must_alternate() # this will hold effect for all remaning calls to the instruction_generator
                 summary_prompt_chat, summary_prompt_chat_prompt_keywords = self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content)
-                print(f"    summary_prompt_chat_prompt_keywords: {summary_prompt_chat_prompt_keywords}")
+                self.logger.info(f"    summary_prompt_chat_prompt_keywords: {summary_prompt_chat_prompt_keywords}")
                 summary_chat, summary_chat_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_chat)
 
         selected_summary = ""
@@ -189,8 +188,6 @@ def _reduce_content(list_of_dicts, word_limit):
     return list_of_dicts
 
 def truncate_user_messages_if_needed(list_of_dicts, word_limit):
-    #TODO: https://cookbook.openai.com/examples/how_to_count_tokens_with_tiktoken
-
     while _calculate_word_count(list_of_dicts) > word_limit:
         user_entries = [item for item in list_of_dicts if item["role"] == "user"]
         user_entries_count = len(user_entries)

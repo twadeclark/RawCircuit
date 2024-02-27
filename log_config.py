@@ -5,14 +5,26 @@
 # ERROR=40: Error that prevents the program from performing a function.
 # CRITICAL=50: Critical error that causes the program to stop or crash.
 
+from logging.handlers import RotatingFileHandler
 import logging
 
 def setup_logging():
+    rotating_handler = RotatingFileHandler(
+        "app.log",
+        maxBytes=1024*1024*1,
+        backupCount=5,
+        mode='a'
+    )
+    
+    log_format = '%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s'
+    date_format = '%Y-%m-%d:%H:%M:%S'
+    
     logging.basicConfig(
-        format='%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-        datefmt='%Y-%m-%d:%H:%M:%S',
+        format=log_format,
+        datefmt=date_format,
         level=logging.DEBUG,
         handlers=[
-            logging.FileHandler("app.log", mode='a'),
+            rotating_handler,
             logging.StreamHandler()
-        ])
+        ]
+    )

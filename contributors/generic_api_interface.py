@@ -1,10 +1,15 @@
 import json
 import random
 import requests
+import logging
 from contributors.abstract_ai_unit import AbstractAIUnit
+
+from log_config import setup_logging
+setup_logging()
 
 class GenericApiInterface(AbstractAIUnit):
     def __init__(self, config):
+        self.logger = logging.getLogger(__name__)
         self.api_key = config["api_key"]
         self.base_url = config["base_url"]
 
@@ -32,7 +37,7 @@ class GenericApiInterface(AbstractAIUnit):
         repetition_penalty_as_string = "{:.1f}".format(repetition_penalty)
 
         flavors = f" \t max_new_tokens: {max_new_tokens_as_string}, \t temperature: {temperature_as_string}, \t repetition_penalty: {repetition_penalty_as_string}"
-        print(flavors)
+        self.logger.info(flavors)
 
         data = query(
             {
@@ -53,22 +58,15 @@ class GenericApiInterface(AbstractAIUnit):
 
         target_keys = ['error', 'errors', 'warning', 'warnings', 'generated_text', 'summary_text']
         results = self.find_keys(data, target_keys)
-        print(results)
+        self.logger.info(results)
 
         # big problems:
         if results.get('error'):
-            print("Error: ", results['error'])
-
-        if results.get('errors'):
-            print("Errors: ", results['errors'])
+            self.logger.info("Error: ", results['error'])
 
         # small problems:
         if results.get('warning'):
-            print("Warning: ", results['warning'])
-
-        if results.get('warnings'):
-            print("Warnings: ", results['warnings'])
-
+            self.logger.info("Warning: ", results['warning'])
         # success stories:
         if results.get('generated_text'):
             response = results['generated_text']

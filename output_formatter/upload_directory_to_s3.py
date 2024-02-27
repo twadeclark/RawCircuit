@@ -1,6 +1,6 @@
 import mimetypes
 import os
-
+import logging
 try:
     import boto3
     from botocore.exceptions import NoCredentialsError
@@ -8,7 +8,11 @@ except ImportError:
     boto3 = None
     NoCredentialsError = None
 
+from log_config import setup_logging
+setup_logging()
+
 def upload_directory_to_s3(config_aws_s3_bucket_details, config_publishing_details_local_publish_path):
+    logger = logging.getLogger(__name__)
     bucket_name = config_aws_s3_bucket_details["bucket_name"]
     s3_directory = config_aws_s3_bucket_details["s3_directory"]
     aws_access_key_id = config_aws_s3_bucket_details["aws_access_key_id"]
@@ -35,7 +39,7 @@ def upload_directory_to_s3(config_aws_s3_bucket_details, config_publishing_detai
             if not content_type:
                 content_type = 'binary/octet-stream'
 
-            print(f"Uploading {local_path} to {bucket_name}/{s3_path} with Content-Type {content_type}")
+            logger.info(f"Uploading {local_path} to {bucket_name}/{s3_path} with Content-Type {content_type}")
             try:
                 num_files += 1
                 s3.Bucket(bucket_name).upload_file(
@@ -45,6 +49,6 @@ def upload_directory_to_s3(config_aws_s3_bucket_details, config_publishing_detai
                 )
 
             except NoCredentialsError:
-                print("Credentials not available")
+                logger.info("Credentials not available")
                 return "    Failed on file: " + local_path
     return f"    {num_files} files uploaded successfully."

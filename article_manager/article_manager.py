@@ -35,43 +35,45 @@ class ArticleManager:
         self.news_aggregator_manager = NewsAggregatorManager(self.config, self.db_manager, None) #TODO: news aggregator type should come from config
         self.search_terms = SearchTerms()
         self.hfms = HuggingfaceModelSearch(self.db_manager)
-        self.model_info_from_config = { "name"      : self.config.get('model_info', 'model_name'),
-                                        "interface" : self.config.get('model_info', 'interface'),
-                                        "max_tokens": self.config.getint('model_info', 'max_tokens')}
+        self.model_info_from_config = { 
+            "name"      : self.config.get('model_info', 'model_name'),
+            "interface" : self.config.get('model_info', 'interface'),
+            "max_tokens": self.config.getint('model_info', 'max_tokens')}
         self.logger.info("model_info_from_config: %s", self.model_info_from_config)
         self.article_to_process = None
 
     def load_news_article(self):
         if self.config.getboolean('article_selector', 'use_specific_article') and self.config.get('article_selector', 'specific_article_url'):
-            atp =   Article(    id = None,
-                                aggregator = "tmorganclark.com",
-                                source_id = None,
-                                source_name = "Thomas News Service",
-                                author = self.config.get('article_selector', 'specific_article_author'),
-                                title = self.config.get('article_selector', 'specific_article_title'),
-                                description = None,
-                                url = self.config.get('article_selector', 'specific_article_url'),
-                                url_to_image= None,
-                                published_at = datetime.now(),
-                                content = None,
-                                rec_order = 0,
-                                added_timestamp = datetime.now(),
-                                scraped_timestamp = None,
-                                scraped_website_content = None,
-                                processed_timestamp = None
-                                )
+            atp = Article(
+                id = None,
+                aggregator = "tmorganclark.com",
+                source_id = None,
+                source_name = "Thomas News Service",
+                author = self.config.get('article_selector', 'specific_article_author'),
+                title = self.config.get('article_selector', 'specific_article_title'),
+                description = None,
+                url = self.config.get('article_selector', 'specific_article_url'),
+                url_to_image= None,
+                published_at = datetime.now(),
+                content = None,
+                rec_order = 0,
+                added_timestamp = datetime.now(),
+                scraped_timestamp = None,
+                scraped_website_content = None,
+                processed_timestamp = None)
         else:
             atp = self.db_manager.get_next_article_to_process()
 
             if not atp:
-                self.logger.info("Fetching new articles from aggregator...")
                 num_articles_returned = self.news_aggregator_manager.fetch_new_articles_into_db()
                 if not num_articles_returned:
+                    self.logger.error("No new articles returned from aggregator. Exiting...")
                     raise FatalError("No new articles returned from aggregator. Exiting...")
                 self.logger.info("New articles fetched: %s", num_articles_returned)
                 atp = self.db_manager.get_next_article_to_process()
 
         if not atp:
+            self.logger.error("No article_to_process. Exiting...")
             raise FatalError("No article_to_process. Exiting...")
 
         self.article_to_process = atp
@@ -102,42 +104,45 @@ class ArticleManager:
 
             model_name_temp = self.hfms.fetch_next_model_name_from_huggingface()
             if not model_name_temp:
+                self.logger.error("No new models available from Huggingface. Exiting...")
                 raise FatalError("No new models available from Huggingface. Exiting...")
 
-            self.article_to_process.model = {   "name"      : model_name_temp,
-                                                "interface" : self.model_info_from_config["interface"],
-                                                "max_tokens": self.model_info_from_config["max_tokens"]
-                                            }
+            self.article_to_process.model = {   
+                "name"      : model_name_temp,
+                "interface" : self.model_info_from_config["interface"],
+                "max_tokens": self.model_info_from_config["max_tokens"]}
             self.logger.info("\nTrying model: %s", self.article_to_process.model["name"])
             self.ai_manager.get_and_set_summary_and_record_model_results(self.article_to_process) #TODO: clean up
 
     def add_summary_to_comment_thread_manager(self):
         if not self.article_to_process.summary:
+            self.logger.error("No summary generated. Exiting...")
             raise FatalError("No summary generated. Exiting...")
         else:
-            self.comment_thread_manager.add_comment(0,
-                                                    self.article_to_process.summary,
-                                                    scraper.get_polite_name(self.article_to_process.model["name"]),
-                                                    # "summary | summary",
-                                                    self.article_to_process.summary_prompt_keywords  + " | " +  self.article_to_process.summary_flavors,
-                                                    datetime.now()
-                                                    )
+            self.comment_thread_manager.add_comment(
+                0,
+                self.article_to_process.summary,
+                scraper.get_polite_name(self.article_to_process.model["name"]),
+                # "summary | summary",
+                self.article_to_process.summary_prompt_keywords  + " | " +  self.article_to_process.summary_flavors,
+                datetime.now())
 
     def fetch_and_add_first_comment(self):
         first_comment_prompt, first_comment_prompt_keywords = self.instruction_generator.generate_first_comment_prompt(self.article_to_process.summary)
-        self.logger.info("    first_comment_prompt: %s", first_comment_prompt)
+        self.logger.debug("    first_comment_prompt: %s", first_comment_prompt)
 
         first_comment, first_comment_flavors = self.ai_manager.fetch_inference(self.article_to_process.model, first_comment_prompt, 0.0)
 
         if not first_comment:
+            self.logger.error("No first comment generated. Exiting...")
             raise FatalError("No first comment generated. Exiting...")
 
-        self.comment_thread_manager.add_comment(0,
-                                                first_comment,
-                                                scraper.get_polite_name(self.article_to_process.model["name"]),
-                                                first_comment_prompt_keywords  + " | " +  first_comment_flavors,
-                                                datetime.now()
-                                                )
+        self.comment_thread_manager.add_comment(
+            0,
+            first_comment,
+            scraper.get_polite_name(self.article_to_process.model["name"]),
+            first_comment_prompt_keywords  + " | " +  first_comment_flavors,
+            datetime.now())
 
     def generate_additional_comments(self):
         continuity_multiplier = float(self.config.get('general_configurations', 'continuity_multiplier'))
@@ -149,68 +154,51 @@ class ArticleManager:
         temperature = float(0.0 + temperature_increase)
 
         for loop_cnt in range(1, number_of_comments_between_min_max_temperature + 2):
-            print(f"            a. Loop start. loop_cnt: {loop_cnt}")
             parent_index = random.randint(0, int(self.comment_thread_manager.get_comments_length() * continuity_multiplier))
-            print(f"            b. Loop start. loop_cnt: {loop_cnt}")
             parent_index = min(parent_index, self.comment_thread_manager.get_comments_length() - 1)
-            print(f"            c. Loop start. loop_cnt: {loop_cnt}")
             parent_comment = self.comment_thread_manager.get_comment(parent_index)["comment"]
-            print(f"            d. Loop start. loop_cnt: {loop_cnt}")
             temperature += temperature_increase
 
             loop_comment_prompt, prompt_keywords = self.instruction_generator.generate_loop_prompt(self.article_to_process.summary, parent_comment)
-            print(f"            e. Loop start. loop_cnt: {loop_cnt}")
-            self.logger.info("\n    loop_comment_prompt: %s", loop_comment_prompt)
+            self.logger.debug("    loop_comment_prompt: %s", loop_comment_prompt)
 
             loop_comment, flavors = self.ai_manager.fetch_inference(self.article_to_process.model, loop_comment_prompt, temperature)
-            print(f"            f. Loop start. loop_cnt: {loop_cnt}")
             if not loop_comment:
                 self.logger.info("No loop comment generated. model: %s Skipping...", self.article_to_process.model["name"])
                 continue
-            print(f"            g. Loop start. loop_cnt: {loop_cnt}")
 
-            self.comment_thread_manager.add_comment(parent_index,
-                                                    loop_comment,
-                                                    scraper.get_polite_name(self.article_to_process.model["name"]),
-                                                    prompt_keywords  + " | " +  flavors,
-                                                    datetime.now()
-                                                    )
-            print(f"            Loop done. loop_cnt: {loop_cnt}")
+            self.comment_thread_manager.add_comment(
+                parent_index,
+                loop_comment,
+                scraper.get_polite_name(self.article_to_process.model["name"]),
+                prompt_keywords  + " | " +  flavors,
+                datetime.now())
 
     def format_and_publish(self):
-        print(f"            a. format_and_publish")
         self.search_terms.categorize_article_add_tags(self.article_to_process)
-        print(f"            b. format_and_publish")
 
         local_content_path = self.config.get('publishing_details', 'local_content_path')
-        print(f"            c. format_and_publish")
         formatted_post = markdown_formatter.format_to_markdown(self.article_to_process, self.comment_thread_manager)
-        print(f"            d. format_and_publish")
         self.logger.info("\nPost sucessfully formatted. %s characters \t(%s)", len(formatted_post), self.article_to_process.title)
 
         unique_seconds = int(time.time())
         file_name = "formatted_post_" + str(unique_seconds) + ".md"
         file_path = os.path.join(local_content_path, file_name)
 
-        print(f"            e. format_and_publish")
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(formatted_post)
         self.logger.info("     Formatted post saved to: %s", file_path)
-        print(f"            f. format_and_publish")
 
         pushed_to_pelican = "NOT published by Pelican. \t"
-        print(f"            g. format_and_publish")
         if self.config.getboolean('publishing_details', 'publish_to_pelican'):
             publish_pelican.publish_pelican(self.config["publishing_details"])
             pushed_to_pelican = "PUBLISHED by Pelican. \t"
 
-        print(f"            h. format_and_publish")
         published_to_s3 = "NOT pushed to S3. \t"
         if self.config.getboolean('aws_s3_bucket_details', 'publish_to_s3'):
             number_of_files_pushed = upload_directory_to_s3.upload_directory_to_s3(self.config["aws_s3_bucket_details"], self.config["publishing_details"]["local_publish_path"])
             published_to_s3 = f"PUSHED files to S3: {number_of_files_pushed} \t"
 
-        print(f"            i. format_and_publish")
         return pushed_to_pelican + published_to_s3
 
 
@@ -221,13 +209,15 @@ class ArticleManager:
         self.db_manager.update_scrape_time(self.article_to_process)
         raw_html_from_url, fetch_success = scraper.fetch_raw_html_from_url(self.article_to_process.url)
         if not fetch_success:
+            self.logger.error("Error with fetch_raw_html_from_url. Exiting...")
             raise FatalError("Error with fetch_raw_html_from_url. Exiting...")
 
         self.article_to_process.scraped_website_content = scraper.extract_pure_text_from_raw_html(
-                                                            scraper.get_article_text_based_on_content_hint(self.article_to_process.content, raw_html_from_url)
-                                                            or raw_html_from_url)
+            scraper.get_article_text_based_on_content_hint(self.article_to_process.content, raw_html_from_url)
+            or raw_html_from_url)
 
         if not self.article_to_process.scraped_website_content:
+            self.logger.error("Error scraping website content. Exiting...")
             raise FatalError("Error scraping website content. Exiting...")
 
         self.db_manager.update_scraped_website_content(self.article_to_process)
@@ -258,6 +248,7 @@ class ArticleManager:
         self.logger.info("fake_content: %s", fake_content)
 
         if not self.article_to_process.scraped_website_content:
+            self.logger.error("Error assembling fake content. Exiting...")
             raise FatalError("Error assembling fake content. Exiting...")
 
         self.db_manager.update_scraped_website_content(self.article_to_process)

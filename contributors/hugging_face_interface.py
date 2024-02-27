@@ -7,7 +7,6 @@ try:
 except ImportError:
     AutoTokenizer = None
 from contributors.abstract_ai_unit import AbstractAIUnit
-# from prompt_generator.apply_chat_template_cheater import ApplyChatTemplateCheater
 
 from log_config import setup_logging
 setup_logging()
@@ -38,9 +37,6 @@ class HuggingFaceInterface(AbstractAIUnit):
             tokenizer = AutoTokenizer.from_pretrained(model["name"], **kwargs)
             formatted_messages_as_string = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
 
-        print(f"formatted_messages_as_string={formatted_messages_as_string}")
-        self.logger.info("formatted_messages_as_string= %s", formatted_messages_as_string)
-
         payload = {
             "inputs": formatted_messages_as_string,
             "parameters": { 
@@ -56,7 +52,7 @@ class HuggingFaceInterface(AbstractAIUnit):
                             }
             }
 
-        self.logger.info("payload= %s", payload)
+        self.logger.debug("payload= %s", payload)
 
         start_time = time.time()
         first_chunk_time = None
@@ -76,35 +72,31 @@ class HuggingFaceInterface(AbstractAIUnit):
 
         response.close()
         data = json.loads(all_chunks)
+        self.logger.info(data)
         end_time = time.time()
-
-        self.logger.info("data= %s", data)
 
         print()
 
         time_to_first_token = first_chunk_time - start_time
         tokens_per_second = token_count / (end_time - start_time)
-
-
-        print(f"        total time: {end_time - start_time:.3f}")
-
+        self.logger.info(f"        total time: {end_time - start_time:.3f}")
 
         max_tokens_as_string = str(max_new_tokens)
         temperature_as_string = "{:.1f}".format(temperature)
         flavors = f" \t max_tokens: {max_tokens_as_string}, \t temperature: {temperature_as_string}, \t time_to_first_token: {time_to_first_token:.3f}, \t tokens_per_second: {tokens_per_second:.2f}"
-        print(flavors)
+        self.logger.info(flavors)
 
         target_keys = ['error', 'errors', 'warning', 'warnings', 'generated_text', 'summary_text']
         results = self.find_keys(data, target_keys)
 
         # big problems:
         if results.get('error'):
-            print("Error: ", results['error'])
+            self.logger.info("Error: ", results['error'])
             raise SystemError(f"Error: {results['error']}")
 
         # small problems:
         if results.get('warning'):
-            print("Warning: ", results['warning'])
+            self.logger.info("Warning: ", results['warning'])
 
         # success stories:
         response = None
