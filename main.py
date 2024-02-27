@@ -7,39 +7,6 @@ def main():
     logger = logging.getLogger(__name__)
     logger.critical("Starting main()")
 
-    import os
-    print("Current Working Directory:", os.getcwd())
-
-    import configparser
-    config = configparser.ConfigParser()
-    config.read('config.ini')
-
-    try:
-        if 'NewsAPI' in config:
-            # Access the configuration
-            news_api = config['NewsAPI']
-            print(f"news_api = {news_api}")
-
-            news_api2 = config.get('NewsAPI', 'apiKey')
-            print(f"news_api2 = {news_api2}")
-
-            news_api3 = config['NewsAPI']['apiKey']
-            print(f"news_api3 = {news_api3}")
-
-        else:
-            # Handle the case where 'NewsAPI' section is missing
-            print("The 'NewsAPI' section is missing from the config.ini file.")
-    except Exception as e:
-        print(f"1. An error occurred: {e}")
-
-    try:
-        print(f"config = {config}")
-    except Exception as e:
-        print(f"2. An error occurred: {e}")
-
-    print("here!")
-
-
     article_manager = ArticleManager()
 
     article_manager.load_news_article()

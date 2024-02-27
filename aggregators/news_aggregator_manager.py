@@ -10,22 +10,6 @@ except ImportError:
 class NewsAggregatorManager:
 
     def __init__(self, config, db_manager, aggregator_name=None):
-
-        try:
-            print(f"config = {config}")
-        except Exception as e:
-            print(f"1a. An error occurred: {e}")
-
-        try:
-            print(f"config NewsAPI = {config['NewsAPI']}")
-        except Exception as e:
-            print(f"2a. An error occurred: {e}")
-
-        try:
-            print(f"config NewsAPI apiKey = {config['NewsAPI']['apiKey']}")
-        except Exception as e:
-            print(f"3a. An error occurred: {e}")
-
         self.db_manager = db_manager
         self.aggregators = [
             NewsApiOrgNews(config["NewsAPI"]),

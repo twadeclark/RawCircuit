@@ -2,3 +2,4 @@ python_dateutil==2.8.2
 Requests==2.31.0
 tinydb==4.8.0
 transformers==4.37.2
+newsapi_python==0.2.7
