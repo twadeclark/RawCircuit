@@ -10,6 +10,29 @@ def main():
     import os
     print("Current Working Directory:", os.getcwd())
 
+    import configparser
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+
+    try:
+        if 'NewsAPI' in config:
+            # Access the configuration
+            news_api = config['NewsAPI']
+            print(f"news_api = {news_api}")
+        else:
+            # Handle the case where 'NewsAPI' section is missing
+            print("The 'NewsAPI' section is missing from the config.ini file.")
+    except Exception as e:
+        print(f"1. An error occurred: {e}")
+
+    try:
+        print(f"config = {config}")
+    except Exception as e:
+        print(f"2. An error occurred: {e}")
+
+    print("here!")
+
+
     article_manager = ArticleManager()
 
     article_manager.load_news_article()
