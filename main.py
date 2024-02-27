@@ -6,8 +6,7 @@ setup_logging()
 
 def main():
     logger = logging.getLogger(__name__) 
-    logger.critical("\n                 Starting main()")
-    logger.critical ("BEGIN: \t" + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    logger.critical("\n-- -- -- -- -- -- -- -- -- -- -- Starting main() -- -- -- -- -- -- -- -- -- -- --")
 
     article_manager = ArticleManager()
     article_manager.load_news_article()
@@ -37,4 +36,3 @@ if __name__ == "__main__":
         main_logger = logging.getLogger(__name__)
         main_logger.critical("An terrible error occurred.")
         main_logger.exception(e)
-        raise e

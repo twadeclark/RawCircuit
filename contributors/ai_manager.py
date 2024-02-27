@@ -30,11 +30,12 @@ class AIManager:
             summary_temperature = float(self.config.get('general_configurations', 'summary_temperature'))
             summary_temp, flavors = self.fetch_inference(model_temp, summary_prompt_temp, summary_temperature)
             length_of_summary = len(str(summary_temp))
-            self.logger.info(f"    Successful fetch. length_of_summary: {length_of_summary}")
+            self.logger.info(f"    Successful summary fetch. length_of_summary: {length_of_summary}")
             self.db_manager.update_model_record(model_temp["name"], True, f"length_of_summary: {length_of_summary}")
             return summary_temp, flavors, None
         except Exception as e:
-            self.logger.info(f"    Model '{model_temp['name']}' no worky: ", str(e))
+            self.logger.info("    Model '%s' no worky: %s", model_temp['name'], e)
+
             if model_temp["name"]:
                 self.db_manager.update_model_record(model_temp["name"], False, str(e))
             return summary_temp, flavors, str(e)
@@ -145,8 +146,8 @@ class AIManager:
         #     word_limit = model["max_tokens"] // 2
         #     formatted_messages = truncate_user_messages_if_needed(formatted_messages, word_limit)
 
-        # let's go!
-        self.logger.info("\n    let's go! fetch_inference(model, formatted_messages, temperature) %s, %s, %s", model, formatted_messages, temperature)
+        # Let's Go!
+        self.logger.info("\n    Let's Go! fetch_inference(model, formatted_messages, temperature) %s, %s, %s", model, formatted_messages, temperature)
 
         response, flavors = interface.fetch_inference(model, formatted_messages, temperature)
 

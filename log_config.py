@@ -13,7 +13,8 @@ def setup_logging():
         "app.log",
         maxBytes=1024*1024*1,
         backupCount=5,
-        mode='a'
+        mode='a',
+        encoding='utf-8'
     )
     
     log_format = '%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s'
