@@ -22,7 +22,7 @@ def setup_logging():
     logging.basicConfig(
         format=log_format,
         datefmt=date_format,
-        level=logging.DEBUG,
+        level=logging.INFO,
         handlers=[
             rotating_handler,
             logging.StreamHandler()

@@ -170,3 +170,7 @@ clean_env/
 prompt_generator/apply_chat_template_cheater.py
 config_alternate.ini
 app.log.1
+app.log.2
+app.log.3
+app.log.4
+app.log.5
