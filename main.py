@@ -19,6 +19,13 @@ def main():
             # Access the configuration
             news_api = config['NewsAPI']
             print(f"news_api = {news_api}")
+
+            news_api2 = config.get('NewsAPI')
+            print(f"news_api2 = {news_api2}")
+
+            news_api3 = config['NewsAPI']['apiKey']
+            print(f"news_api3 = {news_api3}")
+
         else:
             # Handle the case where 'NewsAPI' section is missing
             print("The 'NewsAPI' section is missing from the config.ini file.")
