@@ -52,7 +52,8 @@ def format_to_markdown(article, comment_thread_manager):
         markdown += ("\n\n***\n\n")
 
     if article.shortened_content:
-        markdown += (f"🦪 <span style='font-size: xx-small;'>View Source for Original Content.</span> <!-- {str(article.shortened_content).replace('\n', ' ')} -->\n")
+        processed_content = str(article.shortened_content).replace('\n', ' ')
+        markdown += (f"🦪 <span style='font-size: xx-small;'>View Source for Original Content.</span> <!-- {processed_content} -->\n")
 
     if article.summary_dump:
         markdown += (f"⚗️ <span style='font-size: xx-small;'>View Source for Summaries.</span> <!-- {article.summary_dump.replace('\n', ' ')} -->\n")
