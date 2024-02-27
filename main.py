@@ -7,6 +7,9 @@ def main():
     logger = logging.getLogger(__name__)
     logger.critical("Starting main()")
 
+    import os
+    print("Current Working Directory:", os.getcwd())
+
     article_manager = ArticleManager()
 
     article_manager.load_news_article()
