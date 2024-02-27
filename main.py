@@ -20,7 +20,7 @@ def main():
             news_api = config['NewsAPI']
             print(f"news_api = {news_api}")
 
-            news_api2 = config.get('NewsAPI')
+            news_api2 = config.get('NewsAPI', 'apiKey')
             print(f"news_api2 = {news_api2}")
 
             news_api3 = config['NewsAPI']['apiKey']
