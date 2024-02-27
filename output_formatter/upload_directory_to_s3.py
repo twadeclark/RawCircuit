@@ -1,7 +1,12 @@
 import mimetypes
 import os
-import boto3
-from botocore.exceptions import NoCredentialsError
+
+try:
+    import boto3
+    from botocore.exceptions import NoCredentialsError
+except ImportError:
+    boto3 = None
+    NoCredentialsError = None
 
 def upload_directory_to_s3(config_aws_s3_bucket_details, config_publishing_details_local_publish_path):
     bucket_name = config_aws_s3_bucket_details["bucket_name"]
