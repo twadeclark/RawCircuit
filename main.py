@@ -1,3 +1,4 @@
+import configparser
 from datetime import datetime
 import logging
 from article_manager.article_manager import ArticleManager
@@ -8,24 +9,43 @@ def main():
     logger = logging.getLogger(__name__) 
     logger.critical("\n-- -- -- -- -- -- -- -- -- -- -- Starting main() -- -- -- -- -- -- -- -- -- -- --")
 
-    article_manager = ArticleManager()
-    article_manager.load_news_article()
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    articles_total_qty = int(config['general_configurations']['articles_total_qty'])
+    completed_articles = 0
 
-    if article_manager.model_info_from_config["name"] or article_manager.model_info_from_config["interface"] == "LocalOpenAIInterface":
-        article_manager.get_summary_model_defined()
-    else:
-        article_manager.get_summary_find_model()
+    for article_counter in range(1, int(articles_total_qty) + 1):
+        logger.warning("    Starting article %d of %d", article_counter, articles_total_qty)
 
-    article_manager.add_summary_to_comment_thread_manager()
-    article_manager.fetch_and_add_first_comment()
-    article_manager.generate_additional_comments()
-    final_results = article_manager.format_and_publish()
+        article_manager = ArticleManager(config)
+        article_manager.load_news_article()
 
-    logger.critical (   
-        "SUCCESS: \t" + \
-        f"article_id: {article_manager.article_to_process.id} \t" + \
-        final_results + \
-        f"Elapsed time: {article_manager.comment_thread_manager.get_duration()}\n")
+        if article_manager.model_info_from_config["name"] or article_manager.model_info_from_config["interface"] == "LocalOpenAIInterface":
+            article_manager.get_summary_model_defined()
+        else:
+            article_manager.get_summary_find_model()
+
+        if not article_manager.article_to_process.summary:
+            logger.info("    No summary returned for article %d. Skipping.", article_counter)
+            continue
+
+        article_manager.add_summary_to_comment_thread_manager()
+
+        first_comment = article_manager.fetch_and_add_first_comment()
+        if not first_comment:
+            logger.info("    No first comment returned for article %d. Skipping.", article_counter)
+            continue
+
+        article_manager.generate_additional_comments()
+        article_manager.format_article_into_markdown()
+        completed_articles += 1
+
+    logger.warning("    Done with loop.")
+
+    article_manager.publish_by_pelican()
+    article_manager.push_to_S3()
+
+    logger.critical ("SUCCESS: Completed %d articles out of %d attempts.\n", completed_articles, articles_total_qty)
     print("end.")
 
 

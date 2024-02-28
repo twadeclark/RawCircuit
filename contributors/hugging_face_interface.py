@@ -79,7 +79,7 @@ class HuggingFaceInterface(AbstractAIUnit):
 
         time_to_first_token = first_chunk_time - start_time
         tokens_per_second = token_count / (end_time - start_time)
-        self.logger.info(f"        total time: {end_time - start_time:.3f}")
+        self.logger.info("        total time: %.3f", end_time - start_time)
 
         max_tokens_as_string = str(max_new_tokens)
         temperature_as_string = "{:.1f}".format(temperature)
@@ -91,12 +91,12 @@ class HuggingFaceInterface(AbstractAIUnit):
 
         # big problems:
         if results.get('error'):
-            self.logger.info("Error: ", results['error'])
+            self.logger.info("Error: %s", results['error'])
             raise SystemError(f"Error: {results['error']}")
 
         # small problems:
         if results.get('warning'):
-            self.logger.info("Warning: ", results['warning'])
+            self.logger.info("Warning: %s", results['warning'])
 
         # success stories:
         response = None

@@ -30,7 +30,7 @@ class AIManager:
             summary_temperature = float(self.config.get('general_configurations', 'summary_temperature'))
             summary_temp, flavors = self.fetch_inference(model_temp, summary_prompt_temp, summary_temperature)
             length_of_summary = len(str(summary_temp))
-            self.logger.info(f"    Successful summary fetch. length_of_summary: {length_of_summary}")
+            self.logger.info("    Successful summary fetch. length_of_summary: %d", length_of_summary)
             self.db_manager.update_model_record(model_temp["name"], True, f"length_of_summary: {length_of_summary}")
             return summary_temp, flavors, None
         except Exception as e:
@@ -69,38 +69,37 @@ class AIManager:
         #         return
 
         summary_prompt_instruct_chat, summary_prompt_instruct_chat_prompt_keywords = self.instruction_generator.generate_summary_prompt_instruct_chat(article_to_process.shortened_content)
-        self.logger.info(f"    summary_prompt_instruct_chat_prompt_keywords: {summary_prompt_instruct_chat_prompt_keywords}")
+        self.logger.info("    summary_prompt_instruct_chat_prompt_keywords: %s", summary_prompt_instruct_chat_prompt_keywords)
         summary_instruct_chat,  summary_instruct_chat_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_instruct_chat)
 
         if error_message:
             if "Read timed out" in error_message:
-                self.logger.info("    Summary attempt timed out again. Exiting.")
+                self.logger.info("    Summary attempt timed out. Exiting.")
                 article_to_process.summary = ""
                 return
             elif "You are trying to access a gated repo" in error_message:
                 self.logger.info("    Gated repo error. Exiting.")
                 article_to_process.summary = ""
                 return
-
             elif "Model requires a Pro subscription" in error_message:
                 self.logger.info("    Pro subscription error. Exiting.")
                 article_to_process.summary = ""
                 return
             else:
-                self.logger.info(f"    Unknown Error. Exiting. error_message: {error_message}")
+                self.logger.info("    Unknown Error. Exiting. error_message: %s", error_message)
                 article_to_process.summary = ""
                 return
             
         # mistral / mixtral tell us we need to swith the first role name to assistant
         summary_prompt_chat, summary_prompt_chat_prompt_keywords = self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content)
-        self.logger.info(f"    summary_prompt_chat_prompt_keywords: {summary_prompt_chat_prompt_keywords}")
+        self.logger.info("    summary_prompt_chat_prompt_keywords: %s", summary_prompt_chat_prompt_keywords)
         summary_chat, summary_chat_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_chat)
         if error_message:
             if "Conversation roles must alternate" in error_message:
                 self.logger.info("    Conversation roles must alternate. Doing this now.")
                 self.instruction_generator.handle_conversation_roles_must_alternate() # this will hold effect for all remaning calls to the instruction_generator
                 summary_prompt_chat, summary_prompt_chat_prompt_keywords = self.instruction_generator.generate_summary_prompt_chat(article_to_process.shortened_content)
-                self.logger.info(f"    summary_prompt_chat_prompt_keywords: {summary_prompt_chat_prompt_keywords}")
+                self.logger.info("    summary_prompt_chat_prompt_keywords: %s", summary_prompt_chat_prompt_keywords)
                 summary_chat, summary_chat_flavors, error_message = self.fetch_summary_and_record_model_results(article_to_process.model, summary_prompt_chat)
 
         selected_summary = ""

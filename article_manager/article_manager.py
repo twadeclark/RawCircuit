@@ -1,4 +1,3 @@
-import configparser
 from datetime import datetime
 import os
 import random
@@ -24,11 +23,10 @@ setup_logging()
 
 
 class ArticleManager:
-    def __init__(self):
+    def __init__(self, config):
         self.logger = logging.getLogger(__name__)
         self.comment_thread_manager = CommentThreadManager()
-        self.config = configparser.ConfigParser()
-        self.config.read('config.ini')
+        self.config = config
         self.db_manager = DBManager(self.config)
         self.instruction_generator =  InstructionGenerator(self.config.get('general_configurations', 'prompt_tier'))
         self.ai_manager = AIManager(self.config, self.db_manager, self.instruction_generator)
@@ -97,10 +95,10 @@ class ArticleManager:
         self.ai_manager.get_and_set_summary_and_record_model_results(self.article_to_process)
 
     def get_summary_find_model(self):
-        cnt = int(self.config.get('general_configurations', 'number_of_models_to_try'))
+        model_attempt_cnt = int(self.config.get('general_configurations', 'number_of_models_to_try_per_aticle'))
 
-        while not self.article_to_process.summary and cnt > 0:
-            cnt -= 1
+        while not self.article_to_process.summary and model_attempt_cnt > 0:
+            model_attempt_cnt -= 1
 
             model_name_temp = self.hfms.fetch_next_model_name_from_huggingface()
             if not model_name_temp:
@@ -115,17 +113,12 @@ class ArticleManager:
             self.ai_manager.get_and_set_summary_and_record_model_results(self.article_to_process) #TODO: clean up
 
     def add_summary_to_comment_thread_manager(self):
-        if not self.article_to_process.summary:
-            self.logger.error("No summary generated. Exiting...")
-            raise FatalError("No summary generated. Exiting...")
-        else:
-            self.comment_thread_manager.add_comment(
-                0,
-                self.article_to_process.summary,
-                scraper.get_polite_name(self.article_to_process.model["name"]),
-                # "summary | summary",
-                self.article_to_process.summary_prompt_keywords  + " | " +  self.article_to_process.summary_flavors,
-                datetime.now())
+        self.comment_thread_manager.add_comment(
+            0,
+            self.article_to_process.summary,
+            scraper.get_polite_name(self.article_to_process.model["name"]),
+            self.article_to_process.summary_prompt_keywords  + " | " +  self.article_to_process.summary_flavors,
+            datetime.now())
 
     def fetch_and_add_first_comment(self):
         first_comment_prompt, first_comment_prompt_keywords = self.instruction_generator.generate_first_comment_prompt(self.article_to_process.summary)
@@ -134,8 +127,7 @@ class ArticleManager:
         first_comment, first_comment_flavors = self.ai_manager.fetch_inference(self.article_to_process.model, first_comment_prompt, 0.0)
 
         if not first_comment:
-            self.logger.error("No first comment generated. Exiting...")
-            raise FatalError("No first comment generated. Exiting...")
+            return None
 
         self.comment_thread_manager.add_comment(
             0,
@@ -143,6 +135,7 @@ class ArticleManager:
             scraper.get_polite_name(self.article_to_process.model["name"]),
             first_comment_prompt_keywords  + " | " +  first_comment_flavors,
             datetime.now())
+        return first_comment
 
     def generate_additional_comments(self):
         continuity_multiplier = float(self.config.get('general_configurations', 'continuity_multiplier'))
@@ -151,7 +144,7 @@ class ArticleManager:
         min_comment_temperature = float(self.config.get('general_configurations', 'min_comment_temperature'))
         temp_pct_increase = float( 1 / (number_of_comments_between_min_max_temperature + 2))
         temperature_increase = float(temp_pct_increase * (max_comment_temperature - min_comment_temperature))
-        temperature = float(0.0 + temperature_increase)
+        temperature = float(0.0)
 
         for loop_cnt in range(1, number_of_comments_between_min_max_temperature + 2):
             parent_index = random.randint(0, int(self.comment_thread_manager.get_comments_length() * continuity_multiplier))
@@ -160,7 +153,7 @@ class ArticleManager:
             temperature += temperature_increase
 
             loop_comment_prompt, prompt_keywords = self.instruction_generator.generate_loop_prompt(self.article_to_process.summary, parent_comment)
-            self.logger.debug("    loop_comment_prompt: %s", loop_comment_prompt)
+            self.logger.debug("    (loop %d) loop_comment_prompt: %s", loop_cnt, loop_comment_prompt)
 
             loop_comment, flavors = self.ai_manager.fetch_inference(self.article_to_process.model, loop_comment_prompt, temperature)
             if not loop_comment:
@@ -174,7 +167,7 @@ class ArticleManager:
                 prompt_keywords  + " | " +  flavors,
                 datetime.now())
 
-    def format_and_publish(self):
+    def format_article_into_markdown(self):
         self.search_terms.categorize_article_add_tags(self.article_to_process)
 
         local_content_path = self.config.get('publishing_details', 'local_content_path')
@@ -187,19 +180,21 @@ class ArticleManager:
 
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(formatted_post)
-        self.logger.info("     Formatted post saved to: %s", file_path)
+        self.logger.info("     Formatted post saved to: %s\n", file_path)
 
-        pushed_to_pelican = "NOT published by Pelican. \t"
+    def publish_by_pelican(self):
+        pushed_to_pelican = "NOT published by Pelican. \n"
         if self.config.getboolean('publishing_details', 'publish_to_pelican'):
             publish_pelican.publish_pelican(self.config["publishing_details"])
-            pushed_to_pelican = "PUBLISHED by Pelican. \t"
+            pushed_to_pelican = "PUBLISHED by Pelican. \n"
+        self.logger.info(pushed_to_pelican)
 
-        published_to_s3 = "NOT pushed to S3. \t"
+    def push_to_S3(self):
+        pushed_to_s3 = "NOT pushed to S3. \n"
         if self.config.getboolean('aws_s3_bucket_details', 'publish_to_s3'):
             number_of_files_pushed = upload_directory_to_s3.upload_directory_to_s3(self.config["aws_s3_bucket_details"], self.config["publishing_details"]["local_publish_path"])
-            published_to_s3 = f"PUSHED files to S3: {number_of_files_pushed} \t"
-
-        return pushed_to_pelican + published_to_s3
+            pushed_to_s3 = f"PUSHED files to S3: {number_of_files_pushed} \n"
+        self.logger.info(pushed_to_s3)
 
 
 
