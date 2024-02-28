@@ -146,7 +146,7 @@ class AIManager:
         #     formatted_messages = truncate_user_messages_if_needed(formatted_messages, word_limit)
 
         # Let's Go!
-        self.logger.info("\n    Let's Go! fetch_inference(model, formatted_messages, temperature) %s, %s, %s", model, formatted_messages, temperature)
+        self.logger.info("\n-   Let's Go! fetch_inference(model, formatted_messages, temperature) %s, %s, %s", model, formatted_messages, temperature)
 
         response, flavors = interface.fetch_inference(model, formatted_messages, temperature)
 

@@ -15,7 +15,7 @@ def main():
     completed_articles = 0
 
     for article_counter in range(1, int(articles_total_qty) + 1):
-        logger.warning("    Starting article %d of %d", article_counter, articles_total_qty)
+        logger.warning("\n*   Starting article %d of %d", article_counter, articles_total_qty)
 
         article_manager = ArticleManager(config)
         article_manager.load_news_article()

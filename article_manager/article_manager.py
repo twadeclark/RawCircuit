@@ -109,7 +109,7 @@ class ArticleManager:
                 "name"      : model_name_temp,
                 "interface" : self.model_info_from_config["interface"],
                 "max_tokens": self.model_info_from_config["max_tokens"]}
-            self.logger.info("\nTrying model: %s", self.article_to_process.model["name"])
+            self.logger.info("\n+   Trying model: %s", self.article_to_process.model["name"])
             self.ai_manager.get_and_set_summary_and_record_model_results(self.article_to_process) #TODO: clean up
 
     def add_summary_to_comment_thread_manager(self):
