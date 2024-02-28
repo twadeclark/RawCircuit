@@ -146,7 +146,7 @@ class ArticleManager:
         temperature_increase = float(temp_pct_increase * (max_comment_temperature - min_comment_temperature))
         temperature = float(0.0)
 
-        for loop_cnt in range(1, number_of_comments_between_min_max_temperature + 2):
+        for loop_cnt in range(1, number_of_comments_between_min_max_temperature + 3):
             parent_index = random.randint(0, int(self.comment_thread_manager.get_comments_length() * continuity_multiplier))
             parent_index = min(parent_index, self.comment_thread_manager.get_comments_length() - 1)
             parent_comment = self.comment_thread_manager.get_comment(parent_index)["comment"]

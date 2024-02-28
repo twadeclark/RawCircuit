@@ -17,6 +17,7 @@ class HuggingFaceInterface(AbstractAIUnit):
         self.logger = logging.getLogger(__name__)
         self.api_key = config["api_key"]
         self.base_url = config["base_url"]
+        self.tokenizer = None
 
     def fetch_inference(self, model, formatted_messages, temperature):
         headers = {"Authorization": f"Bearer {self.api_key}"}
@@ -34,8 +35,11 @@ class HuggingFaceInterface(AbstractAIUnit):
         else:
             kwargs = {}
             kwargs["token"] = self.api_key
-            tokenizer = AutoTokenizer.from_pretrained(model["name"], **kwargs)
-            formatted_messages_as_string = tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
+
+            if self.tokenizer is None or self.tokenizer.name_or_path != model["name"]:
+                self.tokenizer = AutoTokenizer.from_pretrained(model["name"], **kwargs)
+
+            formatted_messages_as_string = self.tokenizer.apply_chat_template(formatted_messages, tokenize=False, add_generation_prompt=True)
 
         payload = {
             "inputs": formatted_messages_as_string,
