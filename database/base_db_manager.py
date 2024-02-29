@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-# from datetime import datetime
 
 
 class BaseDBManager(ABC):
@@ -14,14 +13,6 @@ class BaseDBManager(ABC):
 
     @abstractmethod
     def save_article(self, article_data):
-        pass
-
-    @abstractmethod
-    def get_random_article(self):
-        pass
-
-    @abstractmethod
-    def get_next_article_to_scrape(self):
         pass
 
     @abstractmethod
@@ -50,10 +41,6 @@ class BaseDBManager(ABC):
 
     @abstractmethod
     def update_model_record(self, model_name, success, disposition):
-        pass
-
-    @abstractmethod
-    def update_model_record_template(self, model_name, template):
         pass
 
     @abstractmethod

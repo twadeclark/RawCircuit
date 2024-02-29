@@ -67,6 +67,7 @@ class GenericApiInterface(AbstractAIUnit):
         # small problems:
         if results.get('warning'):
             self.logger.info("Warning: ", results['warning'])
+
         # success stories:
         if results.get('generated_text'):
             response = results['generated_text']

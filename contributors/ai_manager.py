@@ -134,9 +134,10 @@ class AIManager:
             selected_summary = selected_summary.replace("\n", " ")
 
         article_to_process.summary_dump             = summary_dump
-        article_to_process.summary                  = selected_summary
         article_to_process.summary_prompt_keywords  = selected_prompt_keywords
         article_to_process.summary_flavors          = selected_flavors
+        
+        return selected_summary
 
     def fetch_inference(self, model, formatted_messages, temperature):
         interface = self.interface_list.get(model["interface"])

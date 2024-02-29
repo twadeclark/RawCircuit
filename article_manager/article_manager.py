@@ -4,11 +4,12 @@ import random
 import time
 
 import logging
+
+import requests
 from aggregators.news_aggregator_manager import NewsAggregatorManager
 from article import Article
 from content_loaders import scraper
 from contributors.ai_manager import AIManager
-from contributors.huggingface_model_search import HuggingfaceModelSearch
 from database.db_manager import DBManager
 from error_handler import FatalError
 from output_formatter.comment_thread_manager import CommentThreadManager
@@ -30,9 +31,8 @@ class ArticleManager:
         self.db_manager = DBManager(self.config)
         self.instruction_generator =  InstructionGenerator(self.config.get('general_configurations', 'prompt_tier'))
         self.ai_manager = AIManager(self.config, self.db_manager, self.instruction_generator)
-        self.news_aggregator_manager = NewsAggregatorManager(self.config, self.db_manager, None) #TODO: news aggregator type should come from config
+        self.news_aggregator_manager = NewsAggregatorManager(self.config, self.db_manager, None)
         self.search_terms = SearchTerms()
-        self.hfms = HuggingfaceModelSearch(self.db_manager)
         self.model_info_from_config = { 
             "name"      : self.config.get('model_info', 'model_name'),
             "interface" : self.config.get('model_info', 'interface'),
@@ -76,7 +76,7 @@ class ArticleManager:
 
         self.article_to_process = atp
         self.db_manager.update_process_time(self.article_to_process)
-        self.comment_thread_manager.set_article(self.article_to_process) #TODO: this seems like it should be set later, after the article has been processed
+        self.comment_thread_manager.set_article(self.article_to_process)
 
         if not self.article_to_process.scraped_website_content:
             if self.config.getboolean('article_selector', 'use_info_from_aggregator_instead_of_fetch'):
@@ -89,7 +89,6 @@ class ArticleManager:
         self.article_to_process.shortened_content = shortened_content_tmp
         self.logger.info("    shortened_content: %s", self.article_to_process.shortened_content)
 
-
     def get_summary_model_defined(self):
         self.article_to_process.model = self.model_info_from_config
         self.ai_manager.get_and_set_summary_and_record_model_results(self.article_to_process)
@@ -99,8 +98,7 @@ class ArticleManager:
 
         while not self.article_to_process.summary and model_attempt_cnt > 0:
             model_attempt_cnt -= 1
-
-            model_name_temp = self.hfms.fetch_next_model_name_from_huggingface()
+            model_name_temp = self._fetch_next_model_name_from_huggingface()
             if not model_name_temp:
                 self.logger.error("No new models available from Huggingface. Exiting...")
                 raise FatalError("No new models available from Huggingface. Exiting...")
@@ -110,7 +108,7 @@ class ArticleManager:
                 "interface" : self.model_info_from_config["interface"],
                 "max_tokens": self.model_info_from_config["max_tokens"]}
             self.logger.info("\n+   Trying model: %s", self.article_to_process.model["name"])
-            self.ai_manager.get_and_set_summary_and_record_model_results(self.article_to_process) #TODO: clean up
+            self.article_to_process.summary = self.ai_manager.get_and_set_summary_and_record_model_results(self.article_to_process)
 
     def add_summary_to_comment_thread_manager(self):
         self.comment_thread_manager.add_comment(
@@ -247,3 +245,40 @@ class ArticleManager:
             raise FatalError("Error assembling fake content. Exiting...")
 
         self.db_manager.update_scraped_website_content(self.article_to_process)
+
+    def _fetch_next_model_name_from_huggingface(self):
+        next_model_name = self.db_manager.get_first_model_name_with_none_success()
+
+        # https://huggingface.co/spaces/enzostvs/hub-api-playground
+        payload = {
+            "url"   : "https://huggingface.co/api/models",
+            "params": {"filter"    : "text-generation",
+                       "sort"      : "likes",
+                       "direction" : "-1",
+                       "limit"     : "100",
+                       "full"      : "False",
+                       "config"    : "False"},
+            "headers": {},
+            "timeout": 120
+        }
+
+        while not next_model_name:
+            next_model_name = None
+            response = requests.get(payload['url'], params=payload['params'], headers=payload['headers'], timeout=payload['timeout'])
+            if response.status_code != 200:
+                self.logger.error("    No luck with new models from Huggingface. response.status_code: %s", response.status_code)
+                raise FatalError("No luck with new models from Huggingface. Exiting...")
+
+            for model in response.json():
+                self.db_manager.only_insert_model_into_database_if_not_already_there(model["id"])
+
+            next_model_name = self.db_manager.get_first_model_name_with_none_success()
+            
+            payload = {
+                "url"   : response.links['next']['url'],
+                "params": {},
+                "headers": {},
+                "timeout": 120
+            }
+
+        return next_model_name

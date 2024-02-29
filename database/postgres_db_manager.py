@@ -33,32 +33,6 @@ class PostgresDBManager:
                 (article_data.aggregator, article_data.source_id, article_data.source_name, article_data.author, article_data.title, article_data.description, article_data.url, article_data.url_to_image, article_data.published_at, article_data.content, article_data.rec_order, article_data.added_timestamp, article_data.scraped_timestamp, article_data.processed_timestamp))
             self.conn.commit()
 
-    def get_random_article(self):
-        with self.conn.cursor() as cur:
-            cur.execute("""
-                SELECT id, aggregator, source_id, source_name, author, title, description, url, url_to_image, published_at, content, rec_order, added_timestamp, scraped_timestamp, scraped_website_content, processed_timestamp
-                FROM articles
-                ORDER BY RANDOM() --published_at DESC
-                LIMIT 1
-                """)
-            row = cur.fetchone()
-            if not row:
-                return None
-            return Article(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9],row[10],row[11],row[12],row[13],row[14],row[15])
-
-    def get_next_article_to_scrape(self):
-        with self.conn.cursor() as cur:
-            cur.execute("""
-                SELECT a.id, a.aggregator, a.source_id, a.source_name, a.author, a.title, a.description, a.url, a.url_to_image, a.published_at, a.content, a.rec_order, a.added_timestamp, a.scraped_timestamp, a.scraped_website_content, a.processed_timestamp
-                FROM articles a
-                WHERE scraped_timestamp IS NULL AND processed_timestamp IS NULL AND scraped_website_content IS NULL
-                ORDER BY added_timestamp, rec_order
-                """)
-            row = cur.fetchone()
-            if not row:
-                return None
-            return Article(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9],row[10],row[11],row[12],row[13],row[14],row[15])
-
     def get_next_article_to_process(self):
         with self.conn.cursor() as cur:
             cur.execute("""
@@ -132,16 +106,6 @@ class PostgresDBManager:
                 WHERE model_name = %s
                 """,
                 (datetime.now(), success_bit, disposition, model_name))
-            self.conn.commit()
-
-    def update_model_record_template(self, model_name, template):
-        with self.conn.cursor() as cur:
-            cur.execute("""
-                UPDATE model_records
-                SET template = %s
-                WHERE model_name = %s
-                """,
-                (template, model_name))
             self.conn.commit()
 
     def get_model_name_list_by_list_of_model_names(self, list_of_model_names):
