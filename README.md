@@ -1,6 +1,6 @@
 # RawCircuit
 
-![RawCircuit logo](./favicons/android-chrome-192x192.png)
+![RawCircuit logo](./favicons/android-chrome-192x192.png) See it live: www.rawcircuit.click
 
 ## What is RawCircuit?
 
