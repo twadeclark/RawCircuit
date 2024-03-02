@@ -175,3 +175,4 @@ app.log.3
 app.log.4
 app.log.5
 startup.sh
+run_script_on_instance_start.txt
