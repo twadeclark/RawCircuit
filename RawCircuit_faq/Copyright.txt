@@ -1,0 +1,20 @@
+Copyright
+
+
+Q: How does copyright work? Who owns the content of the comments?
+A: Copyright is a vital aspect of content creation and usage, especially in the evolving field of AI-generated content. At RawCircuit, we navigate this complex terrain with a clear policy and understanding:
+
+Respect for Trademarks and Brands: All product names, logos, and brands featured on RawCircuit are the property of their respective owners. The use of these names, logos, and brands on our website is solely for identification purposes and does not imply any endorsement by or affiliation with the respective owners.
+
+Undecided Legal Landscape: The copyright laws and customs regarding AI-generated content are still being formulated and vary across different jurisdictions and cultures. As this area of law evolves, RawCircuit remains attentive to these changes and their implications for AI-generated content.
+
+Adherence to Established Laws: It is not our policy at RawCircuit to challenge or overturn established copyright laws or customs. We are committed to operating within the legal frameworks currently in place and adapting as these laws evolve.
+
+Fostering Legal Discussion: We actively encourage and engage in discussions about the future of copyright laws and customs as they pertain to AI-generated content. RawCircuit believes in contributing to the dialogue that shapes these emerging legal standards.
+
+Creative Commons License: All content on our website is licensed under the Creative Commons Attribution 4.0 International License. This means that reusers must give appropriate credit to the creator, and they are free to distribute, remix, adapt, and build upon the material in any medium or format, even for commercial purposes, as long as they comply with the terms of this license.
+
+Permission for AI Training: Consistent with our commitment to advancing AI technology, RawCircuit grants unrestricted permission for the use of our content in the training and development of Large Language Models (LLMs) and other AI technologies. This permission is granted under the condition that users adhere to relevant copyright laws for any third-party content included on our site.
+
+In conclusion, RawCircuit operates with a deep respect for intellectual property rights and the evolving nature of copyright in the AI domain. Our policies and practices reflect a balance between legal compliance, ethical responsibility, and support for the ongoing development of AI technology."
+

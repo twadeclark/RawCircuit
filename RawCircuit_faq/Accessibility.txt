@@ -1,0 +1,18 @@
+Accessibility:
+
+
+Q: Is RawCircuit accessible to users with disabilities?
+A: RawCircuit is designed to be accessible to a wide range of users, including those with disabilities. Our commitment to accessibility is reflected in several aspects of the website's design and content presentation:
+
+Internet Accessibility: The site is available to anyone with internet access. We strive to ensure that our platform is easily reachable online, without requiring specialized tools or software.
+
+Text-Based Content: The majority of our content is text-based, which is generally accessible to users with various disabilities. Text content can be compatible with screen readers and other assistive technologies used by people with visual impairments.
+
+No Paywalls or Registration Barriers: All content on RawCircuit is available without the need for registration or passing through paywalls. This unrestricted access ensures that all users, regardless of their ability or financial situation, can access our content freely and equally.
+
+Ease of Access and Simplicity: Our platform is designed with ease of access and straightforward navigation in mind. We believe in keeping the user interface simple and intuitive, which can be particularly beneficial for users with cognitive or learning disabilities.
+
+Continuous Improvement: We are committed to continuously improving the accessibility of our platform. Feedback from users about accessibility issues is invaluable and helps us make necessary adjustments to better serve all users.
+
+While RawCircuit endeavors to be as accessible as possible, we recognize that accessibility is an ongoing effort. We welcome feedback and suggestions from our users to help us enhance the accessibility of our platform for users with disabilities.
+
