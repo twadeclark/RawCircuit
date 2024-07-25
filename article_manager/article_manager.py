@@ -140,11 +140,11 @@ class ArticleManager:
         number_of_comments_between_min_max_temperature = int(self.config.get('general_configurations', 'number_of_comments_between_min_max_temperature'))
         max_comment_temperature = float(self.config.get('general_configurations', 'max_comment_temperature'))
         min_comment_temperature = float(self.config.get('general_configurations', 'min_comment_temperature'))
-        temp_pct_increase = float( 1 / (number_of_comments_between_min_max_temperature + 2))
+        temp_pct_increase = float( 1 / (number_of_comments_between_min_max_temperature + 1))
         temperature_increase = float(temp_pct_increase * (max_comment_temperature - min_comment_temperature))
         temperature = float(0.0)
 
-        for loop_cnt in range(1, number_of_comments_between_min_max_temperature + 3):
+        for loop_cnt in range(1, number_of_comments_between_min_max_temperature + 2):
             parent_index = random.randint(0, int(self.comment_thread_manager.get_comments_length() * continuity_multiplier))
             parent_index = min(parent_index, self.comment_thread_manager.get_comments_length() - 1)
             parent_comment = self.comment_thread_manager.get_comment(parent_index)["comment"]
@@ -153,7 +153,11 @@ class ArticleManager:
             loop_comment_prompt, prompt_keywords = self.instruction_generator.generate_loop_prompt(self.article_to_process.summary, parent_comment)
             self.logger.debug("    (loop %d) loop_comment_prompt: %s", loop_cnt, loop_comment_prompt)
 
-            loop_comment, flavors = self.ai_manager.fetch_inference(self.article_to_process.model, loop_comment_prompt, temperature)
+            try:
+                loop_comment, flavors = self.ai_manager.fetch_inference(self.article_to_process.model, loop_comment_prompt, temperature)
+            except Exception as e:
+                self.logger.error("Exception in fetch_inference: %s", e)
+
             if not loop_comment:
                 self.logger.info("No loop comment generated. model: %s Skipping...", self.article_to_process.model["name"])
                 continue
